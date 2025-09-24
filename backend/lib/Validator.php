@@ -1,0 +1,235 @@
+<?php
+
+class Validator {
+    private $errors = [];
+
+    public function required($value, $fieldName) {
+        if (empty($value) && $value !== '0') {
+            $this->errors[$fieldName] = "{$fieldName}는 필수 입력 항목입니다.";
+        }
+        return $this;
+    }
+
+    public function numeric($value, $fieldName) {
+        if (!empty($value) && !is_numeric($value)) {
+            $this->errors[$fieldName] = "{$fieldName}는 숫자여야 합니다.";
+        }
+        return $this;
+    }
+
+    public function decimal($value, $fieldName, $precision = 2) {
+        if (!empty($value)) {
+            if (!is_numeric($value)) {
+                $this->errors[$fieldName] = "{$fieldName}는 숫자여야 합니다.";
+            } else {
+                $decimalParts = explode('.', $value);
+                if (count($decimalParts) > 2 || (count($decimalParts) == 2 && strlen($decimalParts[1]) > $precision)) {
+                    $this->errors[$fieldName] = "{$fieldName}는 소수점 {$precision}자리까지만 가능합니다.";
+                }
+            }
+        }
+        return $this;
+    }
+
+    public function maxLength($value, $fieldName, $max) {
+        if (!empty($value) && strlen($value) > $max) {
+            $this->errors[$fieldName] = "{$fieldName}는 최대 {$max}자까지 입력 가능합니다.";
+        }
+        return $this;
+    }
+
+    public function inArray($value, $fieldName, $allowedValues) {
+        if (!empty($value) && !in_array($value, $allowedValues)) {
+            $allowedStr = implode(', ', $allowedValues);
+            $this->errors[$fieldName] = "{$fieldName}는 다음 값 중 하나여야 합니다: {$allowedStr}";
+        }
+        return $this;
+    }
+
+    public function date($value, $fieldName) {
+        if (!empty($value)) {
+            $date = DateTime::createFromFormat('Y-m-d', $value);
+            if (!$date || $date->format('Y-m-d') !== $value) {
+                $this->errors[$fieldName] = "{$fieldName}는 YYYY-MM-DD 형식의 올바른 날짜여야 합니다.";
+            }
+        }
+        return $this;
+    }
+
+    public function integer($value, $fieldName, $min = null, $max = null) {
+        if (!empty($value)) {
+            if (!filter_var($value, FILTER_VALIDATE_INT)) {
+                $this->errors[$fieldName] = "{$fieldName}는 정수여야 합니다.";
+            } else {
+                $intValue = (int)$value;
+                if ($min !== null && $intValue < $min) {
+                    $this->errors[$fieldName] = "{$fieldName}는 {$min} 이상이어야 합니다.";
+                }
+                if ($max !== null && $intValue > $max) {
+                    $this->errors[$fieldName] = "{$fieldName}는 {$max} 이하여야 합니다.";
+                }
+            }
+        }
+        return $this;
+    }
+
+    public function boolean($value, $fieldName) {
+        if (!empty($value) && !in_array($value, [true, false, 1, 0, '1', '0', 'true', 'false'])) {
+            $this->errors[$fieldName] = "{$fieldName}는 참/거짓 값이어야 합니다.";
+        }
+        return $this;
+    }
+
+    public function hasErrors() {
+        return !empty($this->errors);
+    }
+
+    public function getErrors() {
+        return $this->errors;
+    }
+
+    public function getFirstError() {
+        return !empty($this->errors) ? reset($this->errors) : null;
+    }
+
+    public function clear() {
+        $this->errors = [];
+        return $this;
+    }
+
+    public static function validateCashAsset($data) {
+        $validator = new self();
+
+        $validator->required($data['type'] ?? '', 'type')
+                 ->inArray($data['type'] ?? '', 'type', ['현금', '통장']);
+
+        $validator->required($data['item_name'] ?? '', 'item_name')
+                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+
+        $validator->required($data['balance'] ?? '', 'balance')
+                 ->decimal($data['balance'] ?? '', 'balance', 2);
+
+        if (!empty($data['account_name'])) {
+            $validator->maxLength($data['account_name'], 'account_name', 100);
+        }
+
+        return $validator;
+    }
+
+    public static function validateInvestmentAsset($data) {
+        $validator = new self();
+
+        $validator->required($data['category'] ?? '', 'category')
+                 ->inArray($data['category'] ?? '', 'category', ['저축', '혼합', '주식']);
+
+        $validator->required($data['item_name'] ?? '', 'item_name')
+                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+
+        $validator->required($data['current_value'] ?? '', 'current_value')
+                 ->decimal($data['current_value'] ?? '', 'current_value', 2);
+
+        $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
+                 ->decimal($data['deposit_amount'] ?? '', 'deposit_amount', 2);
+
+        if (!empty($data['account_name'])) {
+            $validator->maxLength($data['account_name'], 'account_name', 100);
+        }
+
+        return $validator;
+    }
+
+    public static function validatePensionAsset($data) {
+        $validator = new self();
+
+        $validator->required($data['type'] ?? '', 'type')
+                 ->inArray($data['type'] ?? '', 'type', ['연금저축', '퇴직연금']);
+
+        $validator->required($data['item_name'] ?? '', 'item_name')
+                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+
+        $validator->required($data['current_value'] ?? '', 'current_value')
+                 ->decimal($data['current_value'] ?? '', 'current_value', 2);
+
+        $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
+                 ->decimal($data['deposit_amount'] ?? '', 'deposit_amount', 2);
+
+        return $validator;
+    }
+
+    public static function validateDailyExpense($data) {
+        $validator = new self();
+
+        $validator->required($data['expense_date'] ?? '', 'expense_date')
+                 ->date($data['expense_date'] ?? '', 'expense_date');
+
+        $validator->required($data['total_amount'] ?? '', 'total_amount')
+                 ->decimal($data['total_amount'] ?? '', 'total_amount', 2);
+
+        if (!empty($data['food_cost'])) {
+            $validator->decimal($data['food_cost'], 'food_cost', 2);
+        }
+        if (!empty($data['necessities_cost'])) {
+            $validator->decimal($data['necessities_cost'], 'necessities_cost', 2);
+        }
+        if (!empty($data['transportation_cost'])) {
+            $validator->decimal($data['transportation_cost'], 'transportation_cost', 2);
+        }
+        if (!empty($data['other_cost'])) {
+            $validator->decimal($data['other_cost'], 'other_cost', 2);
+        }
+
+        return $validator;
+    }
+
+    public static function validateFixedExpense($data) {
+        $validator = new self();
+
+        $validator->required($data['item_name'] ?? '', 'item_name')
+                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+
+        $validator->required($data['amount'] ?? '', 'amount')
+                 ->decimal($data['amount'] ?? '', 'amount', 2);
+
+        $validator->required($data['payment_date'] ?? '', 'payment_date')
+                 ->integer($data['payment_date'] ?? '', 'payment_date', 1, 31);
+
+        $validator->required($data['payment_method'] ?? '', 'payment_method')
+                 ->inArray($data['payment_method'] ?? '', 'payment_method', ['신용', '체크', '현금']);
+
+        if (!empty($data['category'])) {
+            $validator->maxLength($data['category'], 'category', 50);
+        }
+
+        if (isset($data['is_active'])) {
+            $validator->boolean($data['is_active'], 'is_active');
+        }
+
+        return $validator;
+    }
+
+    public static function validatePrepaidExpense($data) {
+        $validator = new self();
+
+        $validator->required($data['item_name'] ?? '', 'item_name')
+                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+
+        $validator->required($data['amount'] ?? '', 'amount')
+                 ->decimal($data['amount'] ?? '', 'amount', 2);
+
+        $validator->required($data['payment_date'] ?? '', 'payment_date')
+                 ->integer($data['payment_date'] ?? '', 'payment_date', 1, 31);
+
+        $validator->required($data['payment_method'] ?? '', 'payment_method')
+                 ->inArray($data['payment_method'] ?? '', 'payment_method', ['신용', '체크', '현금']);
+
+        if (!empty($data['expiry_date'])) {
+            $validator->date($data['expiry_date'], 'expiry_date');
+        }
+
+        if (isset($data['is_active'])) {
+            $validator->boolean($data['is_active'], 'is_active');
+        }
+
+        return $validator;
+    }
+}

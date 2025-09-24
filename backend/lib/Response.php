@@ -1,14 +1,15 @@
 <?php
-/**
- * API Response Helper
- * API 응답 헬퍼 클래스
- */
 
 class Response {
-    /**
-     * 성공 응답
-     */
-    public static function success($data = null, $message = 'Success') {
+
+    public static function json($data, $statusCode = 200) {
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public static function success($data = null, $message = 'Success', $pagination = null) {
         $response = [
             'success' => true,
             'message' => $message
@@ -18,49 +19,39 @@ class Response {
             $response['data'] = $data;
         }
 
-        http_response_code(200);
-        return json_encode($response, JSON_UNESCAPED_UNICODE);
+        if ($pagination !== null) {
+            $response['pagination'] = $pagination;
+        }
+
+        self::json($response);
     }
 
-    /**
-     * 에러 응답
-     */
-    public static function error($message = 'Error', $code = 400) {
+    public static function error($message = 'Error', $errorCode = 400, $details = null) {
         $response = [
             'success' => false,
             'message' => $message,
-            'error_code' => $code
+            'error_code' => $errorCode
         ];
 
-        http_response_code($code);
-        return json_encode($response, JSON_UNESCAPED_UNICODE);
-    }
-
-    /**
-     * 데이터 응답 (페이징 포함)
-     */
-    public static function data($data, $total = null, $page = null, $limit = null) {
-        $response = [
-            'success' => true,
-            'data' => $data
-        ];
-
-        if ($total !== null) {
-            $response['pagination'] = [
-                'total' => (int)$total,
-                'page' => (int)$page,
-                'limit' => (int)$limit,
-                'pages' => $limit > 0 ? ceil($total / $limit) : 1
-            ];
+        if ($details !== null) {
+            $response['details'] = $details;
         }
 
-        http_response_code(200);
-        return json_encode($response, JSON_UNESCAPED_UNICODE);
+        self::json($response, $errorCode);
     }
 
-    /**
-     * 생성 성공 응답
-     */
+    public static function notFound($message = 'Resource not found') {
+        self::error($message, 404);
+    }
+
+    public static function validationError($errors) {
+        self::error('Validation failed', 400, $errors);
+    }
+
+    public static function serverError($message = 'Internal server error') {
+        self::error($message, 500);
+    }
+
     public static function created($data = null, $message = 'Created') {
         $response = [
             'success' => true,
@@ -71,8 +62,6 @@ class Response {
             $response['data'] = $data;
         }
 
-        http_response_code(201);
-        return json_encode($response, JSON_UNESCAPED_UNICODE);
+        self::json($response, 201);
     }
 }
-?>
