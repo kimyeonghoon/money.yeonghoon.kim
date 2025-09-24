@@ -54,7 +54,7 @@ curl -X POST "http://localhost/api/cash-assets.php" \
     "type": "현금",
     "account_name": "테스트 계좌",
     "item_name": "테스트 현금",
-    "balance": 100000.00
+    "balance": 100000
   }'
 
 # 수정
@@ -64,7 +64,7 @@ curl -X PUT "http://localhost/api/cash-assets.php/1" \
     "type": "통장",
     "account_name": "수정된 계좌",
     "item_name": "수정된 항목",
-    "balance": 150000.00
+    "balance": 150000
   }'
 
 # 삭제 (논리적 삭제)
@@ -103,8 +103,8 @@ curl -X POST "http://localhost/api/investment-assets.php" \
     "category": "주식",
     "account_name": "KB증권",
     "item_name": "테스트 ETF",
-    "current_value": 1200000.00,
-    "deposit_amount": 1000000.00
+    "current_value": 1200000,
+    "deposit_amount": 1000000
   }'
 ```
 
@@ -133,8 +133,8 @@ curl -X POST "http://localhost/api/pension-assets.php" \
   -d '{
     "type": "연금저축",
     "item_name": "테스트 연금상품",
-    "current_value": 5000000.00,
-    "deposit_amount": 4500000.00
+    "current_value": 5000000,
+    "deposit_amount": 4500000
   }'
 ```
 
@@ -162,11 +162,11 @@ curl -X POST "http://localhost/api/daily-expenses.php" \
   -H "Content-Type: application/json" \
   -d '{
     "expense_date": "2024-09-24",
-    "total_amount": 50000.00,
-    "food_cost": 30000.00,
-    "necessities_cost": 10000.00,
-    "transportation_cost": 5000.00,
-    "other_cost": 5000.00
+    "total_amount": 50000,
+    "food_cost": 30000,
+    "necessities_cost": 10000,
+    "transportation_cost": 5000,
+    "other_cost": 5000
   }'
 ```
 
@@ -207,7 +207,7 @@ curl -X POST "http://localhost/api/fixed-expenses.php" \
   -d '{
     "category": "구독",
     "item_name": "테스트 구독",
-    "amount": 9900.00,
+    "amount": 9900,
     "payment_date": 15,
     "payment_method": "신용",
     "is_active": true
@@ -251,7 +251,7 @@ curl -X POST "http://localhost/api/prepaid-expenses.php" \
   -H "Content-Type: application/json" \
   -d '{
     "item_name": "테스트 보험",
-    "amount": 50000.00,
+    "amount": 50000,
     "payment_date": 10,
     "payment_method": "현금",
     "expiry_date": "2025-12-31",

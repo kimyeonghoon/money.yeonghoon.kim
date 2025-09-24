@@ -17,14 +17,17 @@ class Validator {
         return $this;
     }
 
-    public function decimal($value, $fieldName, $precision = 2) {
+    public function amount($value, $fieldName) {
         if (!empty($value)) {
             if (!is_numeric($value)) {
                 $this->errors[$fieldName] = "{$fieldName}는 숫자여야 합니다.";
             } else {
-                $decimalParts = explode('.', $value);
-                if (count($decimalParts) > 2 || (count($decimalParts) == 2 && strlen($decimalParts[1]) > $precision)) {
-                    $this->errors[$fieldName] = "{$fieldName}는 소수점 {$precision}자리까지만 가능합니다.";
+                $intValue = (int)$value;
+                if ($intValue < 0) {
+                    $this->errors[$fieldName] = "{$fieldName}는 0 이상이어야 합니다.";
+                }
+                if ($intValue > 2147483647) { // INT 최대값
+                    $this->errors[$fieldName] = "{$fieldName}가 너무 큽니다.";
                 }
             }
         }
@@ -107,7 +110,7 @@ class Validator {
                  ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
         $validator->required($data['balance'] ?? '', 'balance')
-                 ->decimal($data['balance'] ?? '', 'balance', 2);
+                 ->amount($data['balance'] ?? '', 'balance');
 
         if (!empty($data['account_name'])) {
             $validator->maxLength($data['account_name'], 'account_name', 100);
@@ -126,10 +129,10 @@ class Validator {
                  ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
         $validator->required($data['current_value'] ?? '', 'current_value')
-                 ->decimal($data['current_value'] ?? '', 'current_value', 2);
+                 ->amount($data['current_value'] ?? '', 'current_value');
 
         $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
-                 ->decimal($data['deposit_amount'] ?? '', 'deposit_amount', 2);
+                 ->amount($data['deposit_amount'] ?? '', 'deposit_amount');
 
         if (!empty($data['account_name'])) {
             $validator->maxLength($data['account_name'], 'account_name', 100);
@@ -148,10 +151,10 @@ class Validator {
                  ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
         $validator->required($data['current_value'] ?? '', 'current_value')
-                 ->decimal($data['current_value'] ?? '', 'current_value', 2);
+                 ->amount($data['current_value'] ?? '', 'current_value');
 
         $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
-                 ->decimal($data['deposit_amount'] ?? '', 'deposit_amount', 2);
+                 ->amount($data['deposit_amount'] ?? '', 'deposit_amount');
 
         return $validator;
     }
@@ -163,19 +166,19 @@ class Validator {
                  ->date($data['expense_date'] ?? '', 'expense_date');
 
         $validator->required($data['total_amount'] ?? '', 'total_amount')
-                 ->decimal($data['total_amount'] ?? '', 'total_amount', 2);
+                 ->amount($data['total_amount'] ?? '', 'total_amount');
 
         if (!empty($data['food_cost'])) {
-            $validator->decimal($data['food_cost'], 'food_cost', 2);
+            $validator->amount($data['food_cost'], 'food_cost');
         }
         if (!empty($data['necessities_cost'])) {
-            $validator->decimal($data['necessities_cost'], 'necessities_cost', 2);
+            $validator->amount($data['necessities_cost'], 'necessities_cost');
         }
         if (!empty($data['transportation_cost'])) {
-            $validator->decimal($data['transportation_cost'], 'transportation_cost', 2);
+            $validator->amount($data['transportation_cost'], 'transportation_cost');
         }
         if (!empty($data['other_cost'])) {
-            $validator->decimal($data['other_cost'], 'other_cost', 2);
+            $validator->amount($data['other_cost'], 'other_cost');
         }
 
         return $validator;
@@ -188,7 +191,7 @@ class Validator {
                  ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
         $validator->required($data['amount'] ?? '', 'amount')
-                 ->decimal($data['amount'] ?? '', 'amount', 2);
+                 ->amount($data['amount'] ?? '', 'amount');
 
         $validator->required($data['payment_date'] ?? '', 'payment_date')
                  ->integer($data['payment_date'] ?? '', 'payment_date', 1, 31);
@@ -214,7 +217,7 @@ class Validator {
                  ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
         $validator->required($data['amount'] ?? '', 'amount')
-                 ->decimal($data['amount'] ?? '', 'amount', 2);
+                 ->amount($data['amount'] ?? '', 'amount');
 
         $validator->required($data['payment_date'] ?? '', 'payment_date')
                  ->integer($data['payment_date'] ?? '', 'payment_date', 1, 31);
