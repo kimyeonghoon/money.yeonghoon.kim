@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PHP-FPM 서비스
+  php:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    container_name: money_php
+    volumes:
+      - ../backend:/var/www/html
+      - ../logs:/var/log/app
+    environment:
+      - PHP_TIMEZONE=${PHP_TIMEZONE:-Asia/Seoul}
+    env_file:
+      - ../.env
+    depends_on:
+      - mysql
+    networks:
+      - money_network
+
+  # Nginx 서비스 (API 전용)
+  nginx:
+    image: nginx:alpine
+    container_name: money_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ../backend:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ../logs:/var/log/nginx
+    depends_on:
+      - php
+    networks:
+      - money_network
+
+  # MySQL 서비스 (개발환경용)
+  mysql:
+    image: mysql:8.0
+    container_name: money_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: money_dev_2024
+      MYSQL_DATABASE: money_management
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../backend/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ../backend/test-sample-data.sql:/docker-entrypoint-initdb.d/02-sample-data.sql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - money_network
+
+  # phpMyAdmin (선택사항)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: money_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: money_dev_2024
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    depends_on:
+      - mysql
+    networks:
+      - money_network
+    profiles:
+      - dev
+
+volumes:
+  mysql_data:
+
+networks:
+  money_network:
+    driver: bridge

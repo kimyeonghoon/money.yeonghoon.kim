@@ -41,3 +41,5 @@ composer.lock
 # Local configuration overrides
 config/local.php
 config/database.local.php
+자산관리시트.csv
+자산관리시트.xlsx

@@ -8,7 +8,7 @@ class Database {
         $host = getenv('DB_HOST') ?: 'localhost';
         $dbname = getenv('DB_NAME') ?: 'money_management';
         $username = getenv('DB_USER') ?: 'root';
-        $password = getenv('DB_PASS') ?: '';
+        $password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: '';
 
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
 
