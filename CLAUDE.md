@@ -97,3 +97,45 @@ Since this is an early-stage project without existing build tools:
 - Implement proper environment separation between development and production databases
 - Ensure Docker container resource optimization (stop unused MySQL container when using external DB)
 - Maintain security best practices for environment variable handling
+
+## Next Priority Tasks (Tomorrow's Work)
+
+### Immediate Priority (High)
+1. **투자자산 페이지 모바일 최적화** - Apply cash-assets mobile optimization to investment-assets.php
+   - 드래그 앤 드롭 순서 변경 기능
+   - 모바일 친화적 카드 레이아웃
+   - 인라인 잔액 편집 기능
+   - 모달을 통한 전체 정보 편집
+
+2. **연금자산 페이지 모바일 최적화** - Apply same optimizations to pension-assets.php
+   - 현금성 자산과 동일한 UX 패턴 적용
+   - 터치 친화적 인터랙션 구현
+
+3. **일별지출 페이지 개선** - Enhance daily-expenses.php functionality
+   - 날짜별 지출 내역 관리
+   - 카테고리별 분류 및 필터링
+   - 모바일 최적화된 입력 폼
+
+### Medium Priority
+4. **대시보드 통합 개선** - Enhance dashboard.php with all asset types
+   - 모든 자산 유형 실시간 데이터 표시
+   - 자산 분포 시각화 (차트/그래프)
+   - 월별/연별 총계 및 증감률 표시
+
+5. **고정지출/선납지출 페이지 완성** - Complete remaining asset management pages
+   - fixed-expenses.php 모바일 최적화
+   - prepaid-expenses.php 기능 개선
+
+### Future Enhancements (Low Priority)
+6. **로그인 인증 시스템** - Implement authentication with Telegram notifications
+7. **PWA 기능 추가** - Add Progressive Web App capabilities for mobile usage
+8. **데이터 백업/복원** - Implement export/import functionality for data management
+9. **고급 차트 및 분석** - Add comprehensive financial analytics and reporting
+
+### Current Status
+- ✅ Cash Assets: Complete (mobile-optimized, drag & drop, inline editing)
+- 🔧 Investment Assets: Basic structure ready, needs mobile optimization
+- 🔧 Pension Assets: Basic structure ready, needs mobile optimization
+- 🔧 Daily Expenses: Basic structure ready, needs functionality enhancement
+- 🔧 Fixed/Prepaid Expenses: Basic structure ready, needs completion
+- 📊 Dashboard: Partially complete, needs full integration

@@ -11,16 +11,32 @@ include 'includes/header.php';
         transition: background-color 0.2s ease;
     }
 
+    .balance-cell.editable {
+        position: relative;
+    }
+
     .balance-cell.editable::after {
         content: "✏️";
         font-size: 12px;
-        margin-left: 5px;
         opacity: 0;
         transition: opacity 0.2s ease;
+        position: absolute;
+        right: -20px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
     }
 
     .balance-cell.editable:hover::after {
         opacity: 0.7;
+    }
+
+    /* 모바일 카드에서 잔액 컨테이너 우측 공간 확보 */
+    .asset-card-balance.balance-cell.editable {
+        padding-right: 0;
+        text-align: right;
+        position: relative;
+        display: block;
     }
 
     .balance-input {
@@ -40,10 +56,117 @@ include 'includes/header.php';
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
+        gap: 10px;
     }
 
     .section-header .section-title {
         margin: 0;
+        flex: 1;
+    }
+
+    .section-header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    /* 모바일에서 section-header 최적화 */
+    @media only screen and (max-width: 600px) {
+        .section-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-header .section-title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .section-header-actions {
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .section-header .btn-small {
+            font-size: 12px;
+            padding: 8px 16px;
+            min-height: 40px;
+            white-space: nowrap;
+            border-radius: 20px;
+        }
+
+        .section-header .btn-floating {
+            width: 40px;
+            height: 40px;
+            transform: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-header .btn-floating .material-icons {
+            font-size: 20px;
+            line-height: 1;
+            margin: 0;
+        }
+    }
+
+    @media only screen and (max-width: 480px) {
+        .section-header .section-title {
+            font-size: 16px;
+        }
+
+        .section-header-actions {
+            gap: 8px;
+        }
+
+        .section-header .btn-small {
+            font-size: 11px;
+            padding: 6px 14px;
+            min-height: 36px;
+            white-space: nowrap;
+            border-radius: 18px;
+        }
+
+        .section-header .btn-floating {
+            width: 40px;
+            height: 40px;
+            transform: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-header .btn-floating .material-icons {
+            font-size: 20px;
+            line-height: 1;
+            margin: 0;
+        }
+
+        /* 모바일에서 버튼 텍스트 숨기기 */
+        .section-header .btn-small .button-text {
+            display: none;
+        }
+
+        .section-header .btn-small {
+            min-width: 40px;
+            min-height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .section-header .btn-small .material-icons {
+            margin: 0;
+            font-size: 20px;
+            line-height: 1;
+        }
     }
 
     .asset-row {
@@ -205,6 +328,7 @@ include 'includes/header.php';
         padding: 4px 8px;
         border-radius: 4px;
         transition: background-color 0.3s;
+        text-align: right;
     }
 
     .asset-card-balance:hover {
@@ -247,7 +371,6 @@ include 'includes/header.php';
         <div class="section">
             <div class="row">
                 <div class="col s12">
-                    <h4 class="section-title"><i class="material-icons left">dashboard</i>자산관리 대시보드</h4>
                 </div>
             </div>
 
@@ -276,10 +399,10 @@ include 'includes/header.php';
                 <!-- 현금성 자산 상세 -->
                 <div class="dashboard-section">
                     <div class="section-header">
-                        <h5 class="section-title">💵 현금성 자산 현황</h5>
-                        <div>
+                        <h5 class="section-title">💵 현금성 자산</h5>
+                        <div class="section-header-actions">
                             <button id="reorder-toggle" class="btn-small waves-effect waves-light blue reorder-toggle" title="순서 변경">
-                                <i class="material-icons left">swap_vert</i>순서변경
+                                <i class="material-icons left">swap_vert</i><span class="button-text">순서변경</span>
                             </button>
                             <button class="btn-floating waves-effect waves-light green modal-trigger"
                                     data-target="add-asset-modal" title="자산 추가">

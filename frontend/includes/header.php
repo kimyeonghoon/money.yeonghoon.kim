@@ -2,7 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="머니매니저">
+    <meta name="theme-color" content="#2196F3">
     <title><?php echo isset($pageTitle) ? $pageTitle : '개인 자산관리'; ?> - 머니매니저</title>
 
     <!-- Materialize CSS -->
@@ -44,9 +49,6 @@
                 <li><a href="/dashboard.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">dashboard</i>대시보드
                 </a></li>
-                <li><a href="/cash-assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'cash-assets.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">account_balance_wallet</i>현금자산
-                </a></li>
                 <li><a href="/investment-assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'investment-assets.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">trending_up</i>투자자산
                 </a></li>
@@ -69,7 +71,6 @@
     <!-- Mobile Navigation -->
     <ul class="sidenav" id="mobile-demo">
         <li><a href="/dashboard.php"><i class="material-icons">dashboard</i>대시보드</a></li>
-        <li><a href="/cash-assets.php"><i class="material-icons">account_balance_wallet</i>현금자산</a></li>
         <li><a href="/investment-assets.php"><i class="material-icons">trending_up</i>투자자산</a></li>
         <li><a href="/pension-assets.php"><i class="material-icons">security</i>연금자산</a></li>
         <li><a href="/daily-expenses.php"><i class="material-icons">receipt</i>일별지출</a></li>
@@ -82,10 +83,6 @@
         <a href="/dashboard.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
             <i class="material-icons">dashboard</i>
             <span>홈</span>
-        </a>
-        <a href="/cash-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'cash-assets.php') ? 'active' : ''; ?>">
-            <i class="material-icons">account_balance_wallet</i>
-            <span>현금</span>
         </a>
         <a href="/investment-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'investment-assets.php') ? 'active' : ''; ?>">
             <i class="material-icons">trending_up</i>

@@ -356,7 +356,7 @@ table tbody tr:hover {
     font-size: 1.2rem;
 }
 
-/* Responsive Design */
+/* Responsive Design - Enhanced Mobile Breakpoints */
 @media only screen and (max-width: 992px) {
     .stats-card {
         margin-bottom: 1rem;
@@ -364,6 +364,21 @@ table tbody tr:hover {
 
     nav .nav-wrapper {
         padding: 0 1rem;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .brand-logo {
+        font-size: 1.6rem !important;
+    }
+
+    .container {
+        width: 95%;
+    }
+
+    .mobile-card {
+        margin-bottom: 16px;
+        padding: 18px;
     }
 }
 
@@ -382,6 +397,90 @@ table tbody tr:hover {
 
     .brand-subtitle {
         font-size: 0.9rem;
+    }
+
+    /* Enhanced mobile spacing */
+    .mobile-card {
+        margin-bottom: 20px;
+        padding: 20px;
+        min-height: 90px;
+    }
+
+    .mobile-card-title {
+        font-size: 19px;
+        line-height: 1.3;
+    }
+
+    .mobile-card-amount {
+        font-size: 22px;
+        margin: 12px 0;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .container {
+        width: 98%;
+        padding: 0 12px;
+    }
+
+    .mobile-card {
+        margin-bottom: 24px;
+        padding: 24px;
+        border-radius: 16px;
+    }
+
+    .mobile-card-title {
+        font-size: 20px;
+    }
+
+    .mobile-card-amount {
+        font-size: 24px;
+        margin: 14px 0;
+    }
+
+    .quick-action-item {
+        min-height: 70px;
+        padding: 16px;
+    }
+}
+
+@media only screen and (max-width: 375px) {
+    /* Extra small devices */
+    .mobile-card {
+        margin-bottom: 28px;
+        padding: 28px 20px;
+        border-radius: 20px;
+    }
+
+    .mobile-card-title {
+        font-size: 18px;
+    }
+
+    .mobile-card-amount {
+        font-size: 22px;
+    }
+
+    .mobile-card-actions .btn-small {
+        min-width: 56px;
+        font-size: 13px;
+        padding: 10px 16px;
+    }
+
+    .bottom-nav-item {
+        padding: 12px 2px;
+    }
+
+    .bottom-nav-item span {
+        font-size: 10px;
+    }
+
+    /* Better form inputs for small screens */
+    .input-field {
+        margin-bottom: 20px;
+    }
+
+    .card .card-content {
+        padding: 16px;
     }
 }
 
@@ -449,11 +548,14 @@ table tbody tr:hover {
 }
 
 .mobile-card-actions .btn-small {
-    min-width: 60px;
-    min-height: 44px;
-    border-radius: 20px;
-    font-size: 12px;
-    padding: 8px 16px;
+    min-width: 64px;
+    min-height: 48px;
+    border-radius: 24px;
+    font-size: 14px;
+    padding: 12px 20px;
+    margin: 4px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .mobile-card-icon {
@@ -568,7 +670,7 @@ table tbody tr:hover {
     text-align: center;
 }
 
-/* Mobile Optimizations */
+/* Enhanced Mobile Optimizations */
 @media only screen and (max-width: 600px) {
     /* Hide desktop table on mobile */
     .desktop-table {
@@ -580,26 +682,96 @@ table tbody tr:hover {
         display: block !important;
     }
 
-    /* Adjust container padding for bottom nav */
+    /* Remove bottom nav padding */
     main.container {
-        padding-bottom: 90px;
+        padding-bottom: 20px;
+        margin-top: 16px;
     }
 
-    /* Make buttons more touch-friendly */
+    /* Enhanced touch-friendly buttons */
     .btn, .btn-small {
-        min-height: 44px;
-        min-width: 44px;
+        min-height: 48px;
+        min-width: 48px;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 24px;
+        margin: 6px 4px;
     }
 
-    /* Larger text for mobile */
+    .btn-small {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    /* Larger text for mobile readability */
     body {
         font-size: 16px;
+        line-height: 1.5;
     }
 
-    /* Touch-friendly form inputs */
+    /* Enhanced touch-friendly form inputs */
     .input-field input, .input-field textarea {
         font-size: 16px;
-        padding: 12px 0;
+        padding: 16px 0;
+        min-height: 44px;
+    }
+
+    .input-field label {
+        font-size: 16px;
+    }
+
+    /* Better select dropdowns for mobile */
+    .input-field select {
+        font-size: 16px;
+        padding: 16px 0;
+        min-height: 44px;
+    }
+
+    /* Enhanced card spacing */
+    .card {
+        margin-bottom: 20px;
+        border-radius: 12px;
+    }
+
+    .card .card-content {
+        padding: 20px;
+    }
+
+    .card .card-action {
+        padding: 16px 20px;
+    }
+
+    /* Better mobile navigation */
+    .sidenav li > a {
+        padding: 16px 32px;
+        font-size: 16px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .sidenav li > a i {
+        margin-right: 16px;
+        font-size: 20px;
+    }
+
+    /* Enhanced mobile modal */
+    .modal {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 20px auto;
+        max-height: 90vh;
+    }
+
+    /* Better mobile tables fallback */
+    .responsive-table table {
+        font-size: 14px;
+    }
+
+    .responsive-table table th,
+    .responsive-table table td {
+        padding: 12px 8px;
     }
 }
 
@@ -620,6 +792,11 @@ table tbody tr:hover {
     }
 }
 
+/* Hide bottom nav on mobile too - use sidenav instead */
+.bottom-nav {
+    display: none !important;
+}
+
 /* Animation for page transitions */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
@@ -628,4 +805,145 @@ table tbody tr:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhanced Mobile Experience */
+@media only screen and (max-width: 768px) {
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Safe area for iPhone X and newer */
+    @supports (padding: max(0px)) {
+        .bottom-nav {
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            height: max(70px, calc(70px + env(safe-area-inset-bottom)));
+        }
+
+        main.container {
+            padding-bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
+        }
+    }
+
+    /* Better focus states for accessibility */
+    .btn:focus,
+    .btn-small:focus,
+    .mobile-card:focus {
+        outline: 3px solid rgba(33, 150, 243, 0.3);
+        outline-offset: 2px;
+    }
+
+    /* Optimized loading states */
+    .loading-spinner {
+        margin: 40px auto;
+    }
+
+    /* Better empty states */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #757575;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #E0E0E0;
+        margin-bottom: 16px;
+    }
+
+    /* Enhanced pull-to-refresh area */
+    main.container {
+        min-height: calc(100vh - 140px);
+    }
+
+    /* Mobile-optimized shadows */
+    .mobile-card,
+    .card {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+
+    /* Better tap highlights */
+    .mobile-card,
+    .btn,
+    .btn-small,
+    .bottom-nav-item {
+        -webkit-tap-highlight-color: rgba(33, 150, 243, 0.2);
+    }
+
+    /* Enhanced typography for mobile readability */
+    h1 {
+        font-size: 28px;
+        line-height: 1.2;
+        margin-bottom: 20px;
+        font-weight: 400;
+    }
+
+    h2 {
+        font-size: 24px;
+        line-height: 1.25;
+        margin-bottom: 18px;
+        font-weight: 400;
+    }
+
+    h3 {
+        font-size: 20px;
+        line-height: 1.3;
+        margin-bottom: 16px;
+        font-weight: 500;
+    }
+
+    h4 {
+        font-size: 18px;
+        line-height: 1.3;
+        margin-bottom: 16px;
+        font-weight: 500;
+    }
+
+    h5, h6 {
+        font-size: 16px;
+        line-height: 1.4;
+        margin-bottom: 14px;
+        font-weight: 500;
+    }
+
+    p {
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 16px;
+        color: #424242;
+    }
+
+    /* Enhanced readability for data */
+    .mobile-card-meta,
+    .stats-label,
+    .collection-item .secondary-content {
+        font-size: 15px;
+        line-height: 1.4;
+    }
+
+    /* Better contrast for financial data */
+    .amount-display,
+    .mobile-card-amount,
+    .stats-number {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    /* Improved form labels */
+    .input-field label {
+        font-size: 16px;
+        color: #666;
+        font-weight: 400;
+    }
+
+    .input-field label.active {
+        font-size: 14px;
+        font-weight: 500;
+    }
 }
