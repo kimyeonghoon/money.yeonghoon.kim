@@ -174,6 +174,41 @@ table td {
     font-weight: 400;
 }
 
+/* 더 구체적인 셀렉터로 강제 적용 */
+.responsive-table table td,
+.card table td,
+.card .card-content table td {
+    color: #424242 !important;
+    background-color: white !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Materialize CSS 재정의 */
+table.striped tbody tr td {
+    color: #424242 !important;
+}
+
+/* 강제 테이블 표시 - 모든 가능한 숨김 방지 */
+.card table,
+.card table tbody,
+.card table tbody tr,
+.card table tbody tr td {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: table !important;
+    color: #424242 !important;
+    background-color: transparent !important;
+}
+
+.card table tbody tr {
+    display: table-row !important;
+}
+
+.card table tbody tr td {
+    display: table-cell !important;
+}
+
 table tbody tr {
     background-color: white;
 }

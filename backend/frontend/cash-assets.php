@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">account_balance_wallet</i>현금자산 관리</h4>
@@ -152,6 +152,7 @@ include 'includes/header.php';
 let editingAssetId = null;
 
 $(document).ready(function() {
+    console.log('📱 Document ready, loadAssets 호출 예정');
     loadAssets();
 
     // 이벤트 핸들러
@@ -159,9 +160,16 @@ $(document).ready(function() {
     $('#cancel-btn').click(hideForm);
     $('#save-btn').click(saveAsset);
     $('#refresh-btn').click(loadAssets);
+
+    // 5초 후 테이블 상태 확인
+    setTimeout(function() {
+        console.log('⏰ 5초 후 테이블 상태:', $('#assets-table-card').is(':visible') ? '보임' : '숨김');
+        console.log('⏰ 5초 후 테이블 내용 개수:', $('#assets-table-body tr').length);
+    }, 5000);
 });
 
 function loadAssets() {
+    console.log('🔄 loadAssets 시작');
     $('#loading').show();
     $('#assets-table-card').hide();
     $('#no-data').hide();
@@ -170,21 +178,28 @@ function loadAssets() {
         url: '/api/cash-assets',
         method: 'GET',
         success: function(response) {
+            console.log('✅ API 응답:', response);
             $('#loading').hide();
             if (response.success) {
+                console.log('📊 데이터 개수:', response.data.length);
                 if (response.data.length === 0) {
+                    console.log('❌ 데이터 없음');
                     $('#no-data').show();
                     $('#total-amount').text('0원');
                 } else {
+                    console.log('🔨 displayAssets 호출');
                     displayAssets(response.data);
                     calculateTotal(response.data);
+                    console.log('👁️ 테이블 표시');
                     $('#assets-table-card').show();
                 }
             } else {
+                console.log('❌ API 오류:', response.message);
                 showMessage('데이터 로드 실패: ' + response.message, 'error');
             }
         },
         error: function() {
+            console.log('💥 AJAX 오류');
             $('#loading').hide();
             showMessage('서버와의 연결에 실패했습니다.', 'error');
         }
@@ -192,17 +207,20 @@ function loadAssets() {
 }
 
 function displayAssets(assets) {
+    console.log('🏗️ displayAssets 시작, 자산 개수:', assets.length);
     let tbody = $('#assets-table-body');
     tbody.empty();
+    console.log('🗑️ 테이블 내용 비움');
 
-    assets.forEach(function(asset) {
+    assets.forEach(function(asset, index) {
+        console.log('➕ 자산 추가 중:', index + 1, asset.item_name);
         let row = '<tr>' +
-                  '<td>' + (asset.type || '-') + '</td>' +
-                  '<td>' + (asset.account_name || asset.bank_name || '-') + '</td>' +
-                  '<td>' + (asset.item_name || '-') + '</td>' +
-                  '<td style="font-weight: bold; color: #cc6600;">' + formatMoney(asset.balance) + '</td>' +
-                  '<td>' + (asset.notes || '-') + '</td>' +
-                  '<td>' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.type || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.account_name || asset.bank_name || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #cc6600 !important;">' + formatMoney(asset.balance) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
                   '<td>' +
                   '<button onclick="editAsset(' + asset.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteAsset(' + asset.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
@@ -210,7 +228,7 @@ function displayAssets(assets) {
                   '</tr>';
         tbody.append(row);
     });
-
+    console.log('✅ displayAssets 완료');
 }
 
 function calculateTotal(assets) {
