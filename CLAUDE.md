@@ -64,11 +64,31 @@ Since this is an early-stage project without existing build tools:
 
 ## Key Features to Implement
 
-1. **Asset Management**: CRUD operations with soft delete for cash, savings, investments, pensions
-2. **Expense Tracking**: Record and query expense history
-3. **Budget Planning**: Budget creation and actual vs planned expense analysis
-4. **Insurance/Fixed Expenses**: Management of recurring costs
-5. **Authentication**: Single-user login with Telegram notifications
+1. **Dashboard View**: Single centralized page displaying all financial data (cash, investments, pensions, expenses, budgets, insurance)
+2. **Asset Management**: Individual pages for CRUD operations with soft delete for cash, savings, investments, pensions
+3. **Expense Tracking**: Individual page for recording and managing expense history
+4. **Budget Planning**: Individual page for budget creation and management
+5. **Insurance/Fixed Expenses**: Individual page for managing recurring costs
+6. **Authentication**: Single-user login with Telegram notifications
+
+## UI/UX Architecture
+
+### Page Structure
+- **Dashboard (/)**: Primary view showing comprehensive financial overview
+  - Consolidated display of all asset types, recent expenses, budget status, and insurance summaries
+  - Read-only view with navigation links to individual management pages
+- **Individual Management Pages**: Dedicated CRUD interfaces
+  - `/cash-assets`: Cash and savings account management
+  - `/investment-assets`: Investment portfolio management
+  - `/pension-assets`: Pension and retirement account management
+  - `/daily-expenses`: Expense tracking and history
+  - `/fixed-expenses`: Insurance and recurring cost management
+  - `/prepaid-expenses`: Prepaid expense management
+
+### Navigation Flow
+- Users primarily interact with the dashboard for data viewing
+- Management operations (create, update, delete) are performed on dedicated pages
+- Each management page provides full CRUD functionality for its respective data type
 
 ## Development Guidelines
 

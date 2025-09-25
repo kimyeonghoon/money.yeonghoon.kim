@@ -8,9 +8,11 @@ CREATE TABLE cash_assets (
     account_name VARCHAR(100) COMMENT '계좌명',
     item_name VARCHAR(200) NOT NULL COMMENT '항목명',
     balance INT NOT NULL DEFAULT 0 COMMENT '잔액(원)',
+    display_order INT NOT NULL DEFAULT 0 COMMENT '표시 순서',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL COMMENT '삭제일시 (NULL이면 활성)'
+    deleted_at TIMESTAMP NULL COMMENT '삭제일시 (NULL이면 활성)',
+    INDEX idx_display_order (display_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. 저축/투자 자산

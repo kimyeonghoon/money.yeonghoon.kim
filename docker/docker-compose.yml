@@ -1,12 +1,32 @@
 version: '3.8'
 
 services:
-  # PHP-FPM 서비스
-  php:
+  # 프론트엔드 서비스 (PHP + Nginx)
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    container_name: money_frontend
+    ports:
+      - "3001:80"  # 프론트엔드는 3001 포트
+    volumes:
+      - ../frontend:/var/www/html
+      - ../logs:/var/log/frontend
+    environment:
+      - PHP_TIMEZONE=${PHP_TIMEZONE:-Asia/Seoul}
+    env_file:
+      - ../.env
+    networks:
+      - money_network
+    depends_on:
+      - backend-php
+
+  # 백엔드 PHP-FPM 서비스
+  backend-php:
     build:
       context: ..
       dockerfile: docker/backend.Dockerfile
-    container_name: money_php
+    container_name: money_backend_php
     volumes:
       - ../backend:/var/www/html
       - ../logs:/var/log/app
@@ -19,23 +39,22 @@ services:
     networks:
       - money_network
 
-  # Nginx 서비스 (API 전용)
-  nginx:
+  # 백엔드 API용 Nginx
+  backend-nginx:
     image: nginx:alpine
-    container_name: money_nginx
+    container_name: money_backend_nginx
     ports:
-      - "8080:80"
+      - "8080:80"  # API는 8080 포트
     volumes:
       - ../backend:/var/www/html
-      - ../frontend:/var/www/html/frontend
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx-backend.conf:/etc/nginx/conf.d/default.conf
       - ../logs:/var/log/nginx
     depends_on:
-      - php
+      - backend-php
     networks:
       - money_network
 
-  # MySQL 서비스 (개발환경용)
+  # MySQL 서비스
   mysql:
     image: mysql:8.0
     container_name: money_mysql

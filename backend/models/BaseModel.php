@@ -6,6 +6,7 @@ abstract class BaseModel {
     protected $db;
     protected $table;
     protected $fillable = [];
+    protected $defaults = [];
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -32,7 +33,9 @@ abstract class BaseModel {
     }
 
     public function create($data) {
-        $filteredData = $this->filterFillable($data);
+        // 기본값과 입력 데이터 병합
+        $dataWithDefaults = array_merge($this->defaults, $data);
+        $filteredData = $this->filterFillable($dataWithDefaults);
         $columns = implode(',', array_keys($filteredData));
         $placeholders = ':' . implode(', :', array_keys($filteredData));
 
@@ -111,5 +114,39 @@ abstract class BaseModel {
         $sql = "SELECT 1 FROM {$this->table} WHERE id = ? AND deleted_at IS NULL";
         $stmt = $this->db->query($sql, [$id]);
         return $stmt->fetch() !== false;
+    }
+
+    // PATCH용 부분 업데이트 메서드
+    public function partialUpdate($id, $data) {
+        // 빈 필드는 제외하고 업데이트
+        $filteredData = array_filter($this->filterFillable($data), function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        if (empty($filteredData)) {
+            return false;
+        }
+
+        $setPairs = [];
+        foreach ($filteredData as $column => $value) {
+            $setPairs[] = "{$column} = :{$column}";
+        }
+
+        $setClause = implode(', ', $setPairs);
+        $sql = "UPDATE {$this->table} SET {$setClause} WHERE id = :id AND deleted_at IS NULL";
+
+        $filteredData['id'] = $id;
+        $stmt = $this->db->query($sql, $filteredData);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    // 별칭 메서드들 추가
+    public function getAll($limit = null, $offset = null) {
+        return $this->findAll($limit, $offset);
+    }
+
+    public function getById($id) {
+        return $this->findById($id);
     }
 }

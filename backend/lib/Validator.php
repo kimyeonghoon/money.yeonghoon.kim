@@ -100,21 +100,49 @@ class Validator {
         return $this;
     }
 
-    public static function validateCashAsset($data) {
+    public static function validateCashAsset($data, $isPartial = false) {
         $validator = new self();
 
-        $validator->required($data['type'] ?? '', 'type')
-                 ->inArray($data['type'] ?? '', 'type', ['현금', '통장']);
+        // 부분 업데이트가 아닌 경우 필수 필드 검증
+        if (!$isPartial) {
+            $validator->required($data['item_name'] ?? '', 'item_name')
+                     ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
-        $validator->required($data['item_name'] ?? '', 'item_name')
-                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+            // balance는 선택사항으로 변경
+            if (isset($data['balance']) && !empty($data['balance'])) {
+                $validator->amount($data['balance'], 'balance');
+            }
+        } else {
+            // 부분 업데이트인 경우 제공된 필드만 검증
+            if (isset($data['item_name'])) {
+                $validator->required($data['item_name'], 'item_name')
+                         ->maxLength($data['item_name'], 'item_name', 200);
+            }
+
+            if (isset($data['balance'])) {
+                $validator->required($data['balance'], 'balance')
+                         ->amount($data['balance'], 'balance');
+            }
+        }
+
+        // type이 제공된 경우에만 검증 (기본값이 있으므로)
+        if (isset($data['type'])) {
+            $validator->inArray($data['type'], 'type', ['현금', '통장']);
+        }
+
+        // account_name이 제공된 경우에만 검증
+        if (isset($data['account_name']) && !empty($data['account_name'])) {
+            $validator->maxLength($data['account_name'], 'account_name', 100);
+        }
+
+        return $validator;
+    }
+
+    public static function validateCashAssetForBalanceUpdate($data) {
+        $validator = new self();
 
         $validator->required($data['balance'] ?? '', 'balance')
                  ->amount($data['balance'] ?? '', 'balance');
-
-        if (!empty($data['account_name'])) {
-            $validator->maxLength($data['account_name'], 'account_name', 100);
-        }
 
         return $validator;
     }

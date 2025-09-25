@@ -63,6 +63,13 @@ abstract class BaseController {
                     $this->update($id);
                     break;
 
+                case 'PATCH':
+                    if (!is_numeric($id)) {
+                        Response::error('ID is required for partial update', 400);
+                    }
+                    $this->partialUpdate($id);
+                    break;
+
                 case 'DELETE':
                     if (!is_numeric($id)) {
                         Response::error('ID is required for delete', 400);
@@ -169,6 +176,34 @@ abstract class BaseController {
         }
 
         Response::success(null, 'Item permanently deleted');
+    }
+
+    protected function partialUpdate($id) {
+        if (!$this->model->exists($id)) {
+            Response::notFound('Item not found');
+        }
+
+        $data = $this->getRequestData();
+
+        // 부분 업데이트용 검증 사용
+        $validator = $this->validateDataForPartialUpdate($data, $id);
+        if ($validator->hasErrors()) {
+            Response::validationError($validator->getErrors());
+        }
+
+        $updated = $this->model->partialUpdate($id, $data);
+
+        if (!$updated) {
+            Response::error('No fields to update or update failed', 400);
+        }
+
+        $item = $this->model->findById($id);
+        Response::success($item, 'Item partially updated successfully');
+    }
+
+    // 부분 업데이트용 검증 메서드 (하위 클래스에서 재정의 가능)
+    protected function validateDataForPartialUpdate($data, $id = null) {
+        return $this->validateData($data, $id);
     }
 
     protected function getDeleted() {
