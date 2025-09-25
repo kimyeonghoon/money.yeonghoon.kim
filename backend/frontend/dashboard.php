@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">dashboard</i>자산관리 대시보드</h4>
@@ -300,11 +300,11 @@ function updateTransactionTable(transactions) {
 
     transactions.forEach(function(transaction) {
         let row = '<tr>' +
-                  '<td>' + (transaction.date || '-') + '</td>' +
-                  '<td>' + (transaction.type || '-') + '</td>' +
-                  '<td>' + (transaction.item_name || '항목명 없음') + '</td>' +
-                  '<td class="negative">-' + formatMoney(transaction.amount || 0) + '</td>' +
-                  '<td>' + (transaction.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (transaction.date || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (transaction.type || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (transaction.item_name || '항목명 없음') + '</td>' +
+                  '<td class="negative" style="font-weight: bold;">-' + formatMoney(transaction.amount || 0) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (transaction.notes || '-') + '</td>' +
                   '</tr>';
         tbody.append(row);
     });

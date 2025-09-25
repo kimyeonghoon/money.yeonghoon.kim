@@ -74,4 +74,28 @@
         <li><a href="/frontend/prepaid-expenses.php"><i class="material-icons">payment</i>선납지출</a></li>
     </ul>
 
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="/frontend/dashboard.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
+            <i class="material-icons">dashboard</i>
+            <span>홈</span>
+        </a>
+        <a href="/frontend/cash-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'cash-assets.php') ? 'active' : ''; ?>">
+            <i class="material-icons">account_balance_wallet</i>
+            <span>현금</span>
+        </a>
+        <a href="/frontend/investment-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'investment-assets.php') ? 'active' : ''; ?>">
+            <i class="material-icons">trending_up</i>
+            <span>투자</span>
+        </a>
+        <a href="/frontend/pension-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'pension-assets.php') ? 'active' : ''; ?>">
+            <i class="material-icons">security</i>
+            <span>연금</span>
+        </a>
+        <a href="/frontend/daily-expenses.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'daily-expenses.php') ? 'active' : ''; ?>">
+            <i class="material-icons">receipt</i>
+            <span>지출</span>
+        </a>
+    </nav>
+
     <!-- Main Content Container -->

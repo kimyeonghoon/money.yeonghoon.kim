@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">security</i>연금자산 관리</h4>
@@ -94,7 +94,8 @@ include 'includes/header.php';
                         <p>연금자산 목록을 불러오는 중...</p>
                     </div>
 
-                    <div class="card" id="assets-table-card" style="display: none;">
+                    <!-- Desktop Table View -->
+                    <div class="card desktop-table" id="assets-table-card" style="display: none;">
                         <div class="card-content">
                             <div class="responsive-table">
                                 <table class="striped">
@@ -115,6 +116,10 @@ include 'includes/header.php';
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-cards" id="assets-cards-container" style="display: none;">
                     </div>
 
                     <div id="no-data" class="card grey lighten-4" style="display: none;">
@@ -207,8 +212,10 @@ function loadAssets() {
                     updateSummary([]);
                 } else {
                     displayAssets(response.data);
+                    displayMobileCards(response.data);
                     updateSummary(response.data);
                     $('#assets-table-card').show();
+                    $('#assets-cards-container').show();
                 }
             } else {
                 showMessage('데이터 로드 실패: ' + response.message, 'error');
@@ -233,13 +240,13 @@ function displayAssets(assets) {
         let returnClass = returnRate >= 0 ? 'positive' : 'negative';
 
         let row = '<tr>' +
-                  '<td>' + (asset.type || asset.pension_type || '-') + '</td>' +
-                  '<td>' + (asset.item_name || '-') + '</td>' +
-                  '<td style="font-weight: bold;">' + formatMoney(contribution) + '</td>' +
-                  '<td style="font-weight: bold; color: #0066cc;">' + formatMoney(currentValue) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.type || asset.pension_type || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #424242 !important;">' + formatMoney(contribution) + '</td>' +
+                  '<td style="font-weight: bold; color: #0066cc !important;">' + formatMoney(currentValue) + '</td>' +
                   '<td class="' + returnClass + '" style="font-weight: bold;">' + returnRate + '%</td>' +
-                  '<td>' + (asset.notes || '-') + '</td>' +
-                  '<td>' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
                   '<td>' +
                   '<button onclick="editAsset(' + asset.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteAsset(' + asset.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
@@ -247,7 +254,67 @@ function displayAssets(assets) {
                   '</tr>';
         tbody.append(row);
     });
+}
 
+function displayMobileCards(assets) {
+    let container = $('#assets-cards-container');
+    container.empty();
+
+    assets.forEach(function(asset) {
+        let contribution = parseInt(asset.deposit_amount || asset.contribution) || 0;
+        let currentValue = parseInt(asset.current_value) || 0;
+        let returnRate = contribution > 0 ? ((currentValue - contribution) / contribution * 100).toFixed(2) : 0;
+        let returnClass = returnRate >= 0 ? 'positive' : 'negative';
+        let profit = currentValue - contribution;
+
+        let typeIcon = getPensionTypeIcon(asset.type || asset.pension_type);
+        let card = $(`
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">
+                        <i class="material-icons mobile-card-icon">${typeIcon}</i>
+                        ${asset.item_name || '-'}
+                    </div>
+                </div>
+                <div class="mobile-card-amount">
+                    ${formatMoney(currentValue)}
+                    <small style="color: #757575; font-size: 14px; font-weight: normal;">
+                        / ${formatMoney(contribution)} 납입
+                    </small>
+                </div>
+                <div class="mobile-card-meta">
+                    <span><strong>${asset.type || asset.pension_type || '-'}</strong></span>
+                    <span class="${returnClass}" style="font-weight: bold;">${returnRate}% (${profit >= 0 ? '+' : ''}${formatMoney(Math.abs(profit))})</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span>📝 ${asset.notes || '메모 없음'}</span>
+                    <span>${formatDate(asset.updated_at || asset.created_at)}</span>
+                </div>
+                <div class="mobile-card-actions">
+                    <button onclick="editAsset(${asset.id})" class="btn-small waves-effect waves-light blue">
+                        <i class="material-icons left">edit</i>수정
+                    </button>
+                    <button onclick="deleteAsset(${asset.id})" class="btn-small waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>삭제
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(card);
+    });
+}
+
+function getPensionTypeIcon(type) {
+    const iconMap = {
+        '국민연금': 'account_balance',
+        '개인연금': 'person',
+        '퇴직연금': 'work',
+        '연금저축': 'savings',
+        'IRP': 'account_circle',
+        '기타': 'security'
+    };
+    return iconMap[type] || 'security';
 }
 
 function updateSummary(assets) {

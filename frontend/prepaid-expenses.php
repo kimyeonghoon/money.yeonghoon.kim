@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">payment</i>선납비용 관리</h4>
@@ -122,7 +122,8 @@ include 'includes/header.php';
                         <p>선납비용 목록을 불러오는 중...</p>
                     </div>
 
-                    <div class="card" id="expenses-table-card" style="display: none;">
+                    <!-- Desktop Table View -->
+                    <div class="card desktop-table" id="expenses-table-card" style="display: none;">
                         <div class="card-content">
                             <div class="responsive-table">
                                 <table class="striped">
@@ -146,6 +147,10 @@ include 'includes/header.php';
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-cards" id="expenses-cards-container" style="display: none;">
                     </div>
 
                     <div id="no-data" class="card grey lighten-4" style="display: none;">
@@ -260,8 +265,10 @@ function loadExpenses() {
                     updateSummary([]);
                 } else {
                     displayExpenses(response.data);
+                    displayMobileCards(response.data);
                     updateSummary(response.data);
                     $('#expenses-table-card').show();
+                    $('#expenses-cards-container').show();
                 }
             } else {
                 showMessage('데이터 로드 실패: ' + response.message, 'error');
@@ -311,15 +318,15 @@ function displayExpenses(expenses) {
 
         let row = '<tr>' +
                   '<td class="' + statusClass + '" style="font-weight: bold;">' + statusIcon + '</td>' +
-                  '<td>' + (expense.category || '-') + '</td>' +
-                  '<td>' + (expense.item_name || '-') + '</td>' +
-                  '<td style="font-weight: bold; color: #0066cc;">' + formatMoney(expense.amount) + '</td>' +
-                  '<td style="font-weight: bold; color: #0066cc;">' + formatMoney(monthlyAmount || 0) + '</td>' +
-                  '<td>' + formatDate(expense.prepaid_date) + '</td>' +
-                  '<td>' + formatDate(expense.expiry_date) + '</td>' +
-                  '<td' + (remainingDays < 30 && remainingDays > 0 ? ' style="color: #ff6600; font-weight: bold;"' : '') + '>' + remainingText + '</td>' +
-                  '<td>' + (expense.payment_method || '-') + '</td>' +
-                  '<td>' + (expense.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.category || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.item_name || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #0066cc !important;">' + formatMoney(expense.amount) + '</td>' +
+                  '<td style="font-weight: bold; color: #0066cc !important;">' + formatMoney(monthlyAmount || 0) + '</td>' +
+                  '<td style="color: #424242 !important;">' + formatDate(expense.prepaid_date) + '</td>' +
+                  '<td style="color: #424242 !important;">' + formatDate(expense.expiry_date) + '</td>' +
+                  '<td' + (remainingDays < 30 && remainingDays > 0 ? ' style="color: #ff6600 !important; font-weight: bold;"' : ' style="color: #424242 !important;"') + '>' + remainingText + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.payment_method || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.notes || '-') + '</td>' +
                   '<td>' +
                   '<button onclick="editExpense(' + expense.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteExpense(' + expense.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
@@ -328,6 +335,85 @@ function displayExpenses(expenses) {
         tbody.append(row);
     });
 
+}
+
+function displayMobileCards(expenses) {
+    let container = $('#expenses-cards-container');
+    container.empty();
+
+    expenses.forEach(function(expense) {
+        let statusIcon, statusClass;
+        let isActive = expense.is_active == 1;
+        let remainingDays = calculateRemainingDays(expense.expiry_date);
+
+        if (isActive && remainingDays > 0) {
+            statusIcon = '✅';
+        } else if (isActive && remainingDays <= 0) {
+            statusIcon = '⏰';
+        } else {
+            statusIcon = '❌';
+        }
+
+        let remainingText = remainingDays > 0 ? remainingDays + '일 남음' : '만료됨';
+        let monthlyAmount = expense.monthly_amount;
+        if (!monthlyAmount && expense.prepaid_date && expense.expiry_date) {
+            let startDate = new Date(expense.prepaid_date);
+            let endDate = new Date(expense.expiry_date);
+            let diffTime = Math.abs(endDate - startDate);
+            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            let months = diffDays / 30.44;
+            monthlyAmount = months > 0 ? Math.round(expense.amount / months) : 0;
+        }
+
+        let categoryIcon = getPrepaidCategoryIcon(expense.category);
+        let card = $(`
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">
+                        <i class="material-icons mobile-card-icon">${categoryIcon}</i>
+                        ${expense.item_name || '-'}
+                    </div>
+                    <span style="font-size: 18px;">${statusIcon}</span>
+                </div>
+                <div class="mobile-card-amount">
+                    ${formatMoney(expense.amount)}
+                    <small style="color: #757575; font-size: 14px; font-weight: normal;">
+                        (월 ${formatMoney(monthlyAmount || 0)})
+                    </small>
+                </div>
+                <div class="mobile-card-meta">
+                    <span><strong>${expense.category || '-'}</strong></span>
+                    <span class="${remainingDays < 30 && remainingDays > 0 ? 'negative' : ''}" style="font-weight: bold;">${remainingText}</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span>📅 ${formatDate(expense.prepaid_date)} ~ ${formatDate(expense.expiry_date)}</span>
+                </div>
+                <div class="mobile-card-actions">
+                    <button onclick="editExpense(${expense.id})" class="btn-small waves-effect waves-light blue">
+                        <i class="material-icons left">edit</i>수정
+                    </button>
+                    <button onclick="deleteExpense(${expense.id})" class="btn-small waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>삭제
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(card);
+    });
+}
+
+function getPrepaidCategoryIcon(category) {
+    const iconMap = {
+        '보험료': 'security',
+        '구독': 'subscriptions',
+        '교육비': 'school',
+        '회원권': 'fitness_center',
+        '연회비': 'credit_card',
+        '세금': 'account_balance',
+        '기타': 'payment'
+    };
+    return iconMap[category] || 'payment';
 }
 
 function calculateRemainingDays(expiryDate) {

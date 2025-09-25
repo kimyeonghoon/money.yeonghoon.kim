@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">trending_up</i>투자자산 관리</h4>
@@ -94,7 +94,8 @@ include 'includes/header.php';
                         <p>투자자산 목록을 불러오는 중...</p>
                     </div>
 
-                    <div class="card" id="assets-table-card" style="display: none;">
+                    <!-- Desktop Table View -->
+                    <div class="card desktop-table" id="assets-table-card" style="display: none;">
                         <div class="card-content">
                             <div class="responsive-table">
                                 <table class="striped">
@@ -115,6 +116,10 @@ include 'includes/header.php';
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-cards" id="assets-cards-container" style="display: none;">
                     </div>
 
                     <div id="no-data" class="card grey lighten-4" style="display: none;">
@@ -206,8 +211,10 @@ function loadAssets() {
                     updateSummary([]);
                 } else {
                     displayAssets(response.data);
+                    displayMobileCards(response.data);
                     updateSummary(response.data);
                     $('#assets-table-card').show();
+                    $('#assets-cards-container').show();
                 }
             } else {
                 showMessage('데이터 로드 실패: ' + response.message, 'error');
@@ -232,13 +239,13 @@ function displayAssets(assets) {
         let returnClass = returnRate >= 0 ? 'positive' : 'negative';
 
         let row = '<tr>' +
-                  '<td>' + (asset.category || asset.investment_type || '-') + '</td>' +
-                  '<td>' + (asset.item_name || '-') + '</td>' +
-                  '<td style="font-weight: bold;">' + formatMoney(principal) + '</td>' +
-                  '<td style="font-weight: bold; color: #0066cc;">' + formatMoney(currentValue) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.category || asset.investment_type || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #424242 !important;">' + formatMoney(principal) + '</td>' +
+                  '<td style="font-weight: bold; color: #0066cc !important;">' + formatMoney(currentValue) + '</td>' +
                   '<td class="' + returnClass + '" style="font-weight: bold;">' + returnRate + '%</td>' +
-                  '<td>' + (asset.notes || '-') + '</td>' +
-                  '<td>' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (asset.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
                   '<td>' +
                   '<button onclick="editAsset(' + asset.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteAsset(' + asset.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
@@ -246,7 +253,67 @@ function displayAssets(assets) {
                   '</tr>';
         tbody.append(row);
     });
+}
 
+function displayMobileCards(assets) {
+    let container = $('#assets-cards-container');
+    container.empty();
+
+    assets.forEach(function(asset) {
+        let principal = parseInt(asset.deposit_amount || asset.principal) || 0;
+        let currentValue = parseInt(asset.current_value) || 0;
+        let returnRate = principal > 0 ? ((currentValue - principal) / principal * 100).toFixed(2) : 0;
+        let returnClass = returnRate >= 0 ? 'positive' : 'negative';
+        let profit = currentValue - principal;
+
+        let typeIcon = getInvestmentTypeIcon(asset.category || asset.investment_type);
+        let card = $(`
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">
+                        <i class="material-icons mobile-card-icon">${typeIcon}</i>
+                        ${asset.item_name || '-'}
+                    </div>
+                </div>
+                <div class="mobile-card-amount">
+                    ${formatMoney(currentValue)}
+                    <small style="color: #757575; font-size: 14px; font-weight: normal;">
+                        / ${formatMoney(principal)} 투자
+                    </small>
+                </div>
+                <div class="mobile-card-meta">
+                    <span><strong>${asset.category || asset.investment_type || '-'}</strong></span>
+                    <span class="${returnClass}" style="font-weight: bold;">${returnRate}% (${profit >= 0 ? '+' : ''}${formatMoney(Math.abs(profit))})</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span>📝 ${asset.notes || '메모 없음'}</span>
+                    <span>${formatDate(asset.updated_at || asset.created_at)}</span>
+                </div>
+                <div class="mobile-card-actions">
+                    <button onclick="editAsset(${asset.id})" class="btn-small waves-effect waves-light blue">
+                        <i class="material-icons left">edit</i>수정
+                    </button>
+                    <button onclick="deleteAsset(${asset.id})" class="btn-small waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>삭제
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(card);
+    });
+}
+
+function getInvestmentTypeIcon(type) {
+    const iconMap = {
+        '주식': 'show_chart',
+        '펀드': 'account_balance',
+        'ETF': 'trending_up',
+        '채권': 'receipt_long',
+        '리츠': 'apartment',
+        '기타': 'donut_large'
+    };
+    return iconMap[type] || 'trending_up';
 }
 
 function updateSummary(assets) {

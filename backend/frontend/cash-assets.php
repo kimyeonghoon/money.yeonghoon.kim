@@ -93,7 +93,8 @@ include 'includes/header.php';
                         <p>현금자산 목록을 불러오는 중...</p>
                     </div>
 
-                    <div class="card" id="assets-table-card" style="display: none;">
+                    <!-- Desktop Table View -->
+                    <div class="card desktop-table" id="assets-table-card" style="display: none;">
                         <div class="card-content">
                             <div class="responsive-table">
                                 <table class="striped">
@@ -113,6 +114,10 @@ include 'includes/header.php';
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-cards" id="assets-cards-container" style="display: none;">
                     </div>
 
                     <div id="no-data" class="card grey lighten-4" style="display: none;">
@@ -189,9 +194,11 @@ function loadAssets() {
                 } else {
                     console.log('🔨 displayAssets 호출');
                     displayAssets(response.data);
+                    displayMobileCards(response.data);
                     calculateTotal(response.data);
-                    console.log('👁️ 테이블 표시');
+                    console.log('👁️ 테이블 및 카드 표시');
                     $('#assets-table-card').show();
+                    $('#assets-cards-container').show();
                 }
             } else {
                 console.log('❌ API 오류:', response.message);
@@ -209,26 +216,123 @@ function loadAssets() {
 function displayAssets(assets) {
     console.log('🏗️ displayAssets 시작, 자산 개수:', assets.length);
     let tbody = $('#assets-table-body');
+    console.log('🔍 tbody 선택됨:', tbody.length, 'elements');
     tbody.empty();
     console.log('🗑️ 테이블 내용 비움');
 
+    // 강제로 테이블 표시
+    $('#assets-table-card').show().css('display', 'block');
+    tbody.show().css({
+        'display': 'table-row-group',
+        'visibility': 'visible',
+        'opacity': '1'
+    });
+
     assets.forEach(function(asset, index) {
         console.log('➕ 자산 추가 중:', index + 1, asset.item_name);
-        let row = '<tr>' +
-                  '<td style="color: #424242 !important;">' + (asset.type || '-') + '</td>' +
-                  '<td style="color: #424242 !important;">' + (asset.account_name || asset.bank_name || '-') + '</td>' +
-                  '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
-                  '<td style="font-weight: bold; color: #cc6600 !important;">' + formatMoney(asset.balance) + '</td>' +
-                  '<td style="color: #424242 !important;">' + (asset.notes || '-') + '</td>' +
-                  '<td style="color: #424242 !important;">' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
-                  '<td>' +
+
+        // jQuery 객체로 생성하고 강제 스타일 적용
+        let $row = $('<tr></tr>').css({
+            'background-color': 'white !important',
+            'display': 'table-row !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
+
+        $row.html('<td style="color: #424242 !important; display: table-cell !important;">' + (asset.type || '-') + '</td>' +
+                  '<td style="color: #424242 !important; display: table-cell !important;">' + (asset.account_name || asset.bank_name || '-') + '</td>' +
+                  '<td style="color: #424242 !important; display: table-cell !important;">' + (asset.item_name || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #cc6600 !important; display: table-cell !important;">' + formatMoney(asset.balance) + '</td>' +
+                  '<td style="color: #424242 !important; display: table-cell !important;">' + (asset.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important; display: table-cell !important;">' + formatDate(asset.updated_at || asset.created_at) + '</td>' +
+                  '<td style="display: table-cell !important;">' +
                   '<button onclick="editAsset(' + asset.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteAsset(' + asset.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
-                  '</td>' +
-                  '</tr>';
-        tbody.append(row);
+                  '</td>');
+
+        tbody.append($row);
+
+        // 추가 후 다시 한번 강제 스타일 적용
+        $row.find('td').css({
+            'color': '#424242 !important',
+            'display': 'table-cell !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
     });
-    console.log('✅ displayAssets 완료');
+
+    // 전체 테이블 강제 표시
+    setTimeout(function() {
+        console.log('🔍 1초 후 강제 표시');
+        $('#assets-table-body, #assets-table-body tr, #assets-table-body td').css({
+            'display': 'table-row-group !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
+        $('#assets-table-body tr').css('display', 'table-row !important');
+        $('#assets-table-body td').css({
+            'display': 'table-cell !important',
+            'color': '#424242 !important'
+        });
+    }, 1000);
+
+    console.log('✅ displayAssets 완료, tbody HTML 길이:', tbody.html().length);
+}
+
+function displayMobileCards(assets) {
+    console.log('📱 displayMobileCards 시작, 자산 개수:', assets.length);
+    let container = $('#assets-cards-container');
+    container.empty();
+
+    assets.forEach(function(asset, index) {
+        console.log('🃏 카드 생성 중:', index + 1, asset.item_name);
+
+        let typeIcon = getTypeIcon(asset.type);
+        let card = $(`
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">
+                        <i class="material-icons mobile-card-icon">${typeIcon}</i>
+                        ${asset.item_name || '-'}
+                    </div>
+                </div>
+                <div class="mobile-card-amount">
+                    ${formatMoney(asset.balance)}
+                </div>
+                <div class="mobile-card-meta">
+                    <span><strong>${asset.type || '-'}</strong> | ${asset.account_name || asset.bank_name || '-'}</span>
+                    <span>${formatDate(asset.updated_at || asset.created_at)}</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span>📝 ${asset.notes || '메모 없음'}</span>
+                </div>
+                <div class="mobile-card-actions">
+                    <button onclick="editAsset(${asset.id})" class="btn-small waves-effect waves-light blue">
+                        <i class="material-icons left">edit</i>수정
+                    </button>
+                    <button onclick="deleteAsset(${asset.id})" class="btn-small waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>삭제
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(card);
+    });
+
+    console.log('✅ displayMobileCards 완료, 카드 개수:', assets.length);
+}
+
+function getTypeIcon(type) {
+    const iconMap = {
+        '체크카드': 'credit_card',
+        '신용카드': 'payment',
+        '예금': 'account_balance',
+        '적금': 'savings',
+        '현금': 'payments',
+        '기타': 'account_balance_wallet'
+    };
+    return iconMap[type] || 'account_balance_wallet';
 }
 
 function calculateTotal(assets) {

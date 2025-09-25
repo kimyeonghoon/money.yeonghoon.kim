@@ -4,7 +4,7 @@ include 'includes/header.php';
 ?>
 
     <main class="container">
-        <div class="section fade-in">
+        <div class="section">
             <div class="row">
                 <div class="col s12">
                     <h4 class="section-title"><i class="material-icons left">receipt</i>일별지출 관리</h4>
@@ -274,8 +274,10 @@ function loadExpenses() {
                     $('#no-data').show();
                 } else {
                     displayExpenses(response.data);
+                    displayMobileCards(response.data);
                     updatePagination(response.pagination);
                     $('#expenses-table-card').show();
+                    $('#expenses-cards-container').show();
                 }
             } else {
                 showMessage('데이터 로드 실패: ' + response.message, 'error');
@@ -343,12 +345,12 @@ function displayExpenses(expenses) {
 
     expenses.forEach(function(expense) {
         let row = '<tr>' +
-                  '<td>' + expense.expense_date + '</td>' +
-                  '<td>' + expense.item_name + '</td>' +
-                  '<td>' + (expense.category || '-') + '</td>' +
-                  '<td style="font-weight: bold; color: #cc0000;">-' + formatMoney(expense.amount) + '</td>' +
-                  '<td>' + (expense.payment_method || '-') + '</td>' +
-                  '<td>' + (expense.notes || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + expense.expense_date + '</td>' +
+                  '<td style="color: #424242 !important;">' + expense.item_name + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.category || '-') + '</td>' +
+                  '<td style="font-weight: bold; color: #cc0000 !important;">-' + formatMoney(expense.amount) + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.payment_method || '-') + '</td>' +
+                  '<td style="color: #424242 !important;">' + (expense.notes || '-') + '</td>' +
                   '<td>' +
                   '<button onclick="editExpense(' + expense.id + ')" class="btn-small waves-effect waves-light blue" style="margin-right: 5px;"><i class="material-icons left">edit</i>수정</button>' +
                   '<button onclick="deleteExpense(' + expense.id + ')" class="btn-small waves-effect waves-light red"><i class="material-icons left">delete</i>삭제</button>' +
@@ -356,7 +358,55 @@ function displayExpenses(expenses) {
                   '</tr>';
         tbody.append(row);
     });
+}
 
+function displayMobileCards(expenses) {
+    let container = $('#expenses-cards-container');
+    container.empty();
+
+    expenses.forEach(function(expense) {
+        let categoryIcon = getDailyCategoryIcon(expense.category);
+        let card = $(`
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">
+                        <i class="material-icons mobile-card-icon">${categoryIcon}</i>
+                        ${expense.item_name || '-'}
+                    </div>
+                    <span style="color: #D32F2F; font-weight: bold;">-${formatMoney(expense.amount)}</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span><strong>${expense.category || '-'}</strong> | ${expense.payment_method || '-'}</span>
+                    <span>${expense.expense_date}</span>
+                </div>
+                <div class="mobile-card-meta">
+                    <span>📝 ${expense.notes || '메모 없음'}</span>
+                </div>
+                <div class="mobile-card-actions">
+                    <button onclick="editExpense(${expense.id})" class="btn-small waves-effect waves-light blue">
+                        <i class="material-icons left">edit</i>수정
+                    </button>
+                    <button onclick="deleteExpense(${expense.id})" class="btn-small waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>삭제
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(card);
+    });
+}
+
+function getDailyCategoryIcon(category) {
+    const iconMap = {
+        '식비': 'restaurant',
+        '생필품': 'shopping_cart',
+        '교통비': 'directions_bus',
+        '문화생활': 'movie',
+        '의료비': 'local_hospital',
+        '기타': 'receipt'
+    };
+    return iconMap[category] || 'receipt';
 }
 
 function updatePagination(pagination) {

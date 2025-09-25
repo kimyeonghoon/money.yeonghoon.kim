@@ -30,24 +30,25 @@ nav ul li:hover {
     border-radius: 4px;
 }
 
-/* Header Customization */
+/* Header Customization - Compact */
 .header-content {
     background: white;
-    padding: 2rem 0;
+    padding: 1rem 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .brand-logo {
-    font-size: 2.5rem !important;
-    font-weight: 300;
+    font-size: 1.8rem !important;
+    font-weight: 400;
     color: var(--primary-color) !important;
+    margin-bottom: 0.2rem;
 }
 
 .brand-subtitle {
     color: #757575;
-    font-size: 1.2rem;
-    margin-top: 0.5rem;
+    font-size: 1rem;
+    margin-top: 0.2rem;
 }
 
 /* Card Enhancements */
@@ -141,13 +142,6 @@ nav ul li:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-.btn-floating {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.btn-floating:hover {
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-}
 
 /* Table Enhancements */
 .responsive-table {
@@ -191,22 +185,61 @@ table.striped tbody tr td {
 
 /* 강제 테이블 표시 - 모든 가능한 숨김 방지 */
 .card table,
-.card table tbody,
-.card table tbody tr,
-.card table tbody tr td {
+table {
+    display: table !important;
     opacity: 1 !important;
     visibility: visible !important;
-    display: table !important;
-    color: #424242 !important;
-    background-color: transparent !important;
+    background-color: white !important;
 }
 
-.card table tbody tr {
+.card table tbody,
+table tbody {
+    display: table-row-group !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.card table tbody tr,
+table tbody tr {
     display: table-row !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background-color: white !important;
+    color: #424242 !important;
 }
 
-.card table tbody tr td {
+.card table tbody tr td,
+table tbody tr td {
     display: table-cell !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    color: #424242 !important;
+    background-color: white !important;
+}
+
+/* 더 구체적인 강제 규칙 */
+#assets-table-body,
+#expenses-table-body {
+    display: table-row-group !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#assets-table-body tr,
+#expenses-table-body tr {
+    display: table-row !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background-color: white !important;
+}
+
+#assets-table-body tr td,
+#expenses-table-body tr td {
+    display: table-cell !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    color: #424242 !important;
+    background-color: white !important;
 }
 
 table tbody tr {
@@ -336,7 +369,7 @@ table tbody tr:hover {
 
 @media only screen and (max-width: 600px) {
     .brand-logo {
-        font-size: 2rem !important;
+        font-size: 1.5rem !important;
     }
 
     .stats-card .stats-number {
@@ -344,7 +377,246 @@ table tbody tr:hover {
     }
 
     .header-content {
-        padding: 1rem 0;
+        padding: 0.7rem 0;
+    }
+
+    .brand-subtitle {
+        font-size: 0.9rem;
+    }
+}
+
+/* Mobile-First Card Components */
+.mobile-card {
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: white;
+    min-height: 80px;
+    transition: box-shadow 0.2s ease;
+    position: relative;
+}
+
+.mobile-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.mobile-card-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #2196F3;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-card-amount {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Roboto Mono', monospace;
+    color: #2E7D32;
+    margin: 8px 0;
+}
+
+.mobile-card-amount.negative {
+    color: #D32F2F;
+}
+
+.mobile-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #757575;
+    margin-bottom: 12px;
+}
+
+.mobile-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+    border-top: 1px solid #E0E0E0;
+    padding-top: 12px;
+}
+
+.mobile-card-actions .btn-small {
+    min-width: 60px;
+    min-height: 44px;
+    border-radius: 20px;
+    font-size: 12px;
+    padding: 8px 16px;
+}
+
+.mobile-card-icon {
+    font-size: 24px;
+    margin-right: 8px;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #E0E0E0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    height: 70px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #757575;
+    transition: all 0.2s ease;
+    flex: 1;
+    max-width: 80px;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item:focus {
+    color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.1);
+    text-decoration: none;
+}
+
+.bottom-nav-item.active {
+    color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.1);
+}
+
+.bottom-nav-item i {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.bottom-nav-item span {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Quick Action Panel */
+.quick-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.quick-actions-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #424242;
+    margin-bottom: 12px;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 12px;
+}
+
+.quick-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #F5F5F5;
+    text-decoration: none;
+    color: #424242;
+    transition: background-color 0.2s ease;
+    min-height: 60px;
+    justify-content: center;
+}
+
+.quick-action-item:hover {
+    background: #E3F2FD;
+    color: #2196F3;
+    text-decoration: none;
+}
+
+.quick-action-item i {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.quick-action-item span {
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Mobile Optimizations */
+@media only screen and (max-width: 600px) {
+    /* Hide desktop table on mobile */
+    .desktop-table {
+        display: none !important;
+    }
+
+    /* Show mobile cards */
+    .mobile-cards {
+        display: block !important;
+    }
+
+    /* Adjust container padding for bottom nav */
+    main.container {
+        padding-bottom: 90px;
+    }
+
+    /* Make buttons more touch-friendly */
+    .btn, .btn-small {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Larger text for mobile */
+    body {
+        font-size: 16px;
+    }
+
+    /* Touch-friendly form inputs */
+    .input-field input, .input-field textarea {
+        font-size: 16px;
+        padding: 12px 0;
+    }
+}
+
+@media only screen and (min-width: 601px) {
+    /* Hide mobile cards on desktop */
+    .mobile-cards {
+        display: none !important;
+    }
+
+    /* Show desktop table */
+    .desktop-table {
+        display: block !important;
+    }
+
+    /* Hide bottom nav on desktop */
+    .bottom-nav {
+        display: none;
     }
 }
 
