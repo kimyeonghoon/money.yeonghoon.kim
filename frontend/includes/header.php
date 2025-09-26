@@ -49,9 +49,6 @@
                 <li><a href="/dashboard.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">dashboard</i>대시보드
                 </a></li>
-                <li><a href="/investment-assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'investment-assets.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">trending_up</i>투자자산
-                </a></li>
                 <li><a href="/pension-assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'pension-assets.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">security</i>연금자산
                 </a></li>
@@ -71,7 +68,6 @@
     <!-- Mobile Navigation -->
     <ul class="sidenav" id="mobile-demo">
         <li><a href="/dashboard.php"><i class="material-icons">dashboard</i>대시보드</a></li>
-        <li><a href="/investment-assets.php"><i class="material-icons">trending_up</i>투자자산</a></li>
         <li><a href="/pension-assets.php"><i class="material-icons">security</i>연금자산</a></li>
         <li><a href="/daily-expenses.php"><i class="material-icons">receipt</i>일별지출</a></li>
         <li><a href="/fixed-expenses.php"><i class="material-icons">repeat</i>고정지출</a></li>
@@ -83,10 +79,6 @@
         <a href="/dashboard.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
             <i class="material-icons">dashboard</i>
             <span>홈</span>
-        </a>
-        <a href="/investment-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'investment-assets.php') ? 'active' : ''; ?>">
-            <i class="material-icons">trending_up</i>
-            <span>투자</span>
         </a>
         <a href="/pension-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'pension-assets.php') ? 'active' : ''; ?>">
             <i class="material-icons">security</i>

@@ -43,13 +43,6 @@ include 'includes/header.php';
         font-family: 'Roboto', sans-serif !important;
     }
 
-    .editing-hint {
-        font-size: 11px;
-        color: #666;
-        text-align: center;
-        margin-top: 10px;
-        font-style: italic;
-    }
 
     .section-header {
         display: flex;
@@ -437,8 +430,49 @@ include 'includes/header.php';
                                 <div class="center-align">데이터를 불러오는 중...</div>
                             </div>
                         </div>
-                        <div class="editing-hint">
-                            💡 잔액 클릭: 금액만 수정 | <span class="desktop-only">행 더블클릭</span><span class="mobile-only">카드 길게 누르기</span>: 전체 수정
+                    </div>
+                </div>
+
+                <!-- 저축 + 투자 자산 상세 -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h5 class="section-title">📈 저축 + 투자 자산</h5>
+                        <div class="section-header-actions">
+                            <button id="investment-reorder-toggle" class="btn-small waves-effect waves-light blue reorder-toggle" title="순서 변경">
+                                <i class="material-icons left">swap_vert</i><span class="button-text">순서변경</span>
+                            </button>
+                            <button class="btn-floating waves-effect waves-light green modal-trigger"
+                                    data-target="add-investment-modal" title="자산 추가">
+                                <i class="material-icons">add</i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <!-- 데스크톱용 테이블 -->
+                            <div class="responsive-table desktop-only">
+                                <table class="striped">
+                                    <thead>
+                                        <tr>
+                                            <th>구분</th>
+                                            <th>계좌</th>
+                                            <th>종목명</th>
+                                            <th>잔액</th>
+                                            <th>비중</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="investment-assets-detail-table">
+                                        <tr>
+                                            <td colspan="5" class="center-align">데이터를 불러오는 중...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 모바일용 카드 -->
+                            <div class="mobile-only" id="investment-assets-detail-cards">
+                                <div class="center-align">데이터를 불러오는 중...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -523,11 +557,62 @@ include 'includes/header.php';
         </div>
     </div>
 
+    <!-- 투자자산 추가 모달 -->
+    <div id="add-investment-modal" class="modal modal-fixed-footer">
+        <div class="modal-content">
+            <h4><i class="material-icons left">trending_up</i>저축 + 투자 자산 추가</h4>
+            <div class="row">
+                <form id="add-investment-form" class="col s12">
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <select id="add-investment-type">
+                                <option value="" disabled selected>선택하세요</option>
+                                <option value="저축">💰 저축</option>
+                                <option value="혼합">🏦 혼합</option>
+                                <option value="주식">📈 주식</option>
+                            </select>
+                            <label>투자유형 *</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="add-investment-account" type="text" maxlength="100">
+                            <label for="add-investment-account">계좌명</label>
+                            <span class="helper-text">예: KB증권, ISA계좌 등</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="add-investment-item-name" type="text" maxlength="200" required>
+                            <label for="add-investment-item-name">종목명 *</label>
+                            <span class="helper-text">예: Vanguard S&P 500 ETF, KB증권 중개형 ISA 등</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="add-investment-balance" type="number" min="0" step="1000" value="0" required>
+                            <label for="add-investment-balance">현재 잔액 *</label>
+                            <span class="helper-text">단위: 원</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-close waves-effect waves-light btn-flat">취소</button>
+            <button id="save-investment-add" class="waves-effect waves-light btn green">
+                <i class="material-icons left">add</i>추가
+            </button>
+        </div>
+    </div>
+
 <script>
 $(document).ready(function() {
     // 모달 초기화
     M.Modal.init(document.getElementById('edit-modal'));
     M.Modal.init(document.getElementById('add-asset-modal'));
+    M.Modal.init(document.getElementById('add-investment-modal'));
+
+    // Select 초기화
+    M.FormSelect.init(document.getElementById('add-investment-type'));
 
     // 저장 버튼 이벤트 핸들러
     $('#save-edit').on('click', function() {
@@ -539,12 +624,23 @@ $(document).ready(function() {
         saveNewAsset();
     });
 
+    // 투자자산 추가 버튼 이벤트 핸들러
+    $('#save-investment-add').on('click', function() {
+        saveNewInvestmentAsset();
+    });
+
     // 순서 변경 토글 버튼 이벤트 핸들러
     $('#reorder-toggle').on('click', function() {
         toggleReorderMode();
     });
 
+    // 투자자산 순서 변경 토글 버튼 이벤트 핸들러
+    $('#investment-reorder-toggle').on('click', function() {
+        toggleInvestmentReorderMode();
+    });
+
     loadCashAssets();
+    loadInvestmentAssets();
 });
 
 function loadCashAssets() {
@@ -564,6 +660,135 @@ function loadCashAssets() {
             showError('서버와의 연결에 실패했습니다: ' + error);
         }
     });
+}
+
+function loadInvestmentAssets() {
+    $.ajax({
+        url: 'http://localhost:8080/api/investment-assets',
+        method: 'GET',
+        success: function(response) {
+            if (response.success) {
+                updateInvestmentAssetsTable(response.data.data || response.data);
+            } else {
+                console.error('투자 자산 데이터 로드 실패: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('투자 자산 서버 연결 실패: ' + error);
+        }
+    });
+}
+
+function updateInvestmentAssetsTable(assets) {
+    let tbody = $('#investment-assets-detail-table');
+    let cardsContainer = $('#investment-assets-detail-cards');
+
+    tbody.empty();
+    cardsContainer.empty();
+
+    let totalBalance = 0;
+
+    if (!assets || assets.length === 0) {
+        tbody.append('<tr><td colspan="5" class="center-align">저축 + 투자 자산이 없습니다.</td></tr>');
+        cardsContainer.append('<div class="center-align">저축 + 투자 자산이 없습니다.</div>');
+        return;
+    }
+
+    // 자산 목록 표시 (테이블과 카드 모두)
+    assets.forEach(function(asset) {
+        // current_value가 있으면 투자자산, balance가 있으면 저축자산으로 처리
+        let assetBalance = parseInt(asset.current_value || asset.balance || 0);
+        totalBalance += assetBalance;
+
+        // 구분 매핑: category -> 구분
+        let assetType = asset.category || asset.type || '저축';
+        if (assetType === '주식' || assetType === 'ETF' || assetType === '펀드' || assetType === '채권' || assetType === '리츠') {
+            assetType = asset.category;
+        } else if (assetType === '현금') {
+            assetType = '저축';
+        } else {
+            assetType = asset.category || '혼합';
+        }
+
+        // 테이블 행 생성 (데스크톱용)
+        let $row = $('<tr class="asset-row" data-asset-id="' + asset.id + '" ' +
+                     'data-type="' + assetType + '" ' +
+                     'data-account="' + (asset.account_name || '') + '" ' +
+                     'data-item-name="' + (asset.item_name || '') + '" ' +
+                     'data-balance="' + assetBalance + '">' +
+                     '<td style="color: #424242 !important;">' +
+                         '<span class="drag-handle" style="display: none;"><i class="material-icons">drag_handle</i></span>' +
+                         assetType +
+                     '</td>' +
+                     '<td style="color: #424242 !important;">' + (asset.account_name || '-') + '</td>' +
+                     '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
+                     '<td class="positive balance-cell editable" style="font-weight: bold; cursor: pointer;" ' +
+                         'data-asset-id="' + asset.id + '" data-original-balance="' + assetBalance + '">' +
+                         '₩' + assetBalance.toLocaleString() +
+                     '</td>' +
+                     '<td style="color: #424242 !important;">' + (asset.percentage || 0) + '%</td>' +
+                     '</tr>');
+        tbody.append($row);
+
+        // 카드 생성 (모바일용)
+        let $card = $('<div class="asset-card" data-asset-id="' + asset.id + '" ' +
+                      'data-type="' + assetType + '" ' +
+                      'data-account="' + (asset.account_name || '') + '" ' +
+                      'data-item-name="' + (asset.item_name || '') + '" ' +
+                      'data-balance="' + assetBalance + '">' +
+                      '<div class="asset-card-header">' +
+                          '<div class="asset-card-title">' + (asset.item_name || '-') + '</div>' +
+                          '<div class="asset-card-type">' + assetType + '</div>' +
+                          '<div class="mobile-drag-handle"><i class="material-icons">drag_handle</i></div>' +
+                      '</div>' +
+                      '<div class="asset-card-row">' +
+                          '<div class="asset-card-label">계좌</div>' +
+                          '<div class="asset-card-value">' + (asset.account_name || '-') + '</div>' +
+                      '</div>' +
+                      '<div class="asset-card-row">' +
+                          '<div class="asset-card-label">잔액</div>' +
+                          '<div class="asset-card-balance balance-cell editable" ' +
+                              'data-asset-id="' + asset.id + '" data-original-balance="' + assetBalance + '">' +
+                              '₩' + assetBalance.toLocaleString() +
+                          '</div>' +
+                      '</div>' +
+                      '<div class="asset-card-row">' +
+                          '<div class="asset-card-label">비중</div>' +
+                          '<div class="asset-card-percentage">' + (asset.percentage || 0) + '%</div>' +
+                      '</div>' +
+                      '</div>');
+        cardsContainer.append($card);
+    });
+
+    // 총합 행 추가 (테이블만)
+    let totalRow = '<tr style="background-color: #f5f5f5; font-weight: bold;">' +
+                   '<td colspan="3" style="color: #424242 !important; text-align: right;">총 저축 + 투자 자산:</td>' +
+                   '<td class="positive" style="font-weight: bold;">₩' + totalBalance.toLocaleString() + '</td>' +
+                   '<td style="color: #424242 !important;">100%</td>' +
+                   '</tr>';
+    tbody.append(totalRow);
+
+    // 총합 카드 추가 (모바일만)
+    let totalCard = '<div class="asset-card" style="border-left-color: #FF9800; background-color: #f8f9fa;">' +
+                    '<div class="asset-card-header">' +
+                        '<div class="asset-card-title" style="color: #FF9800;">총 저축 + 투자 자산</div>' +
+                    '</div>' +
+                    '<div class="asset-card-row">' +
+                        '<div class="asset-card-label">총 잔액</div>' +
+                        '<div style="font-weight: bold; color: #FF9800; font-size: 1.2em;">₩' + totalBalance.toLocaleString() + '</div>' +
+                    '</div>' +
+                    '<div class="asset-card-row">' +
+                        '<div class="asset-card-label">비중</div>' +
+                        '<div class="asset-card-percentage" style="font-weight: bold;">100%</div>' +
+                    '</div>' +
+                    '</div>';
+    cardsContainer.append(totalCard);
+
+    // 잔액 편집 이벤트 리스너 업데이트
+    setupBalanceEditing();
+
+    // 더블클릭/롱프레스 이벤트 리스너 업데이트
+    setupRowEditing();
 }
 
 function updateCashAssetsTable(assets) {
@@ -961,6 +1186,56 @@ function saveNewAsset() {
     });
 }
 
+function saveNewInvestmentAsset() {
+    const currentValue = parseInt($('#add-investment-balance').val()) || 0;
+    const formData = {
+        category: $('#add-investment-type').val(),
+        account_name: $('#add-investment-account').val() || '투자계좌',
+        item_name: $('#add-investment-item-name').val(),
+        current_value: currentValue,
+        deposit_amount: currentValue // 투자원금을 현재가치와 동일하게 설정
+    };
+
+    // 간단한 클라이언트 검증
+    if (!formData.category || !formData.item_name.trim()) {
+        M.toast({html: '투자유형과 종목명을 입력해주세요.', classes: 'red'});
+        return;
+    }
+
+    // API 호출
+    $.ajax({
+        url: 'http://localhost:8080/api/investment-assets',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            if (response.success) {
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('add-investment-modal'));
+                modal.close();
+
+                // 폼 초기화
+                $('#add-investment-form')[0].reset();
+                M.updateTextFields();
+                M.FormSelect.init(document.getElementById('add-investment-type'));
+
+                // 성공 메시지
+                M.toast({html: '새 투자자산이 추가되었습니다.', classes: 'green'});
+
+                // 테이블 새로고침
+                setTimeout(function() {
+                    loadInvestmentAssets();
+                }, 500);
+            } else {
+                M.toast({html: '추가 실패: ' + response.message, classes: 'red'});
+            }
+        },
+        error: function(xhr, status, error) {
+            M.toast({html: '추가 중 오류 발생: ' + error, classes: 'red'});
+        }
+    });
+}
+
 let isReorderMode = false;
 
 function toggleReorderMode() {
@@ -1084,6 +1359,133 @@ function saveNewOrder() {
             M.toast({html: '순서 저장 중 오류 발생: ' + error, classes: 'red'});
             // 실패시 테이블 새로고침
             loadCashAssets();
+        }
+    });
+}
+
+let isInvestmentReorderMode = false;
+
+function toggleInvestmentReorderMode() {
+    isInvestmentReorderMode = !isInvestmentReorderMode;
+    const $toggle = $('#investment-reorder-toggle');
+    const $tbody = $('#investment-assets-detail-table');
+    const $cardsContainer = $('#investment-assets-detail-cards');
+
+    if (isInvestmentReorderMode) {
+        // 순서 변경 모드 활성화
+        $toggle.removeClass('blue').addClass('orange').html('<i class="material-icons left">check</i>완료');
+
+        // 테이블과 카드 모두에 sortable-enabled 클래스 추가
+        $tbody.addClass('sortable-enabled');
+        $cardsContainer.addClass('sortable-enabled');
+
+        // 드래그 핸들 표시
+        $('#investment-assets-detail-table .drag-handle, #investment-assets-detail-cards .mobile-drag-handle').show();
+
+        // 테이블 sortable 활성화 (데스크톱)
+        $tbody.sortable({
+            handle: '.drag-handle',
+            helper: 'clone',
+            placeholder: 'ui-sortable-placeholder',
+            start: function(e, ui) {
+                ui.placeholder.height(ui.item.height());
+            },
+            stop: function(e, ui) {
+                saveInvestmentNewOrder();
+            }
+        });
+
+        // 카드 sortable 활성화 (모바일)
+        $cardsContainer.sortable({
+            handle: '.mobile-drag-handle',
+            helper: 'clone',
+            placeholder: 'ui-sortable-placeholder',
+            start: function(e, ui) {
+                ui.placeholder.height(ui.item.height());
+            },
+            stop: function(e, ui) {
+                saveInvestmentNewOrder();
+            }
+        });
+
+        // 편집 기능 비활성화
+        $('#investment-assets-detail-table .balance-cell.editable, #investment-assets-detail-cards .balance-cell.editable').removeClass('editable').addClass('disabled-while-sorting');
+
+        M.toast({html: '드래그하여 순서를 변경하세요', classes: 'blue'});
+    } else {
+        // 일반 모드로 복원
+        $toggle.removeClass('orange').addClass('blue').html('<i class="material-icons left">swap_vert</i>순서변경');
+
+        // sortable-enabled 클래스 제거
+        $tbody.removeClass('sortable-enabled');
+        $cardsContainer.removeClass('sortable-enabled');
+
+        // 드래그 핸들 숨기기
+        $('#investment-assets-detail-table .drag-handle, #investment-assets-detail-cards .mobile-drag-handle').hide();
+
+        // jQuery UI sortable 비활성화
+        if ($tbody.hasClass('ui-sortable')) {
+            $tbody.sortable('destroy');
+        }
+        if ($cardsContainer.hasClass('ui-sortable')) {
+            $cardsContainer.sortable('destroy');
+        }
+
+        // 편집 기능 복원
+        $('#investment-assets-detail-table .disabled-while-sorting, #investment-assets-detail-cards .disabled-while-sorting').addClass('editable').removeClass('disabled-while-sorting');
+
+        M.toast({html: '순서 변경이 완료되었습니다', classes: 'green'});
+    }
+}
+
+function saveInvestmentNewOrder() {
+    const orders = [];
+
+    // 현재 보이는 컨테이너(데스크톱: 테이블, 모바일: 카드)에서 순서 가져오기
+    if ($(window).width() > 768) {
+        // 데스크톱: 테이블 행에서 순서 가져오기
+        $('#investment-assets-detail-table .asset-row').each(function(index) {
+            const assetId = $(this).data('asset-id');
+            if (assetId) {
+                orders.push({
+                    id: parseInt(assetId)
+                });
+            }
+        });
+    } else {
+        // 모바일: 카드에서 순서 가져오기
+        $('#investment-assets-detail-cards .asset-card').each(function(index) {
+            const assetId = $(this).data('asset-id');
+            if (assetId) {
+                orders.push({
+                    id: parseInt(assetId)
+                });
+            }
+        });
+    }
+
+    // API 호출하여 순서 저장
+    $.ajax({
+        url: 'http://localhost:8080/api/investment-assets/reorder',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            orders: orders
+        }),
+        success: function(response) {
+            if (response.success) {
+                // 순서가 성공적으로 저장됨
+                console.log('Investment order updated successfully');
+            } else {
+                M.toast({html: '순서 저장 실패: ' + response.message, classes: 'red'});
+                // 실패시 테이블 새로고침
+                loadInvestmentAssets();
+            }
+        },
+        error: function(xhr, status, error) {
+            M.toast({html: '순서 저장 중 오류 발생: ' + error, classes: 'red'});
+            // 실패시 테이블 새로고침
+            loadInvestmentAssets();
         }
     });
 }
