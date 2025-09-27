@@ -11,6 +11,35 @@ include 'includes/header.php';
             </div>
         </div>
 
+        <!-- 월별 선택기 -->
+        <div class="row">
+            <div class="col s12">
+                <div class="card">
+                    <div class="card-content center-align">
+                        <h5 style="margin-bottom: 15px;">📅 조회 기간</h5>
+                        <div class="row">
+                            <div class="col s12 m6 offset-m3">
+                                <div class="input-field">
+                                    <select id="month-selector">
+                                        <!-- 동적으로 생성됨 -->
+                                    </select>
+                                    <label>조회 월 선택</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="archive-controls" style="display: none; margin-top: 10px;">
+                            <button class="btn blue" id="edit-archive-btn">
+                                <i class="material-icons left">edit</i>아카이브 수정
+                            </button>
+                            <button class="btn green" id="create-archive-btn" style="margin-left: 10px;">
+                                <i class="material-icons left">archive</i>스냅샷 생성
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 월간 지출현황 -->
         <div class="row">
             <div class="col s12">
@@ -50,7 +79,7 @@ include 'includes/header.php';
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h5 class="section-title" style="margin: 0;">📋 고정지출(예정)</h5>
                             <button class="btn-floating waves-effect waves-light green modal-trigger"
-                                    data-target="add-fixed-expense-modal" title="고정지출 추가">
+                                    data-target="add-fixed-expense-modal" title="고정지출 추가" id="add-fixed-expense-btn">
                                 <i class="material-icons">add</i>
                             </button>
                         </div>
@@ -91,7 +120,7 @@ include 'includes/header.php';
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h5 class="section-title" style="margin: 0;">💳 고정지출(선납)</h5>
                             <button class="btn-floating waves-effect waves-light blue modal-trigger"
-                                    data-target="add-prepaid-expense-modal" title="선납지출 추가">
+                                    data-target="add-prepaid-expense-modal" title="선납지출 추가" id="add-prepaid-expense-btn">
                                 <i class="material-icons">add</i>
                             </button>
                         </div>
@@ -322,8 +351,11 @@ $(document).ready(function() {
     // 셀렉트 박스 초기화
     M.FormSelect.init(document.querySelectorAll('select'));
 
-    loadFixedExpenses();
-    loadPrepaidExpenses();
+    // 월별 선택기 초기화
+    initMonthSelector();
+
+    // 현재 월 데이터 로드
+    loadCurrentMonthData();
 
     // 고정지출 추가 버튼 이벤트 핸들러
     $('#save-fixed-expense-add').on('click', function() {
@@ -404,7 +436,203 @@ $(document).ready(function() {
         const expenseId = $(this).data('id');
         openEditPrepaidExpenseModal(expenseId);
     });
+
+    // 월별 선택기 변경 이벤트
+    $('#month-selector').on('change', function() {
+        const selectedMonth = $(this).val();
+        loadMonthData(selectedMonth);
+    });
+
+    // 아카이브 수정 버튼
+    $('#edit-archive-btn').on('click', function() {
+        editArchiveData();
+    });
+
+    // 스냅샷 생성 버튼
+    $('#create-archive-btn').on('click', function() {
+        createMonthlySnapshot();
+    });
 });
+
+let currentViewMode = 'current'; // 'current' or 'archive'
+let currentSelectedMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+
+function initMonthSelector() {
+    const monthSelector = $('#month-selector');
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+
+    // 현재 월부터 과거 12개월까지 생성
+    for (let i = 0; i < 12; i++) {
+        const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1;
+        const value = year + '-' + String(month).padStart(2, '0');
+        const text = year + '년 ' + month + '월';
+        const isSelected = i === 0 ? 'selected' : '';
+
+        monthSelector.append(`<option value="${value}" ${isSelected}>${text}</option>`);
+    }
+
+    M.FormSelect.init(document.querySelectorAll('select'));
+}
+
+function loadCurrentMonthData() {
+    currentViewMode = 'current';
+    $('#archive-controls').hide();
+    $('#add-fixed-expense-btn, #add-prepaid-expense-btn').show();
+    loadFixedExpenses();
+    loadPrepaidExpenses();
+}
+
+function loadMonthData(selectedMonth) {
+    currentSelectedMonth = selectedMonth;
+    const currentYearMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+
+    if (selectedMonth === currentYearMonth) {
+        // 현재 월 - 실시간 데이터
+        currentViewMode = 'current';
+        $('#archive-controls').hide();
+        $('#add-fixed-expense-btn, #add-prepaid-expense-btn').show();
+        loadFixedExpenses();
+        loadPrepaidExpenses();
+    } else {
+        // 과거 월 - 아카이브 데이터
+        currentViewMode = 'archive';
+        $('#archive-controls').show();
+        $('#add-fixed-expense-btn, #add-prepaid-expense-btn').hide();
+        loadArchiveData(selectedMonth);
+    }
+}
+
+function loadArchiveData(month) {
+    const [year, monthNum] = month.split('-');
+
+    // 아카이브된 지출 요약 데이터 로드
+    $.ajax({
+        url: `http://localhost:8080/api/monthly-snapshots/expenses?year=${year}&month=${parseInt(monthNum)}`,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.data) {
+                displayArchiveExpenseData(response.data);
+            } else {
+                displayNoArchiveMessage();
+            }
+        },
+        error: function() {
+            displayNoArchiveMessage();
+        }
+    });
+}
+
+function displayArchiveExpenseData(summary) {
+    // 고정지출과 선납지출을 아카이브 데이터로 표시 (읽기 전용)
+    let fixedTbody = $('#fixed-expenses-table');
+    let prepaidTbody = $('#prepaid-expenses-table');
+    let fixedCards = $('#fixed-expenses-cards');
+    let prepaidCards = $('#prepaid-expenses-cards');
+
+    fixedTbody.empty();
+    prepaidTbody.empty();
+    fixedCards.empty();
+    prepaidCards.empty();
+
+    // 아카이브 요약 정보 표시
+    fixedTbody.append(`
+        <tr>
+            <td colspan="4" class="center-align" style="padding: 20px;">
+                <h6>${currentSelectedMonth} 아카이브 데이터</h6>
+                <p>총 지출: ₩${parseInt(summary.total_expenses || 0).toLocaleString()}</p>
+                <p>지출 일수: ${summary.total_days || 0}일</p>
+                <p>일평균: ₩${parseInt(summary.avg_daily_expense || 0).toLocaleString()}</p>
+            </td>
+        </tr>
+    `);
+
+    prepaidTbody.append(`
+        <tr>
+            <td colspan="4" class="center-align" style="padding: 20px;">
+                <p>카테고리별 지출</p>
+                <p>식비: ₩${parseInt(summary.food_total || 0).toLocaleString()}</p>
+                <p>생필품: ₩${parseInt(summary.necessities_total || 0).toLocaleString()}</p>
+                <p>교통비: ₩${parseInt(summary.transportation_total || 0).toLocaleString()}</p>
+                <p>기타: ₩${parseInt(summary.other_total || 0).toLocaleString()}</p>
+            </td>
+        </tr>
+    `);
+
+    fixedCards.html(`
+        <div class="center-align" style="padding: 20px;">
+            <h6>${currentSelectedMonth} 아카이브 데이터</h6>
+            <p>총 지출: ₩${parseInt(summary.total_expenses || 0).toLocaleString()}</p>
+            <p>지출 일수: ${summary.total_days || 0}일</p>
+            <p>일평균: ₩${parseInt(summary.avg_daily_expense || 0).toLocaleString()}</p>
+        </div>
+    `);
+
+    prepaidCards.html(`
+        <div class="center-align" style="padding: 20px;">
+            <p><strong>카테고리별 지출</strong></p>
+            <p>식비: ₩${parseInt(summary.food_total || 0).toLocaleString()}</p>
+            <p>생필품: ₩${parseInt(summary.necessities_total || 0).toLocaleString()}</p>
+            <p>교통비: ₩${parseInt(summary.transportation_total || 0).toLocaleString()}</p>
+            <p>기타: ₩${parseInt(summary.other_total || 0).toLocaleString()}</p>
+        </div>
+    `);
+
+    // 총액 업데이트
+    $('#fixed-expenses-total').text('₩' + parseInt(summary.total_expenses || 0).toLocaleString());
+    $('#prepaid-expenses-total').text('₩0');
+    $('#total-monthly-expenses').text('₩' + parseInt(summary.total_expenses || 0).toLocaleString());
+}
+
+function displayNoArchiveMessage() {
+    let fixedTbody = $('#fixed-expenses-table');
+    let prepaidTbody = $('#prepaid-expenses-table');
+    let fixedCards = $('#fixed-expenses-cards');
+    let prepaidCards = $('#prepaid-expenses-cards');
+
+    const message = `${currentSelectedMonth}의 아카이브 데이터가 없습니다.`;
+
+    fixedTbody.html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+    prepaidTbody.html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+    fixedCards.html(`<div class="center-align">${message}</div>`);
+    prepaidCards.html(`<div class="center-align">${message}</div>`);
+
+    $('#fixed-expenses-total').text('₩0');
+    $('#prepaid-expenses-total').text('₩0');
+    $('#total-monthly-expenses').text('₩0');
+}
+
+function createMonthlySnapshot() {
+    const [year, month] = currentSelectedMonth.split('-');
+
+    $.ajax({
+        url: 'http://localhost:8080/api/monthly-snapshots/create',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            year: parseInt(year),
+            month: parseInt(month)
+        }),
+        success: function(response) {
+            if (response.success) {
+                showMessage(`${currentSelectedMonth} 스냅샷이 생성되었습니다.`, 'success');
+                loadMonthData(currentSelectedMonth);
+            } else {
+                showMessage('스냅샷 생성에 실패했습니다.', 'error');
+            }
+        },
+        error: function() {
+            showMessage('서버 연결에 실패했습니다.', 'error');
+        }
+    });
+}
+
+function editArchiveData() {
+    showMessage('아카이브 수정 기능은 개발 중입니다.', 'info');
+}
 
 function loadFixedExpenses() {
     $.ajax({

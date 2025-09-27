@@ -401,6 +401,33 @@ include 'includes/header.php';
 
             <!-- 자산현황 컨텐츠 -->
             <div id="dashboard-content" style="display: none;">
+                <!-- 월별 선택기 -->
+                <div class="dashboard-section">
+                    <div class="card">
+                        <div class="card-content center-align">
+                            <h5 style="margin-bottom: 15px;">📅 조회 기간</h5>
+                            <div class="row">
+                                <div class="col s12 m6 offset-m3">
+                                    <div class="input-field">
+                                        <select id="assets-month-selector">
+                                            <!-- 동적으로 생성됨 -->
+                                        </select>
+                                        <label>조회 월 선택</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="assets-archive-controls" style="display: none; margin-top: 10px;">
+                                <button class="btn blue" id="edit-assets-archive-btn">
+                                    <i class="material-icons left">edit</i>아카이브 수정
+                                </button>
+                                <button class="btn green" id="create-assets-archive-btn" style="margin-left: 10px;">
+                                    <i class="material-icons left">archive</i>스냅샷 생성
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 총자산현황 -->
                 <div class="dashboard-section">
                     <div class="card">
@@ -836,6 +863,9 @@ $(document).ready(function() {
     M.FormSelect.init(document.getElementById('add-pension-type'));
     M.FormSelect.init(document.getElementById('edit-pension-type'));
 
+    // 월별 선택기 초기화
+    initAssetsMonthSelector();
+
     // 저장 버튼 이벤트 핸들러
     $('#save-edit').on('click', function() {
         saveEditedAsset();
@@ -886,10 +916,210 @@ $(document).ready(function() {
         togglePensionReorderMode();
     });
 
+    // 월별 선택기 변경 이벤트
+    $('#assets-month-selector').on('change', function() {
+        const selectedMonth = $(this).val();
+        loadAssetsMonthData(selectedMonth);
+    });
+
+    // 아카이브 수정 버튼
+    $('#edit-assets-archive-btn').on('click', function() {
+        editAssetsArchiveData();
+    });
+
+    // 스냅샷 생성 버튼
+    $('#create-assets-archive-btn').on('click', function() {
+        createAssetsMonthlySnapshot();
+    });
+
+    // 현재 월 데이터 로드
+    loadCurrentAssetsData();
+});
+
+let assetsCurrentViewMode = 'current'; // 'current' or 'archive'
+let assetsCurrentSelectedMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+
+function initAssetsMonthSelector() {
+    const monthSelector = $('#assets-month-selector');
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+
+    // 현재 월부터 과거 12개월까지 생성
+    for (let i = 0; i < 12; i++) {
+        const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1;
+        const value = year + '-' + String(month).padStart(2, '0');
+        const text = year + '년 ' + month + '월';
+        const isSelected = i === 0 ? 'selected' : '';
+
+        monthSelector.append(`<option value="${value}" ${isSelected}>${text}</option>`);
+    }
+
+    M.FormSelect.init(document.querySelectorAll('select'));
+}
+
+function loadCurrentAssetsData() {
+    assetsCurrentViewMode = 'current';
+    $('#assets-archive-controls').hide();
+    $('.section-header-actions').show(); // 추가 버튼들 표시
     loadCashAssets();
     loadInvestmentAssets();
     loadPensionAssets();
-});
+}
+
+function loadAssetsMonthData(selectedMonth) {
+    assetsCurrentSelectedMonth = selectedMonth;
+    const currentYearMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+
+    if (selectedMonth === currentYearMonth) {
+        // 현재 월 - 실시간 데이터
+        assetsCurrentViewMode = 'current';
+        $('#assets-archive-controls').hide();
+        $('.section-header-actions').show();
+        loadCashAssets();
+        loadInvestmentAssets();
+        loadPensionAssets();
+    } else {
+        // 과거 월 - 아카이브 데이터
+        assetsCurrentViewMode = 'archive';
+        $('#assets-archive-controls').show();
+        $('.section-header-actions').hide(); // 추가 버튼들 숨김
+        loadAssetsArchiveData(selectedMonth);
+    }
+}
+
+function loadAssetsArchiveData(month) {
+    const [year, monthNum] = month.split('-');
+
+    // 아카이브된 자산 스냅샷 데이터 로드
+    $.ajax({
+        url: `http://localhost:8080/api/monthly-snapshots/assets?year=${year}&month=${parseInt(monthNum)}`,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.data && response.data.length > 0) {
+                displayArchiveAssetsData(response.data);
+                $('#loading').hide();
+                $('#dashboard-content').show();
+            } else {
+                displayNoAssetsArchiveMessage();
+                $('#loading').hide();
+                $('#dashboard-content').show();
+            }
+        },
+        error: function() {
+            displayNoAssetsArchiveMessage();
+            $('#loading').hide();
+            $('#dashboard-content').show();
+        }
+    });
+}
+
+function displayArchiveAssetsData(snapshots) {
+    // 자산 타입별로 데이터 분류
+    let cashSnapshot = snapshots.find(s => s.asset_type === '현금성');
+    let investmentSnapshot = snapshots.find(s => s.asset_type === '투자');
+    let pensionSnapshot = snapshots.find(s => s.asset_type === '연금');
+
+    // 총자산현황 업데이트
+    const totalCash = parseInt(cashSnapshot?.total_amount || 0);
+    const totalInvestment = parseInt(investmentSnapshot?.total_amount || 0);
+    const totalPension = parseInt(pensionSnapshot?.total_amount || 0);
+    const totalAll = totalCash + totalInvestment + totalPension;
+
+    $('#total-cash-assets').text('₩' + totalCash.toLocaleString());
+    $('#total-investment-assets').text('₩' + totalInvestment.toLocaleString());
+    $('#total-pension-assets').text('₩' + totalPension.toLocaleString());
+    $('#total-all-assets').text('₩' + totalAll.toLocaleString());
+
+    // 각 자산 섹션에 아카이브 메시지 표시
+    displayArchiveMessage('cash-assets-table', 'cash-assets-container', cashSnapshot);
+    displayArchiveMessage('investment-assets-table', 'investment-assets-container', investmentSnapshot);
+    displayArchiveMessage('pension-assets-table', 'pension-assets-container', pensionSnapshot);
+}
+
+function displayArchiveMessage(tableId, containerId, snapshot) {
+    const table = $('#' + tableId + ' tbody');
+    const container = $('#' + containerId);
+
+    table.empty();
+    container.empty();
+
+    if (snapshot) {
+        const message = `
+            <tr>
+                <td colspan="4" class="center-align" style="padding: 20px;">
+                    <h6>${assetsCurrentSelectedMonth} 아카이브 데이터</h6>
+                    <p>총 ${snapshot.asset_type} 자산: ₩${parseInt(snapshot.total_amount || 0).toLocaleString()}</p>
+                    <p>자산 항목 수: ${snapshot.total_count || 0}개</p>
+                </td>
+            </tr>
+        `;
+        table.html(message);
+
+        const cardMessage = `
+            <div class="center-align" style="padding: 20px;">
+                <h6>${assetsCurrentSelectedMonth} 아카이브 데이터</h6>
+                <p>총 ${snapshot.asset_type} 자산: ₩${parseInt(snapshot.total_amount || 0).toLocaleString()}</p>
+                <p>자산 항목 수: ${snapshot.total_count || 0}개</p>
+            </div>
+        `;
+        container.html(cardMessage);
+    } else {
+        const message = `${assetsCurrentSelectedMonth}의 ${snapshot?.asset_type || ''} 자산 아카이브 데이터가 없습니다.`;
+        table.html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+        container.html(`<div class="center-align">${message}</div>`);
+    }
+}
+
+function displayNoAssetsArchiveMessage() {
+    const message = `${assetsCurrentSelectedMonth}의 자산 아카이브 데이터가 없습니다.`;
+
+    // 총자산현황 초기화
+    $('#total-cash-assets').text('₩0');
+    $('#total-investment-assets').text('₩0');
+    $('#total-pension-assets').text('₩0');
+    $('#total-all-assets').text('₩0');
+
+    // 각 섹션에 메시지 표시
+    $('#cash-assets-table tbody').html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+    $('#investment-assets-table tbody').html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+    $('#pension-assets-table tbody').html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
+
+    $('#cash-assets-container').html(`<div class="center-align">${message}</div>`);
+    $('#investment-assets-container').html(`<div class="center-align">${message}</div>`);
+    $('#pension-assets-container').html(`<div class="center-align">${message}</div>`);
+}
+
+function createAssetsMonthlySnapshot() {
+    const [year, month] = assetsCurrentSelectedMonth.split('-');
+
+    $.ajax({
+        url: 'http://localhost:8080/api/monthly-snapshots/create',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            year: parseInt(year),
+            month: parseInt(month)
+        }),
+        success: function(response) {
+            if (response.success) {
+                showMessage(`${assetsCurrentSelectedMonth} 자산 스냅샷이 생성되었습니다.`, 'success');
+                loadAssetsMonthData(assetsCurrentSelectedMonth);
+            } else {
+                showMessage('자산 스냅샷 생성에 실패했습니다.', 'error');
+            }
+        },
+        error: function() {
+            showMessage('서버 연결에 실패했습니다.', 'error');
+        }
+    });
+}
+
+function editAssetsArchiveData() {
+    showMessage('자산 아카이브 수정 기능은 개발 중입니다.', 'info');
+}
 
 function loadCashAssets() {
     $.ajax({
