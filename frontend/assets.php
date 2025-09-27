@@ -511,6 +511,38 @@ include 'includes/header.php';
                     </div>
                 </div>
 
+                <!-- 저축 + 투자 자산 비중 -->
+                <div class="dashboard-section">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6 class="section-title" style="margin-bottom: 15px;">📊 자산 비중(연금자산 제외)</h6>
+
+                            <!-- 데스크톱용 테이블 -->
+                            <div class="responsive-table desktop-only">
+                                <table class="striped">
+                                    <thead>
+                                        <tr>
+                                            <th>자산군</th>
+                                            <th>잔액</th>
+                                            <th>비중</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="asset-allocation-table">
+                                        <tr>
+                                            <td colspan="3" class="center-align">데이터를 불러오는 중...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 모바일용 카드 -->
+                            <div class="mobile-only" id="asset-allocation-cards">
+                                <div class="center-align">데이터를 불러오는 중...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 연금자산 상세 -->
                 <div class="dashboard-section">
                     <div class="section-header">
@@ -1025,6 +1057,9 @@ function updateInvestmentAssetsTable(assets) {
     tbody.empty();
     cardsContainer.empty();
 
+    // 투자자산 데이터를 전역 변수로 저장 (자산군별 비중 계산용)
+    window.investmentAssetsData = assets;
+
     let totalBalance = 0;
 
     if (!assets || assets.length === 0) {
@@ -1131,6 +1166,9 @@ function updateInvestmentAssetsTable(assets) {
 
     // 총자산현황 업데이트
     updateTotalAssets();
+
+    // 자산군별 비중 업데이트
+    updateAssetAllocation(assets);
 }
 
 function updateCashAssetsTable(assets) {
@@ -1139,6 +1177,9 @@ function updateCashAssetsTable(assets) {
 
     tbody.empty();
     cardsContainer.empty();
+
+    // 현금성 자산 데이터를 전역 변수로 저장 (자산군별 비중 계산용)
+    window.cashAssetsData = assets;
 
     let totalBalance = 0;
 
@@ -1234,6 +1275,11 @@ function updateCashAssetsTable(assets) {
 
     // 총자산현황 업데이트
     updateTotalAssets();
+
+    // 자산군별 비중 업데이트 (투자자산 데이터가 있을 때만)
+    if (window.investmentAssetsData && window.investmentAssetsData.length > 0) {
+        updateAssetAllocation(window.investmentAssetsData);
+    }
 }
 
 function setupBalanceEditing() {
@@ -2299,6 +2345,105 @@ function updateTotalAssets() {
 function formatCurrency(amount) {
     if (amount === 0) return '0원';
     return Math.round(amount).toLocaleString() + '원';
+}
+
+// 자산군별 비중 업데이트 함수
+function updateAssetAllocation(assets) {
+    let tbody = $('#asset-allocation-table');
+    let cardsContainer = $('#asset-allocation-cards');
+
+    tbody.empty();
+    cardsContainer.empty();
+
+    if (!assets || assets.length === 0) {
+        tbody.append('<tr><td colspan="3" class="center-align">자산이 없습니다.</td></tr>');
+        cardsContainer.append('<div class="center-align">자산이 없습니다.</div>');
+        return;
+    }
+
+    // 자산군별 합계 계산
+    let categoryTotals = {};
+    let totalAmount = 0;
+
+    assets.forEach(function(asset) {
+        const balance = parseInt(asset.current_value || asset.balance || 0);
+        const category = asset.category || asset.type || '기타';
+
+        // 혼합형의 경우 현금(30%), 주식(70%)로 분리
+        if (category === '혼합') {
+            // 현금 부분 (30%)
+            if (!categoryTotals['현금']) {
+                categoryTotals['현금'] = 0;
+            }
+            categoryTotals['현금'] += Math.round(balance * 0.3);
+
+            // 주식 부분 (70%)
+            if (!categoryTotals['주식']) {
+                categoryTotals['주식'] = 0;
+            }
+            categoryTotals['주식'] += Math.round(balance * 0.7);
+        } else {
+            if (!categoryTotals[category]) {
+                categoryTotals[category] = 0;
+            }
+            categoryTotals[category] += balance;
+        }
+
+        totalAmount += balance;
+    });
+
+    // 현금성 자산도 포함 (전역에서 가져오기) - 모두 현금으로 분류
+    if (window.cashAssetsData && window.cashAssetsData.length > 0) {
+        window.cashAssetsData.forEach(function(asset) {
+            const balance = parseInt(asset.balance || 0);
+
+            // 현금성 자산은 모두 현금 카테고리 (혼합형에서 분리된 현금과 합산)
+            if (!categoryTotals['현금']) {
+                categoryTotals['현금'] = 0;
+            }
+            categoryTotals['현금'] += balance;
+
+            totalAmount += balance;
+        });
+    }
+
+    // 자산군별 비중 테이블 생성
+    Object.keys(categoryTotals).sort().forEach(function(category) {
+        const amount = categoryTotals[category];
+        const percentage = totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(2) : 0;
+
+        // 테이블 행 추가
+        let row = '<tr>' +
+                  '<td style="color: #424242 !important;">' + category + '</td>' +
+                  '<td class="positive" style="font-weight: bold;">₩' + amount.toLocaleString() + '</td>' +
+                  '<td style="color: #424242 !important; font-weight: bold;">' + percentage + '%</td>' +
+                  '</tr>';
+        tbody.append(row);
+
+        // 모바일 카드 추가
+        let card = '<div class="asset-card" style="margin-bottom: 10px;">' +
+                   '<div class="asset-card-header">' +
+                       '<div class="asset-card-title">' + category + '</div>' +
+                   '</div>' +
+                   '<div class="asset-card-row">' +
+                       '<div class="asset-card-label">잔액</div>' +
+                       '<div class="asset-card-balance" style="font-weight: bold;">₩' + amount.toLocaleString() + '</div>' +
+                   '</div>' +
+                   '<div class="asset-card-row">' +
+                       '<div class="asset-card-label">비중</div>' +
+                       '<div class="asset-card-percentage" style="font-weight: bold;">' + percentage + '%</div>' +
+                   '</div>' +
+                   '</div>';
+        cardsContainer.append(card);
+    });
+
+    // 총합 행 추가 (테이블만)
+    let totalRow = '<tr style="background-color: #f5f5f5; font-weight: bold;">' +
+                   '<td style="color: #424242 !important; text-align: right;">총계:</td>' +
+                   '<td class="positive" style="font-weight: bold;">₩' + totalAmount.toLocaleString() + '</td>' +
+                   '<td style="color: #424242 !important; font-weight: bold;">100.00%</td>' +
+                   '</tr>';
+    tbody.append(totalRow);
 }
 
 function showError(message) {
