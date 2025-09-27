@@ -84,6 +84,156 @@ include 'includes/header.php';
             margin: 0;
         }
     }
+
+    /* 달력 스타일 */
+    .expense-calendar {
+        width: 100%;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .calendar-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background-color: #f5f5f5;
+    }
+
+    .calendar-day-header {
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: bold;
+        color: #424242;
+        border-right: 1px solid #e0e0e0;
+    }
+
+    .calendar-day-header:last-child {
+        border-right: none;
+    }
+
+    .calendar-body {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+    }
+
+    .calendar-day {
+        min-height: 80px;
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 8px;
+        position: relative;
+        background-color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .calendar-day:hover {
+        background-color: #f8f9fa;
+    }
+
+    .calendar-day.other-month {
+        background-color: #fafafa;
+        color: #bdbdbd;
+    }
+
+    .calendar-day.today {
+        background-color: #e3f2fd;
+        border: 2px solid #2196F3;
+    }
+
+    .calendar-day.has-expense {
+        background-color: #fff3e0;
+    }
+
+    .calendar-day:nth-child(7n) {
+        border-right: none;
+    }
+
+    .calendar-day-number {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+
+    .calendar-expense-amount {
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+        padding: 2px 4px;
+        border-radius: 10px;
+        color: white;
+        margin-top: 4px;
+    }
+
+    .calendar-expense-amount.low {
+        background-color: #4caf50;
+    }
+
+    .calendar-expense-amount.medium {
+        background-color: #ff9800;
+    }
+
+    .calendar-expense-amount.high {
+        background-color: #f44336;
+    }
+
+    .calendar-expense-detail {
+        font-size: 9px;
+        color: #666;
+        margin-top: 2px;
+        line-height: 1.2;
+    }
+
+    /* 모바일 달력 최적화 */
+    @media only screen and (max-width: 600px) {
+        .calendar-day {
+            min-height: 60px;
+            padding: 4px;
+        }
+
+        .calendar-day-number {
+            font-size: 12px;
+        }
+
+        .calendar-expense-amount {
+            font-size: 9px;
+            padding: 1px 3px;
+        }
+
+        .calendar-expense-detail {
+            font-size: 8px;
+        }
+
+        #current-month-display {
+            font-size: 14px;
+            margin: 0 8px !important;
+        }
+
+        .section-header-actions {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    }
+
+    @media only screen and (max-width: 480px) {
+        .calendar-day {
+            min-height: 50px;
+            padding: 2px;
+        }
+
+        .calendar-day-number {
+            font-size: 11px;
+        }
+
+        .calendar-expense-amount {
+            font-size: 8px;
+            padding: 1px 2px;
+        }
+
+        .calendar-expense-detail {
+            display: none; /* 아주 작은 화면에서는 세부사항 숨김 */
+        }
+    }
 </style>
 
 <main class="container">
@@ -163,6 +313,74 @@ include 'includes/header.php';
                         <!-- 모바일용 카드 -->
                         <div class="hide-on-med-and-up" id="daily-expenses-cards">
                             <div class="center-align">데이터를 불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 월간 지출 달력 섹션 -->
+        <div class="row">
+            <div class="col s12">
+                <div class="card">
+                    <div class="card-content">
+                        <div class="section-header">
+                            <h5 class="section-title">📅 월간 지출 달력</h5>
+                            <div class="section-header-actions">
+                                <button id="prev-month-btn" class="btn-floating waves-effect waves-light blue">
+                                    <i class="material-icons">chevron_left</i>
+                                </button>
+                                <span id="current-month-display" style="margin: 0 15px; font-weight: bold; color: #424242;">2025년 9월</span>
+                                <button id="next-month-btn" class="btn-floating waves-effect waves-light blue">
+                                    <i class="material-icons">chevron_right</i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 월간 총계 요약 -->
+                        <div class="row" style="margin-bottom: 20px;">
+                            <div class="col s12">
+                                <div class="card blue lighten-5" style="padding: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                        <h6 style="margin: 0; color: #1976D2;">📊 이번 달 총 지출</h6>
+                                        <span id="monthly-total-amount" style="font-size: 20px; font-weight: bold; color: #1976D2;">₩0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 달력 -->
+                        <div class="expense-calendar">
+                            <div class="calendar-header">
+                                <div class="calendar-day-header">일</div>
+                                <div class="calendar-day-header">월</div>
+                                <div class="calendar-day-header">화</div>
+                                <div class="calendar-day-header">수</div>
+                                <div class="calendar-day-header">목</div>
+                                <div class="calendar-day-header">금</div>
+                                <div class="calendar-day-header">토</div>
+                            </div>
+                            <div id="calendar-body" class="calendar-body">
+                                <!-- 달력 내용이 여기에 동적으로 생성됩니다 -->
+                            </div>
+                        </div>
+
+                        <!-- 범례 -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col s12">
+                                <div class="center-align">
+                                    <small style="color: #666;">
+                                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #f44336; border-radius: 50%; margin-right: 5px;"></span>
+                                        높은 지출 (₩30,000+)
+                                        <span style="margin: 0 15px;"></span>
+                                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff9800; border-radius: 50%; margin-right: 5px;"></span>
+                                        보통 지출 (₩10,000~₩29,999)
+                                        <span style="margin: 0 15px;"></span>
+                                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #4caf50; border-radius: 50%; margin-right: 5px;"></span>
+                                        낮은 지출 (₩1~₩9,999)
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -282,6 +500,10 @@ $(document).ready(function() {
     updateExpenseStatistics();
     ensureMissingExpensesExist(); // 누락된 날짜들의 지출 기록 생성
 
+    // 달력 초기화
+    initializeCalendar();
+    loadMonthlyExpenses();
+
     // 카테고리별 금액 입력시 총액 자동 계산
     $('#edit-food-cost, #edit-necessities-cost, #edit-transportation-cost, #edit-other-cost').on('input', function() {
         calculateEditTotalAmount();
@@ -331,6 +553,24 @@ $(document).ready(function() {
     $(document).on('dblclick', '.daily-expense-card', function() {
         const expenseId = $(this).data('id');
         openEditDailyExpenseModal(expenseId);
+    });
+
+    // 달력 월 이동 이벤트
+    $('#prev-month-btn').on('click', function() {
+        changeMonth(-1);
+    });
+
+    $('#next-month-btn').on('click', function() {
+        changeMonth(1);
+    });
+
+    // 달력 날짜 클릭 이벤트
+    $(document).on('click', '.calendar-day', function() {
+        const date = $(this).data('date');
+        if (date && !$(this).hasClass('other-month')) {
+            // 해당 날짜의 지출 편집 모달 열기
+            openEditDailyExpenseByDate(date);
+        }
     });
 });
 
@@ -705,6 +945,178 @@ function saveAddedExpense() {
             showMessage(errorMessage, 'error');
         }
     });
+}
+
+// 달력 관련 변수
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth(); // 0-based (0=January)
+let monthlyExpensesData = {};
+
+function initializeCalendar() {
+    updateCalendarDisplay();
+}
+
+function changeMonth(direction) {
+    currentCalendarMonth += direction;
+
+    if (currentCalendarMonth > 11) {
+        currentCalendarMonth = 0;
+        currentCalendarYear++;
+    } else if (currentCalendarMonth < 0) {
+        currentCalendarMonth = 11;
+        currentCalendarYear--;
+    }
+
+    updateCalendarDisplay();
+    loadMonthlyExpenses();
+}
+
+function updateCalendarDisplay() {
+    const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+    $('#current-month-display').text(`${currentCalendarYear}년 ${monthNames[currentCalendarMonth]}`);
+}
+
+function loadMonthlyExpenses() {
+    $.ajax({
+        url: 'http://localhost:8080/api/daily-expenses/by-month',
+        type: 'GET',
+        data: {
+            year: currentCalendarYear,
+            month: currentCalendarMonth + 1, // API는 1-based month 사용
+            limit: 50
+        },
+        success: function(response) {
+            if (response.success) {
+                monthlyExpensesData = {};
+                response.data.forEach(function(expense) {
+                    monthlyExpensesData[expense.expense_date] = expense;
+                });
+                renderCalendar();
+                updateMonthlyTotal();
+            } else {
+                showMessage('월간 지출 데이터를 불러올 수 없습니다.', 'error');
+            }
+        },
+        error: function() {
+            showMessage('서버 연결에 실패했습니다.', 'error');
+        }
+    });
+}
+
+function renderCalendar() {
+    const calendarBody = $('#calendar-body');
+    calendarBody.empty();
+
+    const firstDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth, 1);
+    const lastDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay(); // 0=Sunday
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // 이전 달의 날짜들 (빈 공간 채우기)
+    const prevMonth = currentCalendarMonth === 0 ? 11 : currentCalendarMonth - 1;
+    const prevYear = currentCalendarMonth === 0 ? currentCalendarYear - 1 : currentCalendarYear;
+    const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+
+    for (let i = firstDayWeekday - 1; i >= 0; i--) {
+        const dayNum = daysInPrevMonth - i;
+        const dayElement = $(`
+            <div class="calendar-day other-month">
+                <div class="calendar-day-number">${dayNum}</div>
+            </div>
+        `);
+        calendarBody.append(dayElement);
+    }
+
+    // 현재 달의 날짜들
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentCalendarYear}-${String(currentCalendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const expense = monthlyExpensesData[dateStr];
+        const isToday = dateStr === todayStr;
+
+        let dayClasses = 'calendar-day';
+        if (isToday) dayClasses += ' today';
+        if (expense && expense.total_amount > 0) dayClasses += ' has-expense';
+
+        let expenseContent = '';
+        if (expense && expense.total_amount > 0) {
+            const amount = parseInt(expense.total_amount);
+            let amountClass = 'low';
+            if (amount >= 30000) amountClass = 'high';
+            else if (amount >= 10000) amountClass = 'medium';
+
+            expenseContent = `
+                <div class="calendar-expense-amount ${amountClass}">
+                    ₩${amount.toLocaleString()}
+                </div>
+                <div class="calendar-expense-detail">
+                    🍽️${(expense.food_cost || 0).toLocaleString()}
+                    🛒${(expense.necessities_cost || 0).toLocaleString()}
+                </div>
+            `;
+        }
+
+        const dayElement = $(`
+            <div class="${dayClasses}" data-date="${dateStr}">
+                <div class="calendar-day-number">${day}</div>
+                ${expenseContent}
+            </div>
+        `);
+
+        calendarBody.append(dayElement);
+    }
+
+    // 다음 달의 날짜들 (빈 공간 채우기)
+    const totalCells = calendarBody.children().length;
+    const remainingCells = (Math.ceil(totalCells / 7) * 7) - totalCells;
+
+    for (let day = 1; day <= remainingCells; day++) {
+        const dayElement = $(`
+            <div class="calendar-day other-month">
+                <div class="calendar-day-number">${day}</div>
+            </div>
+        `);
+        calendarBody.append(dayElement);
+    }
+}
+
+function updateMonthlyTotal() {
+    let total = 0;
+    Object.values(monthlyExpensesData).forEach(function(expense) {
+        total += parseInt(expense.total_amount || 0);
+    });
+    $('#monthly-total-amount').text('₩' + total.toLocaleString());
+}
+
+function openEditDailyExpenseByDate(date) {
+    // 해당 날짜의 지출 데이터가 있는지 확인
+    $.ajax({
+        url: 'http://localhost:8080/api/daily-expenses/by-date',
+        type: 'GET',
+        data: { date: date },
+        success: function(response) {
+            if (response.success && response.data) {
+                // 기존 데이터가 있으면 편집 모달 열기
+                openEditDailyExpenseModal(response.data.id);
+            } else {
+                // 데이터가 없으면 해당 날짜로 지출 추가 모달 열기
+                openAddExpenseModalForDate(date);
+            }
+        },
+        error: function() {
+            // 오류 시 해당 날짜로 지출 추가 모달 열기
+            openAddExpenseModalForDate(date);
+        }
+    });
+}
+
+function openAddExpenseModalForDate(date) {
+    // 지출 추가 모달을 열고 날짜를 설정
+    openAddExpenseModal();
+    // 추가: 특정 날짜용 모달로 수정할 수 있지만, 현재는 오늘 지출 추가만 지원
+    showMessage(`${date} 날짜의 지출을 추가하려면 "오늘 지출 추가" 기능을 사용하세요.`, 'info');
 }
 
 
