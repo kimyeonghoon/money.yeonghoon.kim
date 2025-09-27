@@ -389,6 +389,40 @@ include 'includes/header.php';
 
             <!-- 자산현황 컨텐츠 -->
             <div id="dashboard-content" style="display: none;">
+                <!-- 총자산현황 -->
+                <div class="dashboard-section">
+                    <div class="card">
+                        <div class="card-content">
+                            <h5 class="section-title center-align" style="margin-bottom: 20px;">💰 총자산현황</h5>
+                            <div class="row" style="margin-bottom: 10px;">
+                                <div class="col s12 m4">
+                                    <div class="center-align">
+                                        <h6 style="color: #1976d2; margin: 0;">현금성 자산</h6>
+                                        <span id="total-cash-assets" style="font-size: 18px; font-weight: bold;">-</span>
+                                    </div>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div class="center-align">
+                                        <h6 style="color: #388e3c; margin: 0;">저축+투자 자산</h6>
+                                        <span id="total-investment-assets" style="font-size: 18px; font-weight: bold;">-</span>
+                                    </div>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div class="center-align">
+                                        <h6 style="color: #f57c00; margin: 0;">연금 자산</h6>
+                                        <span id="total-pension-assets" style="font-size: 18px; font-weight: bold;">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="divider" style="margin: 15px 0;"></div>
+                            <div class="center-align">
+                                <h6 style="color: #424242; margin: 0;">총합계</h6>
+                                <span id="total-all-assets" style="font-size: 24px; font-weight: bold; color: #1976d2;">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 현금성 자산 상세 -->
                 <div class="dashboard-section">
                     <div class="section-header">
@@ -979,6 +1013,9 @@ function updatePensionAssetsTable(assets) {
 
     // 편집 이벤트 리스너 업데이트
     setupPensionBalanceEditing();
+
+    // 총자산현황 업데이트
+    updateTotalAssets();
 }
 
 function updateInvestmentAssetsTable(assets) {
@@ -1091,6 +1128,9 @@ function updateInvestmentAssetsTable(assets) {
 
     // 더블클릭/롱프레스 이벤트 리스너 업데이트
     setupRowEditing();
+
+    // 총자산현황 업데이트
+    updateTotalAssets();
 }
 
 function updateCashAssetsTable(assets) {
@@ -1191,6 +1231,9 @@ function updateCashAssetsTable(assets) {
                     '</div>' +
                     '</div>';
     cardsContainer.append(totalCard);
+
+    // 총자산현황 업데이트
+    updateTotalAssets();
 }
 
 function setupBalanceEditing() {
@@ -2214,6 +2257,48 @@ function saveEditedPensionAsset() {
             M.toast({html: '수정 중 오류 발생: ' + error, classes: 'red'});
         }
     });
+}
+
+// 총자산현황 업데이트 함수
+function updateTotalAssets() {
+    let cashTotal = 0;
+    let investmentTotal = 0;
+    let pensionTotal = 0;
+
+    // 현금성 자산 합계 계산
+    $('#cash-assets-detail-table .asset-row').each(function() {
+        const balanceText = $(this).find('.balance-cell').text().replace(/[,원₩]/g, '').trim();
+        const balance = parseInt(balanceText) || 0;
+        cashTotal += balance;
+    });
+
+    // 저축+투자 자산 합계 계산
+    $('#investment-assets-detail-table .asset-row').each(function() {
+        const balanceText = $(this).find('.balance-cell').text().replace(/[,원₩]/g, '').trim();
+        const balance = parseInt(balanceText) || 0;
+        investmentTotal += balance;
+    });
+
+    // 연금 자산 합계 계산 (평가금액만)
+    $('#pension-assets-detail-table .asset-row').each(function() {
+        const balanceText = $(this).find('.current-value-cell').text().replace(/[,원₩]/g, '').trim();
+        const balance = parseInt(balanceText) || 0;
+        pensionTotal += balance;
+    });
+
+    const totalAll = cashTotal + investmentTotal + pensionTotal;
+
+    // UI 업데이트
+    $('#total-cash-assets').text(formatCurrency(cashTotal));
+    $('#total-investment-assets').text(formatCurrency(investmentTotal));
+    $('#total-pension-assets').text(formatCurrency(pensionTotal));
+    $('#total-all-assets').text(formatCurrency(totalAll));
+}
+
+// 통화 포맷팅 함수
+function formatCurrency(amount) {
+    if (amount === 0) return '0원';
+    return Math.round(amount).toLocaleString() + '원';
 }
 
 function showError(message) {
