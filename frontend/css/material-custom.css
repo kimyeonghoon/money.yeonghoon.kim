@@ -947,3 +947,15 @@ table tbody tr:hover {
         font-weight: 500;
     }
 }
+
+/* Long Press Effect for Mobile Cards */
+.asset-card.long-press-active {
+    transform: scale(0.98);
+    background-color: rgba(33, 150, 243, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
+    transition: all 0.2s ease;
+}
+
+.asset-card {
+    transition: all 0.2s ease;
+}

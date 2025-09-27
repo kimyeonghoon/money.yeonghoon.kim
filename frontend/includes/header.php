@@ -46,20 +46,14 @@
         <div class="nav-wrapper">
             <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul class="hide-on-med-and-down">
-                <li><a href="/dashboard.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">dashboard</i>대시보드
+                <li><a href="/assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'assets.php') ? 'active' : ''; ?>">
+                    <i class="material-icons left">dashboard</i>자산현황
                 </a></li>
-                <li><a href="/pension-assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'pension-assets.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">security</i>연금자산
+                <li><a href="/expense-status.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-status.php') ? 'active' : ''; ?>">
+                    <i class="material-icons left">account_balance_wallet</i>지출현황
                 </a></li>
-                <li><a href="/daily-expenses.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'daily-expenses.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">receipt</i>일별지출
-                </a></li>
-                <li><a href="/fixed-expenses.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'fixed-expenses.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">repeat</i>고정지출
-                </a></li>
-                <li><a href="/prepaid-expenses.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'prepaid-expenses.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">payment</i>선납지출
+                <li><a href="/expense-records.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-records.php') ? 'active' : ''; ?>">
+                    <i class="material-icons left">receipt</i>변동지출기록
                 </a></li>
             </ul>
         </div>
@@ -67,26 +61,28 @@
 
     <!-- Mobile Navigation -->
     <ul class="sidenav" id="mobile-demo">
-        <li><a href="/dashboard.php"><i class="material-icons">dashboard</i>대시보드</a></li>
-        <li><a href="/pension-assets.php"><i class="material-icons">security</i>연금자산</a></li>
-        <li><a href="/daily-expenses.php"><i class="material-icons">receipt</i>일별지출</a></li>
-        <li><a href="/fixed-expenses.php"><i class="material-icons">repeat</i>고정지출</a></li>
-        <li><a href="/prepaid-expenses.php"><i class="material-icons">payment</i>선납지출</a></li>
+        <li><a href="/assets.php"><i class="material-icons">dashboard</i>자산현황</a></li>
+        <li><a href="/expense-status.php"><i class="material-icons">account_balance_wallet</i>지출현황</a></li>
+        <li><a href="/expense-records.php"><i class="material-icons">receipt</i>변동지출기록</a></li>
+        <li class="divider"></li>
+        <li><a href="/pension-assets.php"><i class="material-icons">security</i>연금자산 (개별)</a></li>
+        <li><a href="/fixed-expenses.php"><i class="material-icons">repeat</i>고정지출 (개별)</a></li>
+        <li><a href="/prepaid-expenses.php"><i class="material-icons">payment</i>선납지출 (개별)</a></li>
     </ul>
 
     <!-- Bottom Navigation (Mobile) -->
     <nav class="bottom-nav">
-        <a href="/dashboard.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
+        <a href="/assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'assets.php') ? 'active' : ''; ?>">
             <i class="material-icons">dashboard</i>
-            <span>홈</span>
+            <span>자산</span>
         </a>
-        <a href="/pension-assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'pension-assets.php') ? 'active' : ''; ?>">
-            <i class="material-icons">security</i>
-            <span>연금</span>
-        </a>
-        <a href="/daily-expenses.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'daily-expenses.php') ? 'active' : ''; ?>">
-            <i class="material-icons">receipt</i>
+        <a href="/expense-status.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'expense-status.php') ? 'active' : ''; ?>">
+            <i class="material-icons">account_balance_wallet</i>
             <span>지출</span>
+        </a>
+        <a href="/expense-records.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'expense-records.php') ? 'active' : ''; ?>">
+            <i class="material-icons">receipt</i>
+            <span>기록</span>
         </a>
     </nav>
 

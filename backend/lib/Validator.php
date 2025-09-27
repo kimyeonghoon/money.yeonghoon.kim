@@ -169,20 +169,49 @@ class Validator {
         return $validator;
     }
 
-    public static function validatePensionAsset($data) {
+    public static function validatePensionAsset($data, $isPartial = false) {
         $validator = new self();
 
-        $validator->required($data['type'] ?? '', 'type')
-                 ->inArray($data['type'] ?? '', 'type', ['연금저축', '퇴직연금']);
+        // 부분 업데이트가 아닌 경우 필수 필드 검증
+        if (!$isPartial) {
+            $validator->required($data['type'] ?? '', 'type')
+                     ->inArray($data['type'] ?? '', 'type', ['연금저축', '퇴직연금']);
 
-        $validator->required($data['item_name'] ?? '', 'item_name')
-                 ->maxLength($data['item_name'] ?? '', 'item_name', 200);
+            $validator->required($data['item_name'] ?? '', 'item_name')
+                     ->maxLength($data['item_name'] ?? '', 'item_name', 200);
 
-        $validator->required($data['current_value'] ?? '', 'current_value')
-                 ->amount($data['current_value'] ?? '', 'current_value');
+            $validator->required($data['current_value'] ?? '', 'current_value')
+                     ->amount($data['current_value'] ?? '', 'current_value');
 
-        $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
-                 ->amount($data['deposit_amount'] ?? '', 'deposit_amount');
+            $validator->required($data['deposit_amount'] ?? '', 'deposit_amount')
+                     ->amount($data['deposit_amount'] ?? '', 'deposit_amount');
+        } else {
+            // 부분 업데이트인 경우 제공된 필드만 검증
+            if (isset($data['type'])) {
+                $validator->required($data['type'], 'type')
+                         ->inArray($data['type'], 'type', ['연금저축', '퇴직연금']);
+            }
+
+            if (isset($data['item_name'])) {
+                $validator->required($data['item_name'], 'item_name')
+                         ->maxLength($data['item_name'], 'item_name', 200);
+            }
+
+            if (isset($data['current_value'])) {
+                $validator->required($data['current_value'], 'current_value')
+                         ->amount($data['current_value'], 'current_value');
+            }
+
+            if (isset($data['deposit_amount'])) {
+                $validator->required($data['deposit_amount'], 'deposit_amount')
+                         ->amount($data['deposit_amount'], 'deposit_amount');
+            }
+        }
+
+        // account_name이 제공된 경우에만 검증
+        if (isset($data['account_name']) && !empty($data['account_name'])) {
+            $validator->maxLength($data['account_name'], 'account_name', 100);
+        }
 
         return $validator;
     }

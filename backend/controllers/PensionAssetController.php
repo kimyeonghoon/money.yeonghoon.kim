@@ -11,7 +11,9 @@ class PensionAssetController extends BaseController {
     }
 
     protected function validateData($data, $id = null) {
-        return Validator::validatePensionAsset($data);
+        // ID가 있으면 부분 업데이트로 간주
+        $isPartial = ($id !== null);
+        return Validator::validatePensionAsset($data, $isPartial);
     }
 
     public function handleRequest() {
@@ -44,6 +46,9 @@ class PensionAssetController extends BaseController {
                         Response::error('ID is required', 400);
                     }
                     $this->restore($id);
+                    break;
+                case 'reorder':
+                    $this->reorder();
                     break;
                 default:
                     parent::handleRequest();
@@ -108,5 +113,35 @@ class PensionAssetController extends BaseController {
         $assets = $this->model->searchByName($keyword, $pagination->getLimit(), $pagination->getOffset());
 
         Response::success($assets, 'Search results retrieved');
+    }
+
+    private function reorder() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            Response::error('Method not allowed', 405);
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($input['orders']) || !is_array($input['orders'])) {
+            Response::error('Invalid input: orders array is required', 400);
+        }
+
+        $orders = $input['orders'];
+
+        // 유효성 검증
+        foreach ($orders as $order) {
+            if (!isset($order['id']) || !is_numeric($order['id'])) {
+                Response::error('Invalid input: each order must have a numeric id', 400);
+            }
+        }
+
+        // 순서 업데이트 실행
+        $result = $this->model->updateDisplayOrders($orders);
+
+        if ($result) {
+            Response::success(null, 'Order updated successfully');
+        } else {
+            Response::error('Failed to update order', 500);
+        }
     }
 }
