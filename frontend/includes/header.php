@@ -64,10 +64,6 @@
         <li><a href="/assets.php"><i class="material-icons">dashboard</i>자산현황</a></li>
         <li><a href="/expense-status.php"><i class="material-icons">account_balance_wallet</i>지출현황</a></li>
         <li><a href="/expense-records.php"><i class="material-icons">receipt</i>일간지출내역</a></li>
-        <li class="divider"></li>
-        <li><a href="/pension-assets.php"><i class="material-icons">security</i>연금자산 (개별)</a></li>
-        <li><a href="/fixed-expenses.php"><i class="material-icons">repeat</i>고정지출 (개별)</a></li>
-        <li><a href="/prepaid-expenses.php"><i class="material-icons">payment</i>선납지출 (개별)</a></li>
     </ul>
 
     <!-- Bottom Navigation (Mobile) -->
