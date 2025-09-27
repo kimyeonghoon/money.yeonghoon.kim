@@ -250,8 +250,10 @@ class Validator {
         $validator->required($data['amount'] ?? '', 'amount')
                  ->amount($data['amount'] ?? '', 'amount');
 
-        $validator->required($data['payment_date'] ?? '', 'payment_date')
-                 ->integer($data['payment_date'] ?? '', 'payment_date', 1, 31);
+        // payment_date는 선택적 필드 (NULL 허용)
+        if (isset($data['payment_date']) && $data['payment_date'] !== null && $data['payment_date'] !== '') {
+            $validator->integer($data['payment_date'], 'payment_date', 1, 31);
+        }
 
         $validator->required($data['payment_method'] ?? '', 'payment_method')
                  ->inArray($data['payment_method'] ?? '', 'payment_method', ['신용', '체크', '현금']);

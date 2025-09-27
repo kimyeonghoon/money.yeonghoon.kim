@@ -165,6 +165,7 @@ include 'includes/header.php';
     .asset-row {
         transition: background-color 0.2s ease;
         user-select: none;
+        cursor: pointer;
     }
 
     .asset-row:hover {
@@ -184,6 +185,11 @@ include 'includes/header.php';
 
     .sortable-enabled .asset-row:active {
         cursor: grabbing;
+    }
+
+    /* 일반 모드에서는 pointer 커서 */
+    .asset-row:not(.sortable-enabled) {
+        cursor: pointer !important;
     }
 
     .ui-sortable-helper {
@@ -244,6 +250,7 @@ include 'includes/header.php';
         border-left: 4px solid #2196F3;
         transition: all 0.3s ease;
         user-select: none;
+        cursor: pointer;
     }
 
     .asset-card:hover {
@@ -264,6 +271,11 @@ include 'includes/header.php';
 
     .sortable-enabled .asset-card:active {
         cursor: grabbing;
+    }
+
+    /* 일반 모드에서는 pointer 커서 */
+    .asset-card:not(.sortable-enabled) {
+        cursor: pointer !important;
     }
 
     .asset-card-header {
@@ -623,6 +635,9 @@ include 'includes/header.php';
             </div>
         </div>
         <div class="modal-footer">
+            <button id="delete-asset" class="waves-effect waves-light btn red left">
+                <i class="material-icons left">delete</i>삭제
+            </button>
             <button class="modal-close waves-effect waves-light btn-flat">취소</button>
             <button id="save-edit" class="waves-effect waves-light btn blue">
                 <i class="material-icons left">save</i>저장
@@ -797,6 +812,9 @@ include 'includes/header.php';
             </div>
         </div>
         <div class="modal-footer">
+            <button id="delete-pension-asset" class="waves-effect waves-light btn red left">
+                <i class="material-icons left">delete</i>삭제
+            </button>
             <button class="btn-flat modal-close">취소</button>
             <button id="save-pension-edit" class="btn waves-effect waves-light purple">
                 <i class="material-icons left">save</i>저장
@@ -841,6 +859,16 @@ $(document).ready(function() {
     // 연금자산 편집 저장 버튼 이벤트 핸들러
     $('#save-pension-edit').on('click', function() {
         saveEditedPensionAsset();
+    });
+
+    // 자산 삭제 버튼 이벤트 핸들러
+    $('#delete-asset').on('click', function() {
+        deleteAsset();
+    });
+
+    // 연금자산 삭제 버튼 이벤트 핸들러
+    $('#delete-pension-asset').on('click', function() {
+        deletePensionAsset();
     });
 
     // 순서 변경 토글 버튼 이벤트 핸들러
@@ -2301,6 +2329,74 @@ function saveEditedPensionAsset() {
         },
         error: function(xhr, status, error) {
             M.toast({html: '수정 중 오류 발생: ' + error, classes: 'red'});
+        }
+    });
+}
+
+// 현금성 자산 삭제 함수
+function deleteAsset() {
+    const assetId = $('#edit-modal').data('asset-id');
+
+    if (!confirm('이 자산을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        return;
+    }
+
+    $.ajax({
+        url: 'http://localhost:8080/api/cash-assets/' + assetId,
+        method: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('edit-modal'));
+                modal.close();
+
+                // 성공 메시지
+                M.toast({html: '자산이 삭제되었습니다.', classes: 'green'});
+
+                // 테이블 새로고침
+                setTimeout(function() {
+                    loadCashAssets();
+                }, 500);
+            } else {
+                M.toast({html: '삭제 실패: ' + response.message, classes: 'red'});
+            }
+        },
+        error: function(xhr, status, error) {
+            M.toast({html: '삭제 중 오류 발생: ' + error, classes: 'red'});
+        }
+    });
+}
+
+// 연금자산 삭제 함수
+function deletePensionAsset() {
+    const assetId = $('#edit-pension-modal').data('asset-id');
+
+    if (!confirm('이 연금자산을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        return;
+    }
+
+    $.ajax({
+        url: 'http://localhost:8080/api/pension-assets/' + assetId,
+        method: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('edit-pension-modal'));
+                modal.close();
+
+                // 성공 메시지
+                M.toast({html: '연금자산이 삭제되었습니다.', classes: 'green'});
+
+                // 테이블 새로고침
+                setTimeout(function() {
+                    loadPensionAssets();
+                }, 500);
+            } else {
+                M.toast({html: '삭제 실패: ' + response.message, classes: 'red'});
+            }
+        },
+        error: function(xhr, status, error) {
+            M.toast({html: '삭제 중 오류 발생: ' + error, classes: 'red'});
         }
     });
 }
