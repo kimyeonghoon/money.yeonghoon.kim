@@ -34,6 +34,23 @@ class Validator {
         return $this;
     }
 
+    public function expenseAmount($value, $fieldName) {
+        if (isset($value) && $value !== '' && $value !== null) {
+            if (!is_numeric($value)) {
+                $this->errors[$fieldName] = "{$fieldName}는 숫자여야 합니다.";
+            } else {
+                $intValue = (int)$value;
+                if ($intValue < 0) {
+                    $this->errors[$fieldName] = "{$fieldName}는 0 이상이어야 합니다.";
+                }
+                if ($intValue > 2147483647) { // INT 최대값
+                    $this->errors[$fieldName] = "{$fieldName}가 너무 큽니다.";
+                }
+            }
+        }
+        return $this;
+    }
+
     public function maxLength($value, $fieldName, $max) {
         if (!empty($value) && strlen($value) > $max) {
             $this->errors[$fieldName] = "{$fieldName}는 최대 {$max}자까지 입력 가능합니다.";
@@ -222,20 +239,19 @@ class Validator {
         $validator->required($data['expense_date'] ?? '', 'expense_date')
                  ->date($data['expense_date'] ?? '', 'expense_date');
 
-        $validator->required($data['total_amount'] ?? '', 'total_amount')
-                 ->amount($data['total_amount'] ?? '', 'total_amount');
+        $validator->expenseAmount($data['total_amount'] ?? '', 'total_amount');
 
         if (!empty($data['food_cost'])) {
-            $validator->amount($data['food_cost'], 'food_cost');
+            $validator->expenseAmount($data['food_cost'], 'food_cost');
         }
         if (!empty($data['necessities_cost'])) {
-            $validator->amount($data['necessities_cost'], 'necessities_cost');
+            $validator->expenseAmount($data['necessities_cost'], 'necessities_cost');
         }
         if (!empty($data['transportation_cost'])) {
-            $validator->amount($data['transportation_cost'], 'transportation_cost');
+            $validator->expenseAmount($data['transportation_cost'], 'transportation_cost');
         }
         if (!empty($data['other_cost'])) {
-            $validator->amount($data['other_cost'], 'other_cost');
+            $validator->expenseAmount($data['other_cost'], 'other_cost');
         }
 
         return $validator;

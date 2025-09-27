@@ -44,6 +44,12 @@ class DailyExpenseController extends BaseController {
                 case 'category-breakdown':
                     $this->getCategoryBreakdown();
                     break;
+                case 'statistics':
+                    $this->getStatistics();
+                    break;
+                case 'add-today':
+                    $this->addToday();
+                    break;
                 case 'deleted':
                     $this->getDeleted();
                     break;
@@ -144,5 +150,100 @@ class DailyExpenseController extends BaseController {
         $breakdown = $this->model->getCategoryBreakdown($startDate, $endDate);
 
         Response::success($breakdown, 'Category breakdown retrieved');
+    }
+
+    private function getStatistics() {
+        $params = $this->getQueryParams();
+        $today = $params['today'] ?? date('Y-m-d');
+        $weekStart = $params['week_start'] ?? null;
+        $monthStart = $params['month_start'] ?? null;
+
+        // 오늘 지출
+        $todayExpense = $this->model->findByDate($today);
+        $todayTotal = $todayExpense ? $todayExpense['total_amount'] : 0;
+
+        // 이번 주 지출 (week_start부터 today까지)
+        $weekTotal = 0;
+        if ($weekStart) {
+            $weekExpenses = $this->model->getByDateRange($weekStart, $today);
+            $weekTotal = array_sum(array_column($weekExpenses, 'total_amount'));
+        }
+
+        // 이번 달 지출 (month_start부터 today까지)
+        $monthTotal = 0;
+        if ($monthStart) {
+            $monthExpenses = $this->model->getByDateRange($monthStart, $today);
+            $monthTotal = array_sum(array_column($monthExpenses, 'total_amount'));
+        }
+
+        $statistics = [
+            'today' => (int)$todayTotal,
+            'week' => (int)$weekTotal,
+            'month' => (int)$monthTotal
+        ];
+
+        Response::success($statistics, 'Statistics retrieved');
+    }
+
+    private function addToday() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            Response::error('Method not allowed', 405);
+            return;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (!$data) {
+            Response::error('Invalid JSON data', 400);
+            return;
+        }
+
+        $expenseDate = $data['expense_date'] ?? date('Y-m-d');
+        $foodCost = (int)($data['food_cost'] ?? 0);
+        $necessitiesCost = (int)($data['necessities_cost'] ?? 0);
+        $transportationCost = (int)($data['transportation_cost'] ?? 0);
+        $otherCost = (int)($data['other_cost'] ?? 0);
+
+        // 기존 데이터 확인
+        $existingExpense = $this->model->findByDate($expenseDate);
+
+        if ($existingExpense) {
+            // 기존 데이터에 누적
+            $newData = [
+                'food_cost' => $existingExpense['food_cost'] + $foodCost,
+                'necessities_cost' => $existingExpense['necessities_cost'] + $necessitiesCost,
+                'transportation_cost' => $existingExpense['transportation_cost'] + $transportationCost,
+                'other_cost' => $existingExpense['other_cost'] + $otherCost
+            ];
+
+            $newData['total_amount'] = $newData['food_cost'] + $newData['necessities_cost'] +
+                                     $newData['transportation_cost'] + $newData['other_cost'];
+
+            $result = $this->model->update($existingExpense['id'], $newData);
+
+            if ($result) {
+                Response::success($result, 'Expense added to existing record');
+            } else {
+                Response::error('Failed to update expense', 500);
+            }
+        } else {
+            // 새 데이터 생성
+            $newData = [
+                'expense_date' => $expenseDate,
+                'food_cost' => $foodCost,
+                'necessities_cost' => $necessitiesCost,
+                'transportation_cost' => $transportationCost,
+                'other_cost' => $otherCost,
+                'total_amount' => $foodCost + $necessitiesCost + $transportationCost + $otherCost
+            ];
+
+            $result = $this->model->create($newData);
+
+            if ($result) {
+                Response::success($result, 'New expense record created');
+            } else {
+                Response::error('Failed to create expense', 500);
+            }
+        }
     }
 }
