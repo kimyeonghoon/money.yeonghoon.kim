@@ -64,6 +64,49 @@ include 'includes/header.php';
         flex-shrink: 0;
     }
 
+    /* 월 선택기 모바일 최적화 */
+    @media only screen and (max-width: 600px) {
+        .month-selector-row {
+            flex-direction: column !important;
+            gap: 10px;
+        }
+
+        .month-selector-title {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .month-selector-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #month-selector {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        #create-snapshot-btn {
+            font-size: 11px;
+            padding: 8px 12px;
+            white-space: nowrap;
+        }
+
+        #archive-mode-notice {
+            margin: 15px 0 0 0 !important;
+            padding: 12px !important;
+            font-size: 14px;
+        }
+
+        #archive-mode-notice .material-icons {
+            font-size: 18px !important;
+        }
+    }
+
     /* 모바일에서 section-header 최적화 */
     @media only screen and (max-width: 600px) {
         .section-header {
@@ -377,12 +420,12 @@ include 'includes/header.php';
         <div class="section">
             <div class="card">
                 <div class="card-content">
-                    <div class="row" style="margin-bottom: 0;">
+                    <div class="row month-selector-row" style="margin-bottom: 0;">
                         <div class="col s12 m6">
-                            <h6 style="margin: 8px 0;"><i class="material-icons left">date_range</i>조회 기간</h6>
+                            <h6 class="month-selector-title" style="margin: 8px 0;"><i class="material-icons left">date_range</i>조회 기간</h6>
                         </div>
                         <div class="col s12 m6">
-                            <div class="input-field" style="margin-top: 0;">
+                            <div class="month-selector-controls input-field" style="margin-top: 0;">
                                 <select id="month-selector" class="browser-default">
                                     <option value="current" selected>현재 (실시간)</option>
                                     <!-- 아카이브 월 목록은 JavaScript로 동적 로드 -->
@@ -1421,13 +1464,25 @@ function restoreOriginalBalance(cell) {
 }
 
 function updateAssetBalance(assetId, newBalance, cell) {
-    // 로딩 표시
-    cell.html('<i class="material-icons" style="font-size: 18px;">hourglass_empty</i> 수정중...');
+    // 로딩 표시 - 더 구체적인 스피너 사용
+    cell.html('<div class="preloader-wrapper active" style="width: 20px; height: 20px; display: inline-block;"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div> 수정중...');
+
+    // 아카이브 모드인지 확인하여 적절한 API 사용
+    let apiUrl, successMessage;
+
+    if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
+        apiUrl = `http://localhost:8080/api/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
+        successMessage = '아카이브 잔액이 수정되었습니다.';
+    } else {
+        apiUrl = `http://localhost:8080/api/cash-assets/${assetId}`;
+        successMessage = '잔액이 수정되었습니다.';
+    }
 
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets/' + assetId,
+        url: apiUrl,
         method: 'PUT',
         contentType: 'application/json',
+        timeout: 15000, // 15초 타임아웃
         data: JSON.stringify({
             balance: newBalance
         }),
@@ -1438,20 +1493,45 @@ function updateAssetBalance(assetId, newBalance, cell) {
                 cell.html('₩' + newBalance.toLocaleString());
 
                 // 성공 메시지 (짧게 표시)
-                showSuccessMessage('잔액이 수정되었습니다.');
+                showSuccessMessage(successMessage);
 
                 // 전체 테이블 새로고침 (비중 재계산을 위해)
                 setTimeout(function() {
                     loadCashAssets();
                 }, 500);
             } else {
-                showError('수정 실패: ' + response.message);
+                let errorMessage = response.message || '알 수 없는 오류가 발생했습니다';
+                showError('수정 실패: ' + errorMessage);
                 restoreOriginalBalance(cell);
             }
         },
         error: function(xhr, status, error) {
-            showError('수정 중 오류 발생: ' + error);
+            let errorMessage = '수정 중 오류가 발생했습니다';
+
+            if (status === 'timeout') {
+                errorMessage = '서버 응답 시간이 초과되었습니다';
+            } else if (xhr.status === 0) {
+                errorMessage = '서버에 연결할 수 없습니다';
+            } else if (xhr.status === 403) {
+                errorMessage = '권한이 없습니다';
+            } else if (xhr.status === 404) {
+                errorMessage = '해당 자산을 찾을 수 없습니다';
+            } else if (xhr.status >= 500) {
+                errorMessage = '서버 내부 오류가 발생했습니다';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+
+            showError(errorMessage);
             restoreOriginalBalance(cell);
+
+            console.error('잔액 수정 오류:', {
+                status: status,
+                error: error,
+                xhr: xhr,
+                assetId: assetId,
+                newBalance: newBalance
+            });
         }
     });
 }
@@ -2579,11 +2659,60 @@ function showError(message) {
 
 // =================== 아카이브 관리 시스템 ===================
 
-// 기존 함수들 백업 (오리지널 보존)
+// 기존 함수들 백업 (오리지널 보존) - 즉시 초기화
 const OriginalAssetAPI = {
-    loadCashAssets: window.loadCashAssets,
-    loadInvestmentAssets: window.loadInvestmentAssets,
-    loadPensionAssets: window.loadPensionAssets
+    loadCashAssets: function() {
+        $.ajax({
+            url: 'http://localhost:8080/api/cash-assets',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    updateCashAssetsTable(response.data.data);
+                    $('#loading').hide();
+                    $('#dashboard-content').show();
+                } else {
+                    showError('현금 자산 데이터 로드 실패: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                showError('서버와의 연결에 실패했습니다: ' + error);
+            }
+        });
+    },
+
+    loadInvestmentAssets: function() {
+        $.ajax({
+            url: 'http://localhost:8080/api/investment-assets',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    updateInvestmentAssetsTable(response.data.data);
+                } else {
+                    showError('투자 자산 데이터 로드 실패: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                showError('투자 자산 서버 연결 실패: ' + error);
+            }
+        });
+    },
+
+    loadPensionAssets: function() {
+        $.ajax({
+            url: 'http://localhost:8080/api/pension-assets',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    updatePensionAssetsTable(response.data.data);
+                } else {
+                    showError('연금 자산 데이터 로드 실패: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                showError('연금 자산 서버 연결 실패: ' + error);
+            }
+        });
+    }
 };
 
 // Archive Manager 클래스
@@ -2600,19 +2729,38 @@ class ArchiveManager {
 
     // 아카이브 월 목록 로드
     static loadAvailableMonths() {
+        // 로딩 상태 표시
+        this.showMonthSelectorLoading();
+
         $.ajax({
             url: 'http://localhost:8080/api/archive/months',
             method: 'GET',
+            timeout: 10000, // 10초 타임아웃
             success: (response) => {
+                this.hideMonthSelectorLoading();
                 if (response.success && response.data) {
                     this.availableMonths = response.data;
                     this.populateMonthSelector();
                 } else {
-                    console.log('아카이브 월 목록 로드 실패:', response.message);
+                    this.showMonthSelectorError('아카이브 월 목록을 불러올 수 없습니다: ' + (response.message || '알 수 없는 오류'));
                 }
             },
             error: (xhr, status, error) => {
-                console.log('아카이브 월 목록 로드 오류:', error);
+                this.hideMonthSelectorLoading();
+                let errorMessage = '아카이브 월 목록 로드 실패';
+
+                if (status === 'timeout') {
+                    errorMessage = '서버 응답 시간이 초과되었습니다';
+                } else if (xhr.status === 0) {
+                    errorMessage = '서버에 연결할 수 없습니다';
+                } else if (xhr.status >= 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다';
+                } else if (xhr.status === 404) {
+                    errorMessage = '아카이브 API를 찾을 수 없습니다';
+                }
+
+                this.showMonthSelectorError(errorMessage);
+                console.error('아카이브 월 목록 로드 오류:', error, xhr);
             }
         });
     }
@@ -2651,10 +2799,24 @@ class ArchiveManager {
             this.selectedMonth = null;
             this.hideArchiveNotice();
 
-            // 원본 함수들로 데이터 로드
-            OriginalAssetAPI.loadCashAssets();
-            OriginalAssetAPI.loadInvestmentAssets();
-            OriginalAssetAPI.loadPensionAssets();
+            // 로딩 표시
+            this.showDataLoading();
+
+            try {
+                // 원본 함수들로 데이터 로드
+                OriginalAssetAPI.loadCashAssets();
+                OriginalAssetAPI.loadInvestmentAssets();
+                OriginalAssetAPI.loadPensionAssets();
+
+                // 로딩 상태 숨김 (데이터 로드 완료 후)
+                setTimeout(() => {
+                    this.hideDataLoading();
+                }, 500);
+            } catch (error) {
+                this.hideDataLoading();
+                this.showDataError('현재 데이터 로드 중 오류가 발생했습니다');
+                console.error('현재 데이터 로드 오류:', error);
+            }
 
         } else {
             this.currentMode = 'archive';
@@ -2699,61 +2861,124 @@ class ArchiveManager {
 
     // 아카이브 현금 자산 로드
     static loadArchiveCashAssets() {
+        // 로딩 상태 표시
+        this.showDataLoading();
+
         $.ajax({
             url: this.getAPIUrl('cash-assets'),
             method: 'GET',
+            timeout: 10000, // 10초 타임아웃
             success: (response) => {
+                this.hideDataLoading();
                 if (response.success) {
                     // 기존 함수와 동일한 형태로 데이터 전달
                     const assets = response.data.data || response.data;
                     updateCashAssetsTable(assets);
                     updateTotalAssets();
                 } else {
-                    showError('현금 자산 아카이브 로드 실패: ' + response.message);
+                    this.showDataError('현금 자산 아카이브를 불러올 수 없습니다: ' + (response.message || '알 수 없는 오류'));
                 }
             },
             error: (xhr, status, error) => {
-                showError('현금 자산 아카이브 서버 연결 실패: ' + error);
+                this.hideDataLoading();
+
+                let errorMessage = '현금 자산 아카이브 로드 실패';
+
+                if (status === 'timeout') {
+                    errorMessage = '서버 응답 시간이 초과되었습니다';
+                } else if (xhr.status === 0) {
+                    errorMessage = '서버에 연결할 수 없습니다';
+                } else if (xhr.status === 404) {
+                    errorMessage = '해당 월의 아카이브 데이터를 찾을 수 없습니다';
+                } else if (xhr.status >= 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+
+                this.showDataError(errorMessage);
+                console.error('현금 자산 아카이브 로드 오류:', {
+                    status: status,
+                    error: error,
+                    xhr: xhr,
+                    month: this.selectedMonth
+                });
             }
         });
     }
 
     // 아카이브 투자 자산 로드
     static loadArchiveInvestmentAssets() {
+        this.showDataLoading();
+
         $.ajax({
             url: this.getAPIUrl('investment-assets'),
             method: 'GET',
+            timeout: 10000,
             success: (response) => {
+                this.hideDataLoading();
                 if (response.success) {
                     const assets = response.data.data || response.data;
                     updateInvestmentAssetsTable(assets);
                     updateTotalAssets();
                 } else {
-                    console.error('투자 자산 아카이브 로드 실패:', response.message);
+                    this.showDataError('투자 자산 아카이브를 불러올 수 없습니다: ' + (response.message || '알 수 없는 오류'));
                 }
             },
             error: (xhr, status, error) => {
-                console.error('투자 자산 아카이브 서버 연결 실패:', error);
+                this.hideDataLoading();
+                let errorMessage = '투자 자산 아카이브 로드 실패';
+
+                if (status === 'timeout') {
+                    errorMessage = '서버 응답 시간이 초과되었습니다';
+                } else if (xhr.status === 0) {
+                    errorMessage = '서버에 연결할 수 없습니다';
+                } else if (xhr.status === 404) {
+                    errorMessage = '해당 월의 투자 자산 아카이브를 찾을 수 없습니다';
+                } else if (xhr.status >= 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다';
+                }
+
+                this.showDataError(errorMessage);
+                console.error('투자 자산 아카이브 로드 오류:', error, xhr);
             }
         });
     }
 
     // 아카이브 연금 자산 로드
     static loadArchivePensionAssets() {
+        this.showDataLoading();
+
         $.ajax({
             url: this.getAPIUrl('pension-assets'),
             method: 'GET',
+            timeout: 10000,
             success: (response) => {
+                this.hideDataLoading();
                 if (response.success) {
                     const assets = response.data.data || response.data;
                     updatePensionAssetsTable(assets);
                     updateTotalAssets();
                 } else {
-                    console.error('연금 자산 아카이브 로드 실패:', response.message);
+                    this.showDataError('연금 자산 아카이브를 불러올 수 없습니다: ' + (response.message || '알 수 없는 오류'));
                 }
             },
             error: (xhr, status, error) => {
-                console.error('연금 자산 아카이브 서버 연결 실패:', error);
+                this.hideDataLoading();
+                let errorMessage = '연금 자산 아카이브 로드 실패';
+
+                if (status === 'timeout') {
+                    errorMessage = '서버 응답 시간이 초과되었습니다';
+                } else if (xhr.status === 0) {
+                    errorMessage = '서버에 연결할 수 없습니다';
+                } else if (xhr.status === 404) {
+                    errorMessage = '해당 월의 연금 자산 아카이브를 찾을 수 없습니다';
+                } else if (xhr.status >= 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다';
+                }
+
+                this.showDataError(errorMessage);
+                console.error('연금 자산 아카이브 로드 오류:', error, xhr);
             }
         });
     }
@@ -2790,32 +3015,116 @@ class ArchiveManager {
     static getCurrentMonth() {
         return this.selectedMonth;
     }
+
+    // 로딩 상태 표시 메서드들
+    static showMonthSelectorLoading() {
+        const selector = $('#month-selector');
+        if (selector.length) {
+            selector.prop('disabled', true);
+            selector.html('<option>로딩 중...</option>');
+        }
+    }
+
+    static hideMonthSelectorLoading() {
+        const selector = $('#month-selector');
+        if (selector.length) {
+            selector.prop('disabled', false);
+        }
+    }
+
+    static showMonthSelectorError(message) {
+        const selector = $('#month-selector');
+        if (selector.length) {
+            selector.html(`<option value="">오류: ${message}</option>`);
+            // 사용자에게 토스트 메시지로도 알림
+            if (typeof M !== 'undefined' && M.toast) {
+                M.toast({
+                    html: `<i class="material-icons left">error</i>${message}`,
+                    classes: 'red',
+                    displayLength: 5000
+                });
+            }
+        }
+    }
+
+    // 데이터 로딩 상태 표시
+    static showDataLoading() {
+        const container = $('.assets-container, .desktop-table-container');
+        if (container.length) {
+            const loadingHtml = `
+                <div class="loading-state" style="text-align: center; padding: 40px;">
+                    <div class="preloader-wrapper big active">
+                        <div class="spinner-layer spinner-blue">
+                            <div class="circle-clipper left">
+                                <div class="circle"></div>
+                            </div>
+                            <div class="gap-patch">
+                                <div class="circle"></div>
+                            </div>
+                            <div class="circle-clipper right">
+                                <div class="circle"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 20px; color: #666;">데이터를 불러오는 중...</p>
+                </div>
+            `;
+            container.html(loadingHtml);
+        }
+    }
+
+    static hideDataLoading() {
+        $('.loading-state').remove();
+    }
+
+    static showDataError(message) {
+        const container = $('.assets-container, .desktop-table-container');
+        if (container.length) {
+            const errorHtml = `
+                <div class="error-state" style="text-align: center; padding: 40px;">
+                    <i class="material-icons" style="font-size: 64px; color: #f44336;">error_outline</i>
+                    <h5 style="color: #666; margin: 20px 0;">데이터 로드 실패</h5>
+                    <p style="color: #999; margin-bottom: 20px;">${message}</p>
+                    <button class="btn waves-effect waves-light red" onclick="location.reload()">
+                        <i class="material-icons left">refresh</i>새로고침
+                    </button>
+                </div>
+            `;
+            container.html(errorHtml);
+        }
+    }
 }
 
-// 기존 로드 함수들을 Archive Manager와 연동하도록 오버라이드
-function loadCashAssets() {
-    if (ArchiveManager.isArchiveMode()) {
+// loadCashAssets 함수 재정의 (Archive Manager와 연동)
+window.loadCashAssets = function() {
+    if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
         ArchiveManager.loadArchiveCashAssets();
-    } else {
+    } else if (typeof OriginalAssetAPI !== 'undefined' && OriginalAssetAPI.loadCashAssets) {
         OriginalAssetAPI.loadCashAssets();
+    } else {
+        console.error('OriginalAssetAPI.loadCashAssets is not available');
     }
-}
+};
 
-function loadInvestmentAssets() {
-    if (ArchiveManager.isArchiveMode()) {
+window.loadInvestmentAssets = function() {
+    if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
         ArchiveManager.loadArchiveInvestmentAssets();
-    } else {
+    } else if (typeof OriginalAssetAPI !== 'undefined' && OriginalAssetAPI.loadInvestmentAssets) {
         OriginalAssetAPI.loadInvestmentAssets();
-    }
-}
-
-function loadPensionAssets() {
-    if (ArchiveManager.isArchiveMode()) {
-        ArchiveManager.loadArchivePensionAssets();
     } else {
-        OriginalAssetAPI.loadPensionAssets();
+        console.error('OriginalAssetAPI.loadInvestmentAssets is not available');
     }
-}
+};
+
+window.loadPensionAssets = function() {
+    if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
+        ArchiveManager.loadArchivePensionAssets();
+    } else if (typeof OriginalAssetAPI !== 'undefined' && OriginalAssetAPI.loadPensionAssets) {
+        OriginalAssetAPI.loadPensionAssets();
+    } else {
+        console.error('OriginalAssetAPI.loadPensionAssets is not available');
+    }
+};
 
 // 페이지 로드 시 Archive Manager 초기화
 $(document).ready(function() {
