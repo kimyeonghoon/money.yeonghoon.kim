@@ -109,3 +109,45 @@ CREATE TABLE `prepaid_expenses` (
   PRIMARY KEY (`id`),
   KEY `idx_prepaid_expenses_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 월말 자산 현황 스냅샷 테이블
+DROP TABLE IF EXISTS `assets_monthly_snapshot`;
+CREATE TABLE `assets_monthly_snapshot` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `snapshot_month` date NOT NULL COMMENT '스냅샷 월 (YYYY-MM-01 형식)',
+  `asset_type` enum('현금성','투자','연금') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '자산 분류',
+  `total_amount` bigint NOT NULL DEFAULT '0' COMMENT '총 자산 금액(원)',
+  `total_count` int NOT NULL DEFAULT '0' COMMENT '자산 항목 수',
+  `cash_amount` bigint DEFAULT '0' COMMENT '현금성 자산 금액',
+  `savings_amount` bigint DEFAULT '0' COMMENT '저축성 자산 금액',
+  `investment_amount` bigint DEFAULT '0' COMMENT '투자성 자산 금액',
+  `pension_amount` bigint DEFAULT '0' COMMENT '연금 자산 금액',
+  `snapshot_created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '스냅샷 생성 시간',
+  `notes` text COLLATE utf8mb4_unicode_ci COMMENT '메모',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_snapshot_month_type` (`snapshot_month`,`asset_type`),
+  KEY `idx_snapshot_month` (`snapshot_month`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='월말 자산 현황 스냅샷';
+
+-- 월말 지출 집계 아카이브 테이블
+DROP TABLE IF EXISTS `expenses_monthly_summary`;
+CREATE TABLE `expenses_monthly_summary` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `summary_month` date NOT NULL COMMENT '집계 월 (YYYY-MM-01 형식)',
+  `total_expenses` bigint NOT NULL DEFAULT '0' COMMENT '월 총 지출 금액(원)',
+  `total_days` int NOT NULL DEFAULT '0' COMMENT '지출이 있었던 총 일수',
+  `avg_daily_expense` int NOT NULL DEFAULT '0' COMMENT '일평균 지출 금액(원)',
+  `food_total` bigint DEFAULT '0' COMMENT '식비 총액',
+  `necessities_total` bigint DEFAULT '0' COMMENT '생필품비 총액',
+  `transportation_total` bigint DEFAULT '0' COMMENT '교통비 총액',
+  `other_total` bigint DEFAULT '0' COMMENT '기타 총액',
+  `max_daily_expense` int DEFAULT '0' COMMENT '최대 일일 지출',
+  `max_expense_date` date DEFAULT NULL COMMENT '최대 지출 날짜',
+  `min_daily_expense` int DEFAULT '0' COMMENT '최소 일일 지출 (0 제외)',
+  `min_expense_date` date DEFAULT NULL COMMENT '최소 지출 날짜',
+  `snapshot_created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '집계 생성 시간',
+  `notes` text COLLATE utf8mb4_unicode_ci COMMENT '메모',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_summary_month` (`summary_month`),
+  KEY `idx_summary_month` (`summary_month`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='월말 지출 집계 아카이브';
