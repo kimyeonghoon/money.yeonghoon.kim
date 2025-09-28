@@ -373,6 +373,34 @@ include 'includes/header.php';
 </style>
 
     <main class="container">
+        <!-- 월별 아카이브 선택기 -->
+        <div class="section">
+            <div class="card">
+                <div class="card-content">
+                    <div class="row" style="margin-bottom: 0;">
+                        <div class="col s12 m6">
+                            <h6 style="margin: 8px 0;"><i class="material-icons left">date_range</i>조회 기간</h6>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="input-field" style="margin-top: 0;">
+                                <select id="month-selector" class="browser-default">
+                                    <option value="current" selected>현재 (실시간)</option>
+                                    <!-- 아카이브 월 목록은 JavaScript로 동적 로드 -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="archive-mode-notice" class="card-panel orange lighten-4" style="display:none; margin: 10px 0 0 0; padding: 10px;">
+                        <i class="material-icons left" style="margin-right: 8px;">archive</i>
+                        <span id="archive-notice-text">과거 데이터 조회 중 - 수정 시 아카이브가 업데이트됩니다</span>
+                        <button id="create-snapshot-btn" class="btn-small blue right" style="margin-top: -4px; display: none;">
+                            현재 데이터로 스냅샷 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="section">
             <div class="row">
                 <div class="col s12">
@@ -2548,6 +2576,255 @@ function showError(message) {
     $('#error-message .card-content p').text(message);
     $('#error-message').show();
 }
+
+// =================== 아카이브 관리 시스템 ===================
+
+// 기존 함수들 백업 (오리지널 보존)
+const OriginalAssetAPI = {
+    loadCashAssets: window.loadCashAssets,
+    loadInvestmentAssets: window.loadInvestmentAssets,
+    loadPensionAssets: window.loadPensionAssets
+};
+
+// Archive Manager 클래스
+class ArchiveManager {
+    static currentMode = 'current';
+    static selectedMonth = null;
+    static availableMonths = [];
+
+    // 초기화
+    static init() {
+        this.loadAvailableMonths();
+        this.setupEventHandlers();
+    }
+
+    // 아카이브 월 목록 로드
+    static loadAvailableMonths() {
+        $.ajax({
+            url: 'http://localhost:8080/api/archive/months',
+            method: 'GET',
+            success: (response) => {
+                if (response.success && response.data) {
+                    this.availableMonths = response.data;
+                    this.populateMonthSelector();
+                } else {
+                    console.log('아카이브 월 목록 로드 실패:', response.message);
+                }
+            },
+            error: (xhr, status, error) => {
+                console.log('아카이브 월 목록 로드 오류:', error);
+            }
+        });
+    }
+
+    // 월 선택기 옵션 추가
+    static populateMonthSelector() {
+        const selector = $('#month-selector');
+
+        // 기존 아카이브 옵션 제거 (current는 유지)
+        selector.find('option:not([value="current"])').remove();
+
+        // 아카이브 월 추가
+        this.availableMonths.forEach(month => {
+            selector.append(`<option value="${month.value}">${month.label}</option>`);
+        });
+    }
+
+    // 이벤트 핸들러 설정
+    static setupEventHandlers() {
+        // 월 선택기 변경 이벤트
+        $('#month-selector').on('change', (e) => {
+            const selectedValue = e.target.value;
+            this.switchMode(selectedValue);
+        });
+
+        // 스냅샷 생성 버튼
+        $('#create-snapshot-btn').on('click', () => {
+            this.createSnapshot();
+        });
+    }
+
+    // 모드 전환 (현재 vs 아카이브)
+    static switchMode(month) {
+        if (month === 'current') {
+            this.currentMode = 'current';
+            this.selectedMonth = null;
+            this.hideArchiveNotice();
+
+            // 원본 함수들로 데이터 로드
+            OriginalAssetAPI.loadCashAssets();
+            OriginalAssetAPI.loadInvestmentAssets();
+            OriginalAssetAPI.loadPensionAssets();
+
+        } else {
+            this.currentMode = 'archive';
+            this.selectedMonth = month;
+            this.showArchiveNotice(month);
+
+            // 아카이브 데이터 로드
+            this.loadArchiveData();
+        }
+    }
+
+    // 아카이브 알림 표시
+    static showArchiveNotice(month) {
+        const monthInfo = this.availableMonths.find(m => m.value === month);
+        const monthLabel = monthInfo ? monthInfo.label : month;
+
+        $('#archive-notice-text').text(`${monthLabel} 아카이브 데이터 조회 중 - 수정 시 아카이브가 업데이트됩니다`);
+        $('#archive-mode-notice').show();
+    }
+
+    // 아카이브 알림 숨기기
+    static hideArchiveNotice() {
+        $('#archive-mode-notice').hide();
+    }
+
+    // 아카이브 데이터 로드
+    static loadArchiveData() {
+        // 각 자산 유형별로 아카이브 데이터 로드
+        this.loadArchiveCashAssets();
+        this.loadArchiveInvestmentAssets();
+        this.loadArchivePensionAssets();
+    }
+
+    // API URL 생성
+    static getAPIUrl(endpoint) {
+        if (this.currentMode === 'current') {
+            return `http://localhost:8080/api/${endpoint}`;
+        } else {
+            return `http://localhost:8080/api/archive/${endpoint}?month=${this.selectedMonth}`;
+        }
+    }
+
+    // 아카이브 현금 자산 로드
+    static loadArchiveCashAssets() {
+        $.ajax({
+            url: this.getAPIUrl('cash-assets'),
+            method: 'GET',
+            success: (response) => {
+                if (response.success) {
+                    // 기존 함수와 동일한 형태로 데이터 전달
+                    const assets = response.data.data || response.data;
+                    updateCashAssetsTable(assets);
+                    updateTotalAssets();
+                } else {
+                    showError('현금 자산 아카이브 로드 실패: ' + response.message);
+                }
+            },
+            error: (xhr, status, error) => {
+                showError('현금 자산 아카이브 서버 연결 실패: ' + error);
+            }
+        });
+    }
+
+    // 아카이브 투자 자산 로드
+    static loadArchiveInvestmentAssets() {
+        $.ajax({
+            url: this.getAPIUrl('investment-assets'),
+            method: 'GET',
+            success: (response) => {
+                if (response.success) {
+                    const assets = response.data.data || response.data;
+                    updateInvestmentAssetsTable(assets);
+                    updateTotalAssets();
+                } else {
+                    console.error('투자 자산 아카이브 로드 실패:', response.message);
+                }
+            },
+            error: (xhr, status, error) => {
+                console.error('투자 자산 아카이브 서버 연결 실패:', error);
+            }
+        });
+    }
+
+    // 아카이브 연금 자산 로드
+    static loadArchivePensionAssets() {
+        $.ajax({
+            url: this.getAPIUrl('pension-assets'),
+            method: 'GET',
+            success: (response) => {
+                if (response.success) {
+                    const assets = response.data.data || response.data;
+                    updatePensionAssetsTable(assets);
+                    updateTotalAssets();
+                } else {
+                    console.error('연금 자산 아카이브 로드 실패:', response.message);
+                }
+            },
+            error: (xhr, status, error) => {
+                console.error('연금 자산 아카이브 서버 연결 실패:', error);
+            }
+        });
+    }
+
+    // 스냅샷 생성
+    static createSnapshot() {
+        const currentDate = new Date();
+        const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+        $.ajax({
+            url: `http://localhost:8080/api/archive/create-snapshot?month=${month}`,
+            method: 'POST',
+            success: (response) => {
+                if (response.success) {
+                    M.toast({html: '현재 데이터로 스냅샷이 생성되었습니다', classes: 'green'});
+                    // 월 목록 새로고침
+                    this.loadAvailableMonths();
+                } else {
+                    M.toast({html: '스냅샷 생성 실패: ' + response.message, classes: 'red'});
+                }
+            },
+            error: (xhr, status, error) => {
+                M.toast({html: '스냅샷 생성 오류: ' + error, classes: 'red'});
+            }
+        });
+    }
+
+    // 현재 모드 확인
+    static isArchiveMode() {
+        return this.currentMode === 'archive';
+    }
+
+    // 현재 선택된 월 반환
+    static getCurrentMonth() {
+        return this.selectedMonth;
+    }
+}
+
+// 기존 로드 함수들을 Archive Manager와 연동하도록 오버라이드
+function loadCashAssets() {
+    if (ArchiveManager.isArchiveMode()) {
+        ArchiveManager.loadArchiveCashAssets();
+    } else {
+        OriginalAssetAPI.loadCashAssets();
+    }
+}
+
+function loadInvestmentAssets() {
+    if (ArchiveManager.isArchiveMode()) {
+        ArchiveManager.loadArchiveInvestmentAssets();
+    } else {
+        OriginalAssetAPI.loadInvestmentAssets();
+    }
+}
+
+function loadPensionAssets() {
+    if (ArchiveManager.isArchiveMode()) {
+        ArchiveManager.loadArchivePensionAssets();
+    } else {
+        OriginalAssetAPI.loadPensionAssets();
+    }
+}
+
+// 페이지 로드 시 Archive Manager 초기화
+$(document).ready(function() {
+    // 기존 초기화가 완료된 후 Archive Manager 초기화
+    setTimeout(() => {
+        ArchiveManager.init();
+    }, 100);
+});
+
 </script>
 
 <?php include 'includes/footer.php'; ?>
