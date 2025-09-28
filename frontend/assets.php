@@ -1102,18 +1102,23 @@ function loadInvestmentAssets() {
 }
 
 function loadPensionAssets() {
+    console.log('[DEBUG] 연금자산 로딩 함수 호출됨');
     $.ajax({
         url: 'http://localhost:8080/api/pension-assets',
         method: 'GET',
         success: function(response) {
+            console.log('[DEBUG] 연금자산 API 응답:', response);
             if (response.success) {
-                updatePensionAssetsTable(response.data.data || response.data);
+                console.log('[DEBUG] 연금자산 데이터:', response.data);
+                updatePensionAssetsTable(response.data);
             } else {
                 console.error('연금자산 데이터 로드 실패: ' + response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.error('연금자산 서버 연결 실패: ' + error);
+            console.error('[DEBUG] 연금자산 서버 연결 실패:', error);
+            console.error('[DEBUG] XHR 상태:', xhr.status);
+            console.error('[DEBUG] 응답 텍스트:', xhr.responseText);
         }
     });
 }
@@ -3030,17 +3035,25 @@ const OriginalAssetAPI = {
     },
 
     loadPensionAssets: function() {
+        console.log('[DEBUG] OriginalAssetAPI.loadPensionAssets() 호출됨');
         $.ajax({
             url: 'http://localhost:8080/api/pension-assets',
             method: 'GET',
             success: function(response) {
+                console.log('[DEBUG] OriginalAssetAPI 연금자산 API 응답:', response);
                 if (response.success) {
-                    updatePensionAssetsTable(response.data.data);
+                    console.log('[DEBUG] 연금자산 response.data:', response.data);
+                    console.log('[DEBUG] 연금자산 response.data.data:', response.data.data);
+                    // 올바른 데이터 구조 사용 (연금자산은 response.data에 직접 배열)
+                    const data = response.data.data || response.data;
+                    console.log('[DEBUG] 연금자산 최종 전달 데이터:', data);
+                    updatePensionAssetsTable(data);
                 } else {
                     showError('연금 자산 데이터 로드 실패: ' + response.message);
                 }
             },
             error: function(xhr, status, error) {
+                console.error('[DEBUG] 연금자산 서버 연결 실패:', error);
                 showError('연금 자산 서버 연결 실패: ' + error);
             }
         });
