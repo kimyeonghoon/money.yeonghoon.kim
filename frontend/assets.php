@@ -893,6 +893,59 @@ include 'includes/header.php';
         </div>
     </div>
 
+    <!-- 투자자산 편집 모달 -->
+    <div id="edit-investment-modal" class="modal modal-fixed-footer">
+        <div class="modal-content">
+            <h4><i class="material-icons left">edit</i>투자자산 편집</h4>
+            <div class="row">
+                <form id="edit-investment-form" class="col s12">
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <select id="edit-investment-type">
+                                <option value="저축">💰 저축</option>
+                                <option value="주식">📈 주식</option>
+                                <option value="ETF">📊 ETF</option>
+                                <option value="펀드">🏦 펀드</option>
+                                <option value="채권">📋 채권</option>
+                                <option value="리츠">🏢 리츠</option>
+                                <option value="혼합">🔀 혼합</option>
+                            </select>
+                            <label>투자유형 *</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="edit-investment-account" type="text" maxlength="100">
+                            <label for="edit-investment-account">계좌명</label>
+                            <span class="helper-text">예: KB증권, 미래에셋 등</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="edit-investment-item-name" type="text" maxlength="200" required>
+                            <label for="edit-investment-item-name">종목명 *</label>
+                            <span class="helper-text">예: KODEX 나스닥100, 삼성전자 등</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="edit-investment-balance" type="number" min="0" step="1000" required>
+                            <label for="edit-investment-balance">현재가치 *</label>
+                            <span class="helper-text">현재 평가금액 (원 단위)</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="delete-investment-asset" class="btn waves-effect waves-light red left">
+                <i class="material-icons left">delete</i>삭제
+            </button>
+            <button class="modal-close waves-effect waves-light btn-flat">취소</button>
+            <button id="save-investment-edit" class="btn waves-effect waves-light purple">
+                <i class="material-icons left">save</i>저장
+            </button>
+        </div>
+    </div>
+
 <script>
 $(document).ready(function() {
     // 모달 초기화
@@ -901,11 +954,13 @@ $(document).ready(function() {
     M.Modal.init(document.getElementById('add-investment-modal'));
     M.Modal.init(document.getElementById('add-pension-modal'));
     M.Modal.init(document.getElementById('edit-pension-modal'));
+    M.Modal.init(document.getElementById('edit-investment-modal'));
 
     // Select 초기화
     M.FormSelect.init(document.getElementById('add-investment-type'));
     M.FormSelect.init(document.getElementById('add-pension-type'));
     M.FormSelect.init(document.getElementById('edit-pension-type'));
+    M.FormSelect.init(document.getElementById('edit-investment-type'));
 
     // 저장 버튼 이벤트 핸들러
     $('#save-edit').on('click', function() {
@@ -919,17 +974,25 @@ $(document).ready(function() {
 
     // 투자자산 추가 버튼 이벤트 핸들러
     $('#save-investment-add').on('click', function() {
+        console.log('[DEBUG] 투자자산 추가 버튼 클릭됨');
         saveNewInvestmentAsset();
     });
 
     // 연금자산 추가 버튼 이벤트 핸들러
     $('#save-pension-add').on('click', function() {
+        console.log('[DEBUG] 연금자산 추가 버튼 클릭됨');
         saveNewPensionAsset();
     });
 
     // 연금자산 편집 저장 버튼 이벤트 핸들러
     $('#save-pension-edit').on('click', function() {
         saveEditedPensionAsset();
+    });
+
+    // 투자자산 편집 저장 버튼 이벤트 핸들러
+    $('#save-investment-edit').on('click', function() {
+        console.log('[DEBUG] 투자자산 편집 저장 버튼 클릭됨');
+        saveEditedInvestmentAsset();
     });
 
     // 자산 삭제 버튼 이벤트 핸들러
@@ -940,6 +1003,12 @@ $(document).ready(function() {
     // 연금자산 삭제 버튼 이벤트 핸들러
     $('#delete-pension-asset').on('click', function() {
         deletePensionAsset();
+    });
+
+    // 투자자산 삭제 버튼 이벤트 핸들러
+    $('#delete-investment-asset').on('click', function() {
+        console.log('[DEBUG] 투자자산 삭제 버튼 클릭됨');
+        deleteInvestmentAsset();
     });
 
     // 순서 변경 토글 버튼 이벤트 핸들러
@@ -955,6 +1024,15 @@ $(document).ready(function() {
     // 연금자산 순서 변경 토글 버튼 이벤트 핸들러
     $('#pension-reorder-toggle').on('click', function() {
         togglePensionReorderMode();
+    });
+
+    // 모달 트리거 디버깅
+    $('[data-target="add-investment-modal"]').on('click', function() {
+        console.log('[DEBUG] 투자자산 추가 모달 트리거 클릭됨');
+    });
+
+    $('[data-target="add-pension-modal"]').on('click', function() {
+        console.log('[DEBUG] 연금자산 추가 모달 트리거 클릭됨');
     });
 
     loadCashAssets();
@@ -982,18 +1060,43 @@ function loadCashAssets() {
 }
 
 function loadInvestmentAssets() {
+    console.log('[DEBUG] loadInvestmentAssets() 호출됨');
     $.ajax({
         url: 'http://localhost:8080/api/investment-assets',
         method: 'GET',
         success: function(response) {
+            console.log('[DEBUG] 투자자산 로드 API 응답:', response);
             if (response.success) {
-                updateInvestmentAssetsTable(response.data.data || response.data);
+                console.log('[DEBUG] API 응답 구조 분석:');
+                console.log('[DEBUG] response.data:', response.data);
+                console.log('[DEBUG] response.data.data:', response.data.data);
+
+                let data;
+                if (response.data && Array.isArray(response.data.data)) {
+                    data = response.data.data;
+                    console.log('[DEBUG] response.data.data 사용');
+                } else if (response.data && Array.isArray(response.data)) {
+                    data = response.data;
+                    console.log('[DEBUG] response.data 사용');
+                } else if (Array.isArray(response)) {
+                    data = response;
+                    console.log('[DEBUG] response 직접 사용');
+                } else {
+                    data = [];
+                    console.log('[DEBUG] 데이터 구조를 파악할 수 없어 빈 배열 사용');
+                }
+
+                console.log('[DEBUG] 최종 추출된 투자자산 데이터:', data);
+                console.log('[DEBUG] 데이터 타입:', typeof data, '배열 여부:', Array.isArray(data));
+                console.log('[DEBUG] updateInvestmentAssetsTable 호출 시작');
+                updateInvestmentAssetsTable(data);
+                console.log('[DEBUG] updateInvestmentAssetsTable 호출 완료');
             } else {
                 console.error('투자 자산 데이터 로드 실패: ' + response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.error('투자 자산 서버 연결 실패: ' + error);
+            console.error('[DEBUG] 투자 자산 서버 연결 실패: ' + error);
         }
     });
 }
@@ -1150,8 +1253,12 @@ function updatePensionAssetsTable(assets) {
 }
 
 function updateInvestmentAssetsTable(assets) {
+    console.log('[DEBUG] updateInvestmentAssetsTable() 호출됨, assets:', assets);
+
     let tbody = $('#investment-assets-detail-table');
     let cardsContainer = $('#investment-assets-detail-cards');
+
+    console.log('[DEBUG] tbody 요소:', tbody.length, 'cardsContainer 요소:', cardsContainer.length);
 
     tbody.empty();
     cardsContainer.empty();
@@ -1162,16 +1269,21 @@ function updateInvestmentAssetsTable(assets) {
     let totalBalance = 0;
 
     if (!assets || assets.length === 0) {
+        console.log('[DEBUG] 투자자산 데이터가 비어있음');
         tbody.append('<tr><td colspan="5" class="center-align">저축 + 투자 자산이 없습니다.</td></tr>');
         cardsContainer.append('<div class="center-align">저축 + 투자 자산이 없습니다.</div>');
         return;
     }
 
+    console.log('[DEBUG] 투자자산 개수:', assets.length);
+
     // 자산 목록 표시 (테이블과 카드 모두)
-    assets.forEach(function(asset) {
+    assets.forEach(function(asset, index) {
+        console.log('[DEBUG] 투자자산 처리 중:', index, asset);
         // current_value가 있으면 투자자산, balance가 있으면 저축자산으로 처리
         let assetBalance = parseInt(asset.current_value || asset.balance || 0);
         totalBalance += assetBalance;
+        console.log('[DEBUG] 자산 잔액:', assetBalance);
 
         // 구분 매핑: category -> 구분
         let assetType = asset.category || asset.type || '저축';
@@ -1201,7 +1313,9 @@ function updateInvestmentAssetsTable(assets) {
                      '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.percentage || 0) + '%</td>' +
                      '</tr>');
+        console.log('[DEBUG] 테이블 행 생성:', $row);
         tbody.append($row);
+        console.log('[DEBUG] 테이블 행 추가 완료, 현재 tbody 자식 수:', tbody.children().length);
 
         // 카드 생성 (모바일용)
         let $card = $('<div class="asset-card" data-asset-id="' + asset.id + '" ' +
@@ -1230,8 +1344,12 @@ function updateInvestmentAssetsTable(assets) {
                           '<div class="asset-card-percentage">' + (asset.percentage || 0) + '%</div>' +
                       '</div>' +
                       '</div>');
+        console.log('[DEBUG] 카드 생성:', $card);
         cardsContainer.append($card);
+        console.log('[DEBUG] 카드 추가 완료, 현재 cardsContainer 자식 수:', cardsContainer.children().length);
     });
+
+    console.log('[DEBUG] 모든 투자자산 처리 완료, 총 잔액:', totalBalance);
 
     // 총합 행 추가 (테이블만)
     let totalRow = '<tr style="background-color: #f5f5f5; font-weight: bold;">' +
@@ -1262,6 +1380,9 @@ function updateInvestmentAssetsTable(assets) {
 
     // 더블클릭/롱프레스 이벤트 리스너 업데이트
     setupRowEditing();
+
+    // 투자자산 더블클릭/롱프레스 이벤트 리스너 추가
+    setupInvestmentRowEditing();
 
     // 총자산현황 업데이트
     updateTotalAssets();
@@ -1603,6 +1724,73 @@ function setupRowEditing() {
     });
 }
 
+function setupInvestmentRowEditing() {
+    let longPressTimer;
+    let isLongPress = false;
+
+    // 테이블 행과 카드 모두에서 이벤트 제거
+    $('#investment-assets-detail-table .asset-row, #investment-assets-detail-cards .asset-card').off('dblclick touchstart touchend touchmove');
+
+    // 데스크톱: 더블클릭 이벤트 (테이블 행)
+    $('#investment-assets-detail-table').off('dblclick', '.asset-row').on('dblclick', '.asset-row', function(e) {
+        // 잔액 셀은 제외 (인라인 편집 우선)
+        if (!$(e.target).hasClass('balance-cell')) {
+            console.log('[DEBUG] 투자자산 테이블 행 더블클릭됨');
+            openInvestmentEditModal($(this));
+        }
+    });
+
+    // 모바일: 카드 롱프레스 이벤트
+    $('#investment-assets-detail-cards').off('touchstart', '.asset-card').on('touchstart', '.asset-card', function(e) {
+        const $this = $(this);
+        isLongPress = false;
+
+        longPressTimer = setTimeout(function() {
+            isLongPress = true;
+            console.log('[DEBUG] 투자자산 카드 롱프레스됨');
+            openInvestmentEditModal($this);
+        }, 800);
+    });
+
+    $('#investment-assets-detail-cards').off('touchend', '.asset-card').on('touchend', '.asset-card', function() {
+        clearTimeout(longPressTimer);
+        if (!isLongPress) {
+            // 일반 터치 처리 (필요시)
+        }
+    });
+
+    $('#investment-assets-detail-cards').off('touchmove', '.asset-card').on('touchmove', '.asset-card', function() {
+        clearTimeout(longPressTimer);
+    });
+}
+
+function openInvestmentEditModal($row) {
+    const assetId = $row.data('asset-id');
+    const category = $row.data('type');
+    const account = $row.data('account');
+    const itemName = $row.data('item-name');
+    const balance = $row.data('balance');
+
+    console.log('[DEBUG] 투자자산 편집 모달 열기:', {assetId, category, account, itemName, balance});
+
+    // 모달 폼에 데이터 채우기
+    $('#edit-investment-type').val(category);
+    $('#edit-investment-account').val(account);
+    $('#edit-investment-item-name').val(itemName);
+    $('#edit-investment-balance').val(balance);
+
+    // 모달 데이터 저장
+    $('#edit-investment-modal').data('asset-id', assetId);
+
+    // Materialize 컴포넌트 업데이트
+    M.updateTextFields();
+    M.FormSelect.init(document.getElementById('edit-investment-type'));
+
+    // 모달 열기
+    const modal = M.Modal.getInstance(document.getElementById('edit-investment-modal'));
+    modal.open();
+}
+
 function openEditModal($row) {
     const assetId = $row.data('asset-id');
     const account = $row.data('account');
@@ -1896,6 +2084,8 @@ function updatePensionAssetValue(assetId, field, newValue, cell) {
 }
 
 function saveNewPensionAsset() {
+    console.log('[DEBUG] saveNewPensionAsset() 호출됨');
+
     const formData = {
         type: $('#add-pension-type').val(),
         account_name: $('#add-pension-account').val() || '-',
@@ -1904,11 +2094,16 @@ function saveNewPensionAsset() {
         deposit_amount: parseInt($('#add-pension-deposit-amount').val()) || 0
     };
 
+    console.log('[DEBUG] 연금자산 폼 데이터:', formData);
+
     // 간단한 클라이언트 검증
     if (!formData.type || !formData.item_name.trim()) {
+        console.log('[DEBUG] 유효성 검사 실패 - type:', formData.type, 'item_name:', formData.item_name);
         M.toast({html: '연금유형과 종목명을 입력해주세요.', classes: 'red'});
         return;
     }
+
+    console.log('[DEBUG] 유효성 검사 통과, API 호출 시작');
 
     // API 호출
     $.ajax({
@@ -1916,8 +2111,15 @@ function saveNewPensionAsset() {
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(formData),
+        beforeSend: function() {
+            console.log('[DEBUG] 연금자산 API 호출 시작, URL: http://localhost:8080/api/pension-assets');
+            console.log('[DEBUG] 전송 데이터:', JSON.stringify(formData));
+        },
         success: function(response) {
+            console.log('[DEBUG] 연금자산 API 응답 성공:', response);
             if (response.success) {
+                console.log('[DEBUG] 연금자산 추가 성공, 모달 닫기 시작');
+
                 // 모달 닫기
                 const modal = M.Modal.getInstance(document.getElementById('add-pension-modal'));
                 modal.close();
@@ -1931,20 +2133,25 @@ function saveNewPensionAsset() {
                 M.toast({html: '새 연금자산이 추가되었습니다.', classes: 'green'});
 
                 // 테이블 새로고침
+                console.log('[DEBUG] 연금자산 테이블 새로고침 시작');
                 setTimeout(function() {
                     loadPensionAssets();
                 }, 500);
             } else {
+                console.log('[DEBUG] 연금자산 추가 실패:', response.message);
                 M.toast({html: '추가 실패: ' + response.message, classes: 'red'});
             }
         },
         error: function(xhr, status, error) {
+            console.log('[DEBUG] 연금자산 API 오류 발생 - status:', status, 'error:', error, 'xhr:', xhr);
             M.toast({html: '추가 중 오류 발생: ' + error, classes: 'red'});
         }
     });
 }
 
 function saveNewInvestmentAsset() {
+    console.log('[DEBUG] saveNewInvestmentAsset() 호출됨');
+
     const currentValue = parseInt($('#add-investment-balance').val()) || 0;
     const formData = {
         category: $('#add-investment-type').val(),
@@ -1954,11 +2161,16 @@ function saveNewInvestmentAsset() {
         deposit_amount: currentValue // 투자원금을 현재가치와 동일하게 설정
     };
 
+    console.log('[DEBUG] 투자자산 폼 데이터:', formData);
+
     // 간단한 클라이언트 검증
     if (!formData.category || !formData.item_name.trim()) {
+        console.log('[DEBUG] 유효성 검사 실패 - category:', formData.category, 'item_name:', formData.item_name);
         M.toast({html: '투자유형과 종목명을 입력해주세요.', classes: 'red'});
         return;
     }
+
+    console.log('[DEBUG] 유효성 검사 통과, API 호출 시작');
 
     // API 호출
     $.ajax({
@@ -1966,8 +2178,15 @@ function saveNewInvestmentAsset() {
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(formData),
+        beforeSend: function() {
+            console.log('[DEBUG] 투자자산 API 호출 시작, URL: http://localhost:8080/api/investment-assets');
+            console.log('[DEBUG] 전송 데이터:', JSON.stringify(formData));
+        },
         success: function(response) {
+            console.log('[DEBUG] 투자자산 API 응답 성공:', response);
             if (response.success) {
+                console.log('[DEBUG] 투자자산 추가 성공, 모달 닫기 시작');
+
                 // 모달 닫기
                 const modal = M.Modal.getInstance(document.getElementById('add-investment-modal'));
                 modal.close();
@@ -1981,14 +2200,25 @@ function saveNewInvestmentAsset() {
                 M.toast({html: '새 투자자산이 추가되었습니다.', classes: 'green'});
 
                 // 테이블 새로고침
+                console.log('[DEBUG] 투자자산 테이블 새로고침 시작');
+
+                // 즉시 새로고침 시도
+                console.log('[DEBUG] 즉시 loadInvestmentAssets 호출 시도');
+                loadInvestmentAssets();
+
                 setTimeout(function() {
+                    console.log('[DEBUG] setTimeout 콜백 실행됨');
+                    console.log('[DEBUG] loadInvestmentAssets 함수 타입:', typeof loadInvestmentAssets);
+                    console.log('[DEBUG] loadInvestmentAssets 함수:', loadInvestmentAssets);
                     loadInvestmentAssets();
                 }, 500);
             } else {
+                console.log('[DEBUG] 투자자산 추가 실패:', response.message);
                 M.toast({html: '추가 실패: ' + response.message, classes: 'red'});
             }
         },
         error: function(xhr, status, error) {
+            console.log('[DEBUG] 투자자산 API 오류 발생 - status:', status, 'error:', error, 'xhr:', xhr);
             M.toast({html: '추가 중 오류 발생: ' + error, classes: 'red'});
         }
     });
@@ -2509,6 +2739,99 @@ function deletePensionAsset() {
     });
 }
 
+// 투자자산 편집 저장 함수
+function saveEditedInvestmentAsset() {
+    console.log('[DEBUG] saveEditedInvestmentAsset() 호출됨');
+
+    const assetId = $('#edit-investment-modal').data('asset-id');
+    const formData = {
+        category: $('#edit-investment-type').val(),
+        account_name: $('#edit-investment-account').val() || '투자계좌',
+        item_name: $('#edit-investment-item-name').val(),
+        current_value: parseInt($('#edit-investment-balance').val()) || 0
+    };
+
+    console.log('[DEBUG] 투자자산 편집 데이터:', {assetId, formData});
+
+    // 간단한 클라이언트 검증
+    if (!formData.category || !formData.item_name.trim()) {
+        M.toast({html: '투자유형과 종목명을 입력해주세요.', classes: 'red'});
+        return;
+    }
+
+    // deposit_amount는 current_value와 동일하게 설정
+    formData.deposit_amount = formData.current_value;
+
+    $.ajax({
+        url: 'http://localhost:8080/api/investment-assets/' + assetId,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            console.log('[DEBUG] 투자자산 편집 API 응답:', response);
+            if (response.success) {
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('edit-investment-modal'));
+                modal.close();
+
+                // 성공 메시지
+                M.toast({html: '투자자산이 수정되었습니다.', classes: 'green'});
+
+                // 테이블 새로고침
+                setTimeout(function() {
+                    loadInvestmentAssets();
+                }, 500);
+            } else {
+                M.toast({html: '수정 실패: ' + response.message, classes: 'red'});
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('[DEBUG] 투자자산 편집 오류:', {xhr, status, error});
+            M.toast({html: '수정 중 오류 발생: ' + error, classes: 'red'});
+        }
+    });
+}
+
+// 투자자산 삭제 함수
+function deleteInvestmentAsset() {
+    console.log('[DEBUG] deleteInvestmentAsset() 호출됨');
+
+    const assetId = $('#edit-investment-modal').data('asset-id');
+
+    if (!confirm('이 투자자산을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        return;
+    }
+
+    console.log('[DEBUG] 투자자산 삭제 요청:', assetId);
+
+    $.ajax({
+        url: 'http://localhost:8080/api/investment-assets/' + assetId,
+        method: 'DELETE',
+        success: function(response) {
+            console.log('[DEBUG] 투자자산 삭제 API 응답:', response);
+            if (response.success) {
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('edit-investment-modal'));
+                modal.close();
+
+                // 성공 메시지
+                M.toast({html: '투자자산이 삭제되었습니다.', classes: 'green'});
+
+                // 테이블 새로고침
+                setTimeout(function() {
+                    loadInvestmentAssets();
+                }, 500);
+            } else {
+                M.toast({html: '삭제 실패: ' + response.message, classes: 'red'});
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('[DEBUG] 투자자산 삭제 오류:', {xhr, status, error});
+            M.toast({html: '삭제 중 오류 발생: ' + error, classes: 'red'});
+        }
+    });
+}
+
 // 총자산현황 업데이트 함수
 function updateTotalAssets() {
     let cashTotal = 0;
@@ -2681,12 +3004,21 @@ const OriginalAssetAPI = {
     },
 
     loadInvestmentAssets: function() {
+        console.log('[DEBUG] OriginalAssetAPI.loadInvestmentAssets() 호출됨');
         $.ajax({
             url: 'http://localhost:8080/api/investment-assets',
             method: 'GET',
             success: function(response) {
+                console.log('[DEBUG] OriginalAssetAPI 투자자산 API 응답:', response);
                 if (response.success) {
-                    updateInvestmentAssetsTable(response.data.data);
+                    console.log('[DEBUG] response.data:', response.data);
+                    console.log('[DEBUG] response.data.data:', response.data.data);
+                    console.log('[DEBUG] 전달할 데이터 타입:', typeof response.data.data, '배열 여부:', Array.isArray(response.data.data));
+
+                    // 올바른 데이터 구조 사용
+                    const data = response.data.data || response.data;
+                    console.log('[DEBUG] 최종 전달 데이터:', data);
+                    updateInvestmentAssetsTable(data);
                 } else {
                     showError('투자 자산 데이터 로드 실패: ' + response.message);
                 }
@@ -2799,21 +3131,21 @@ class ArchiveManager {
             this.selectedMonth = null;
             this.hideArchiveNotice();
 
-            // 로딩 표시
-            this.showDataLoading();
-
+            // 현재 모드로 돌아갈 때는 로딩 화면 표시하지 않고 바로 데이터 로드
             try {
                 // 원본 함수들로 데이터 로드
                 OriginalAssetAPI.loadCashAssets();
                 OriginalAssetAPI.loadInvestmentAssets();
                 OriginalAssetAPI.loadPensionAssets();
 
-                // 로딩 상태 숨김 (데이터 로드 완료 후)
+                // 데이터 로드 완료 후 총계 업데이트
                 setTimeout(() => {
-                    this.hideDataLoading();
+                    // 총계 업데이트
+                    if (typeof updateTotalAssets === 'function') {
+                        updateTotalAssets();
+                    }
                 }, 500);
             } catch (error) {
-                this.hideDataLoading();
                 this.showDataError('현재 데이터 로드 중 오류가 발생했습니다');
                 console.error('현재 데이터 로드 오류:', error);
             }
@@ -3021,7 +3353,9 @@ class ArchiveManager {
         const selector = $('#month-selector');
         if (selector.length) {
             selector.prop('disabled', true);
-            selector.html('<option>로딩 중...</option>');
+            // 기존 옵션을 유지하고 로딩 상태만 표시
+            selector.find('option:not([value="current"])').remove();
+            selector.append('<option disabled>로딩 중...</option>');
         }
     }
 
@@ -3029,13 +3363,17 @@ class ArchiveManager {
         const selector = $('#month-selector');
         if (selector.length) {
             selector.prop('disabled', false);
+            // 로딩 옵션 제거
+            selector.find('option:disabled').remove();
         }
     }
 
     static showMonthSelectorError(message) {
         const selector = $('#month-selector');
         if (selector.length) {
-            selector.html(`<option value="">오류: ${message}</option>`);
+            // 현재 옵션은 유지하고 오류 옵션만 추가
+            selector.find('option:not([value="current"])').remove();
+            selector.append(`<option disabled>오류: ${message}</option>`);
             // 사용자에게 토스트 메시지로도 알림
             if (typeof M !== 'undefined' && M.toast) {
                 M.toast({
