@@ -29,18 +29,6 @@
     <link rel="icon" type="image/gif" href="/img/money.gif">
 </head>
 <body>
-    <!-- Header Section -->
-    <div class="header-content">
-        <div class="container">
-            <div class="row">
-                <div class="col s12 center-align">
-                    <h1 class="brand-logo">개인 자산관리</h1>
-                    <p class="brand-subtitle">스마트한 재무 관리 도구</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Navigation -->
     <nav>
         <div class="nav-wrapper">
@@ -50,10 +38,10 @@
                     <i class="material-icons left">dashboard</i>자산현황
                 </a></li>
                 <li><a href="/expense-status.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-status.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">account_balance_wallet</i>지출현황
+                    <i class="material-icons left">account_balance_wallet</i>고정지출
                 </a></li>
                 <li><a href="/expense-records.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-records.php') ? 'active' : ''; ?>">
-                    <i class="material-icons left">receipt</i>일간지출내역
+                    <i class="material-icons left">receipt</i>변동지출
                 </a></li>
             </ul>
         </div>

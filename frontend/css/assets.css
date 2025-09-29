@@ -1,0 +1,410 @@
+/* 자산현황 페이지 스타일 */
+
+/* 인라인 편집 스타일 */
+.balance-cell.editable:hover {
+    background-color: #e3f2fd !important;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.balance-cell.editable {
+    position: relative;
+}
+
+.balance-cell.editable::after {
+    content: "✏️";
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.balance-cell.editable:hover::after {
+    opacity: 0.7;
+}
+
+/* 모바일 카드에서 잔액 컨테이너 우측 공간 확보 */
+.asset-card-balance.balance-cell.editable {
+    padding-right: 0;
+    text-align: right;
+    position: relative;
+    display: block;
+}
+
+.balance-input {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.section-header .section-title {
+    margin: 0;
+    flex: 1;
+}
+
+.section-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* 월 선택기 모바일 최적화 */
+@media only screen and (max-width: 600px) {
+    .month-selector-row {
+        flex-direction: column !important;
+        gap: 10px;
+    }
+
+    .month-selector-title {
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .month-selector-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    #month-selector {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    #create-snapshot-btn {
+        font-size: 11px;
+        padding: 8px 12px;
+        white-space: nowrap;
+    }
+
+    #archive-mode-notice {
+        margin: 15px 0 0 0 !important;
+        padding: 12px !important;
+        font-size: 14px;
+    }
+
+    #archive-mode-notice .material-icons {
+        font-size: 18px !important;
+    }
+}
+
+/* 모바일에서 section-header 최적화 */
+@media only screen and (max-width: 600px) {
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .section-header .section-title {
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .section-header-actions {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .section-header .btn-small {
+        font-size: 12px;
+        padding: 8px 16px;
+        min-height: 40px;
+        white-space: nowrap;
+        border-radius: 20px;
+    }
+
+    .section-header .btn-floating {
+        width: 40px;
+        height: 40px;
+        transform: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .section-header .btn-floating .material-icons {
+        font-size: 20px;
+        line-height: 1;
+        margin: 0;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .section-header .section-title {
+        font-size: 16px;
+    }
+
+    .section-header-actions {
+        gap: 8px;
+    }
+
+    .section-header .btn-small {
+        font-size: 11px;
+        padding: 6px 14px;
+        min-height: 36px;
+        white-space: nowrap;
+        border-radius: 18px;
+    }
+
+    .section-header .btn-floating {
+        width: 40px;
+        height: 40px;
+        transform: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .section-header .btn-floating .material-icons {
+        font-size: 20px;
+        line-height: 1;
+        margin: 0;
+    }
+
+    /* 모바일에서 버튼 텍스트 숨기기 */
+    .section-header .btn-small .button-text {
+        display: none;
+    }
+
+    .section-header .btn-small {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .section-header .btn-small .material-icons {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1;
+    }
+}
+
+.asset-row {
+    transition: background-color 0.2s ease;
+    user-select: none;
+    cursor: pointer;
+}
+
+.asset-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.asset-row.long-press-active {
+    background-color: #e3f2fd !important;
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* 드래그 앤 드롭 스타일 */
+.sortable-enabled .asset-row {
+    cursor: move;
+    cursor: grab;
+}
+
+.sortable-enabled .asset-row:active {
+    cursor: grabbing;
+}
+
+/* 일반 모드에서는 pointer 커서 */
+.asset-row:not(.sortable-enabled) {
+    cursor: pointer !important;
+}
+
+.ui-sortable-helper {
+    background-color: #fff3e0 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transform: rotate(2deg);
+}
+
+.ui-sortable-placeholder {
+    background-color: #f5f5f5 !important;
+    border: 2px dashed #ccc !important;
+    height: 50px;
+    visibility: visible !important;
+}
+
+.drag-handle {
+    color: #999;
+    cursor: grab;
+    padding: 5px;
+    display: inline-block;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.sortable-enabled .drag-handle {
+    opacity: 1;
+}
+
+.drag-handle:hover {
+    color: #666;
+    opacity: 1;
+}
+
+.reorder-toggle {
+    margin-left: 10px;
+}
+
+/* 반응형 디스플레이 */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+}
+
+/* 모바일 카드 스타일 */
+.asset-card {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #2196F3;
+    transition: all 0.3s ease;
+    user-select: none;
+    cursor: pointer;
+}
+
+.asset-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.asset-card.long-press-active {
+    background-color: #e3f2fd !important;
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.sortable-enabled .asset-card {
+    cursor: move;
+    cursor: grab;
+}
+
+.sortable-enabled .asset-card:active {
+    cursor: grabbing;
+}
+
+/* 일반 모드에서는 pointer 커서 */
+.asset-card:not(.sortable-enabled) {
+    cursor: pointer !important;
+}
+
+.asset-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 8px;
+}
+
+.asset-card-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #2196F3;
+}
+
+.asset-card-type {
+    background: #f5f5f5;
+    color: #666;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+.asset-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.asset-card-row:last-child {
+    margin-bottom: 0;
+}
+
+.asset-card-label {
+    color: #666;
+    font-size: 0.9em;
+    min-width: 60px;
+}
+
+.asset-card-value {
+    color: #333;
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+}
+
+.asset-card-balance {
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 1.1em;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    text-align: right;
+}
+
+.asset-card-balance:hover {
+    background-color: #f0f8f0;
+}
+
+.asset-card-percentage {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.mobile-drag-handle {
+    color: #999;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    display: none;
+}
+
+.sortable-enabled .mobile-drag-handle {
+    display: block;
+    opacity: 1;
+}
+
+@keyframes pulse {
+    0% { background-color: #e3f2fd; }
+    50% { background-color: #bbdefb; }
+    100% { background-color: #e3f2fd; }
+}
+
+.row-hint {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    margin-top: 5px;
+    font-style: italic;
+}

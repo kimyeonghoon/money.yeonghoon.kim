@@ -1,0 +1,232 @@
+/* 일간지출내역 페이지 스타일 */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.section-header .section-title {
+    margin: 0;
+    flex: 1;
+}
+
+.section-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* 모바일에서 section-header 최적화 */
+@media only screen and (max-width: 600px) {
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .section-header .section-title {
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .section-header-actions {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .section-header .btn-floating {
+        width: 40px;
+        height: 40px;
+        transform: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .section-header .btn-floating .material-icons {
+        font-size: 20px;
+        line-height: 1;
+        margin: 0;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .section-header .section-title {
+        font-size: 16px;
+    }
+
+    .section-header-actions {
+        gap: 8px;
+    }
+
+    .section-header .btn-floating {
+        width: 40px;
+        height: 40px;
+        transform: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .section-header .btn-floating .material-icons {
+        font-size: 20px;
+        line-height: 1;
+        margin: 0;
+    }
+}
+
+/* 달력 스타일 */
+.expense-calendar {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #f5f5f5;
+}
+
+.calendar-day-header {
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: bold;
+    color: #424242;
+    border-right: 1px solid #e0e0e0;
+}
+
+.calendar-day-header:last-child {
+    border-right: none;
+}
+
+.calendar-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+    min-height: 80px;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px;
+    position: relative;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+}
+
+.calendar-day.other-month {
+    background-color: #fafafa;
+    color: #bdbdbd;
+}
+
+.calendar-day.today {
+    background-color: #e3f2fd;
+    border: 2px solid #2196F3;
+}
+
+.calendar-day.has-expense {
+    background-color: #fff3e0;
+}
+
+.calendar-day:nth-child(7n) {
+    border-right: none;
+}
+
+.calendar-day-number {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.calendar-expense-amount {
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 10px;
+    color: white;
+    margin-top: 4px;
+}
+
+.calendar-expense-amount.low {
+    background-color: #4caf50;
+}
+
+.calendar-expense-amount.medium {
+    background-color: #ff9800;
+}
+
+.calendar-expense-amount.high {
+    background-color: #f44336;
+}
+
+.calendar-expense-detail {
+    font-size: 9px;
+    color: #666;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+/* 모바일 달력 최적화 */
+@media only screen and (max-width: 600px) {
+    .calendar-day {
+        min-height: 60px;
+        padding: 4px;
+    }
+
+    .calendar-day-number {
+        font-size: 12px;
+    }
+
+    .calendar-expense-amount {
+        font-size: 9px;
+        padding: 1px 3px;
+    }
+
+    .calendar-expense-detail {
+        font-size: 8px;
+    }
+
+    #current-month-display {
+        font-size: 14px;
+        margin: 0 8px !important;
+    }
+
+    .section-header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .calendar-day {
+        min-height: 50px;
+        padding: 2px;
+    }
+
+    .calendar-day-number {
+        font-size: 11px;
+    }
+
+    .calendar-expense-amount {
+        font-size: 8px;
+        padding: 1px 2px;
+    }
+
+    .calendar-expense-detail {
+        display: none; /* 아주 작은 화면에서는 세부사항 숨김 */
+    }
+}
