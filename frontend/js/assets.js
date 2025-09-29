@@ -1,17 +1,56 @@
-$(document).ready(function() {
-    // 모달 초기화
-    M.Modal.init(document.getElementById('edit-modal'));
-    M.Modal.init(document.getElementById('add-asset-modal'));
-    M.Modal.init(document.getElementById('add-investment-modal'));
-    M.Modal.init(document.getElementById('add-pension-modal'));
-    M.Modal.init(document.getElementById('edit-pension-modal'));
-    M.Modal.init(document.getElementById('edit-investment-modal'));
+/**
+ * 자산현황 페이지 JavaScript - 머니매니저 시스템
+ *
+ * 자산 관리 메인 페이지의 모든 인터랙티브 기능을 담당하는 핵심 스크립트입니다.
+ * 현금, 투자, 연금 자산의 CRUD 작업과 UI 상호작용을 처리합니다.
+ *
+ * 주요 기능:
+ * - 자산 데이터 로드 및 표시 (실시간/아카이브)
+ * - 자산 추가/수정/삭제 (모달 기반 CRUD)
+ * - 인라인 편집 (잔액 직접 수정)
+ * - 드래그 앤 드롭 순서 변경
+ * - 모바일 친화적 카드 레이아웃
+ * - 아카이브 모드 전환
+ * - 실시간 총액 및 비율 계산
+ * - 에러 처리 및 사용자 피드백
+ *
+ * 아키텍처:
+ * - RESTful API 통신 (fetch API 사용)
+ * - 반응형 UI (모바일/데스크톱 대응)
+ * - 상태 관리 (전역 변수 및 로컬 스토리지)
+ * - 이벤트 기반 프로그래밍
+ *
+ * 의존성:
+ * - jQuery 3.6.0+
+ * - Materialize CSS 1.0.0+
+ * - SortableJS (드래그 앤 드롭)
+ * - 백엔드 API 서버
+ *
+ * @package MoneyManager
+ * @version 1.0
+ * @author YeongHoon Kim
+ */
 
-    // Select 초기화
-    M.FormSelect.init(document.getElementById('add-investment-type'));
-    M.FormSelect.init(document.getElementById('add-pension-type'));
-    M.FormSelect.init(document.getElementById('edit-pension-type'));
-    M.FormSelect.init(document.getElementById('edit-investment-type'));
+// DOM 준비 완료시 실행
+$(document).ready(function() {
+
+    /* ================================
+       Materialize CSS 컴포넌트 초기화
+       ================================ */
+
+    // 모달 컴포넌트 초기화
+    M.Modal.init(document.getElementById('edit-modal'));              // 현금자산 편집 모달
+    M.Modal.init(document.getElementById('add-asset-modal'));         // 현금자산 추가 모달
+    M.Modal.init(document.getElementById('add-investment-modal'));    // 투자자산 추가 모달
+    M.Modal.init(document.getElementById('add-pension-modal'));       // 연금자산 추가 모달
+    M.Modal.init(document.getElementById('edit-pension-modal'));      // 연금자산 편집 모달
+    M.Modal.init(document.getElementById('edit-investment-modal'));   // 투자자산 편집 모달
+
+    // 셀렉트 박스 컴포넌트 초기화
+    M.FormSelect.init(document.getElementById('add-investment-type'));  // 투자자산 타입 선택
+    M.FormSelect.init(document.getElementById('add-pension-type'));     // 연금자산 타입 선택
+    M.FormSelect.init(document.getElementById('edit-pension-type'));    // 연금자산 편집시 타입 선택
+    M.FormSelect.init(document.getElementById('edit-investment-type')); // 투자자산 편집시 타입 선택
 
     // 저장 버튼 이벤트 핸들러
     $('#save-edit').on('click', function() {

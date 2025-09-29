@@ -36,7 +36,7 @@ include 'includes/header.php';
             <div class="col s12">
                 <div class="card">
                     <div class="card-content">
-                        <h5 class="section-title center-align" style="margin-bottom: 20px;">💰 월간 지출현황</h5>
+                        <h5 class="section-title center-align" style="margin-bottom: 20px;">💰 월간 고정지출현황</h5>
                         <div class="row">
                             <div class="col s12 m4">
                                 <div class="center-align">
@@ -52,7 +52,7 @@ include 'includes/header.php';
                             </div>
                             <div class="col s12 m4">
                                 <div class="center-align">
-                                    <h6 style="color: #FF5722; margin: 0;">총 월간지출</h6>
+                                    <h6 style="color: #FF5722; margin: 0;">총 고정지출</h6>
                                     <span id="total-monthly-expenses" style="font-size: 20px; font-weight: bold; color: #FF5722;">₩0</span>
                                 </div>
                             </div>

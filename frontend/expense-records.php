@@ -43,7 +43,7 @@ include 'includes/header.php';
                 <div class="card">
                     <div class="card-content">
                         <div class="section-header">
-                            <h5 class="section-title">📝 일간지출 기록</h5>
+                            <h5 class="section-title">📝 금일 지출 추가</h5>
                             <div class="section-header-actions">
                                 <button id="add-expense-btn" class="btn-floating waves-effect waves-light green">
                                     <i class="material-icons">add</i>
@@ -62,7 +62,7 @@ include 'includes/header.php';
                 <div class="card">
                     <div class="card-content">
                         <div class="section-header">
-                            <h5 class="section-title">📅 월간 지출 달력</h5>
+                            <h5 class="section-title">📅 월간 지출 기록</h5>
                             <div class="section-header-actions">
                                 <button id="prev-month-btn" class="btn-floating waves-effect waves-light blue">
                                     <i class="material-icons">chevron_left</i>

@@ -1,19 +1,57 @@
 <?php
+/**
+ * 현금성 자산 컨트롤러 - 머니매니저 시스템
+ *
+ * 현금성 자산(은행 계좌, 현금, 외화 등)의 CRUD 작업을 처리하는 컨트롤러입니다.
+ * BaseController를 상속받아 공통 기능을 활용하고, CashAsset 모델과 연동됩니다.
+ *
+ * 지원 기능:
+ * - 현금 자산 목록 조회 (페이지네이션 지원)
+ * - 개별 현금 자산 상세 조회
+ * - 새 현금 자산 생성
+ * - 기존 현금 자산 수정 (전체/부분 업데이트)
+ * - 현금 자산 삭제 (소프트 삭제)
+ * - 자산 순서 변경 (드래그 앤 드롭 지원)
+ * - 데이터 검증 및 오류 처리
+ *
+ * @package MoneyManager\Controllers
+ * @extends BaseController
+ * @version 1.0
+ * @author YeongHoon Kim
+ */
 
-require_once __DIR__ . '/BaseController.php';
-require_once __DIR__ . '/../models/CashAsset.php';
-require_once __DIR__ . '/../lib/Validator.php';
+// 필수 의존성 로드
+require_once __DIR__ . '/BaseController.php';     // 기본 컨트롤러 클래스
+require_once __DIR__ . '/../models/CashAsset.php'; // 현금 자산 모델
+require_once __DIR__ . '/../lib/Validator.php';    // 데이터 검증 라이브러리
 
 class CashAssetController extends BaseController {
 
+    /**
+     * 생성자 - CashAsset 모델을 사용하여 BaseController 초기화
+     */
     public function __construct() {
         parent::__construct(new CashAsset());
     }
 
+    /**
+     * 새 데이터 생성시 검증 로직
+     *
+     * @param array $data 검증할 데이터
+     * @param int|null $id 항목 ID (생성시에는 null)
+     * @return array 검증 결과 (is_valid, errors)
+     */
     protected function validateData($data, $id = null) {
         return Validator::validateCashAsset($data, false);
     }
 
+    /**
+     * 부분 업데이트시 검증 로직
+     *
+     * @param array $data 검증할 데이터
+     * @param int|null $id 항목 ID
+     * @return array 검증 결과 (is_valid, errors)
+     */
     protected function validateDataForPartialUpdate($data, $id = null) {
         return Validator::validateCashAsset($data, true);
     }

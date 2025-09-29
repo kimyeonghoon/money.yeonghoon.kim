@@ -1,3 +1,46 @@
+-- =====================================
+-- 머니매니저 데이터베이스 스키마
+-- =====================================
+--
+-- 개인 자산관리 웹 애플리케이션의 전체 데이터베이스 구조를 정의합니다.
+-- 현금, 투자, 연금 자산 관리와 지출 추적, 아카이브 시스템을 지원합니다.
+--
+-- 주요 테이블 그룹:
+-- 1. 자산 관리 테이블
+--    - cash_assets: 현금성 자산 (은행 계좌, 현금 등)
+--    - investment_assets: 투자 자산 (주식, 펀드, ISA 등)
+--    - pension_assets: 연금 자산 (연금저축, 퇴직연금 등)
+--
+-- 2. 지출 관리 테이블
+--    - daily_expenses: 일간 지출 내역
+--    - fixed_expenses: 고정 지출 (월세, 공과금 등)
+--    - prepaid_expenses: 선납 지출 (보험료 등)
+--
+-- 3. 아카이브 시스템
+--    - monthly_archives: 월별 아카이브 기본 정보
+--    - *_archive: 각 자산/지출의 아카이브 데이터
+--    - archive_summary_cache: 아카이브 요약 정보 캐시
+--
+-- 4. 시스템 관리 테이블
+--    - user_sessions: 세션 기반 인증
+--    - assets_monthly_snapshot: 월별 자산 스냅샷
+--    - expenses_monthly_summary: 월별 지출 요약
+--
+-- 데이터베이스 특징:
+-- - UTF-8 완전 지원 (utf8mb4, 이모지 포함)
+-- - 소프트 삭제 지원 (deleted_at 컬럼)
+-- - 자동 타임스탬프 (created_at, updated_at)
+-- - 외래키 제약조건으로 데이터 무결성 보장
+-- - 성능 최적화 인덱스
+-- - 계산된 컬럼으로 실시간 집계
+--
+-- @database money_management
+-- @charset utf8mb4
+-- @collation utf8mb4_unicode_ci
+-- @engine InnoDB
+-- @version 1.0
+-- @author YeongHoon Kim
+--
 -- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
 --
 -- Host: localhost    Database: money_management
@@ -58,7 +101,26 @@ CREATE TABLE `assets_archive_data` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `cash_assets`
+-- =====================================
+-- 현금성 자산 테이블 (cash_assets)
+-- =====================================
+--
+-- 사용자의 현금성 자산을 관리하는 핵심 테이블입니다.
+-- 은행 계좌, 현금, 외화 등 유동성이 높은 자산을 추적합니다.
+--
+-- 주요 기능:
+-- - 자산 유형별 분류 (현금/통장)
+-- - 계좌별 잔액 관리
+-- - 드래그 앤 드롭 순서 변경 (display_order)
+-- - 소프트 삭제 지원 (deleted_at)
+-- - 자동 타임스탬프 (created_at, updated_at)
+--
+-- 인덱스 최적화:
+-- - 활성 자산 조회 (deleted_at IS NULL)
+-- - 순서 정렬 (display_order)
+--
+-- 관련 테이블:
+-- - cash_assets_archive: 월별 아카이브 데이터
 --
 
 DROP TABLE IF EXISTS `cash_assets`;

@@ -1,4 +1,27 @@
 <?php
+/**
+ * 데이터베이스 연결 관리 클래스 - 머니매니저 시스템
+ *
+ * 싱글톤 패턴을 사용하여 MySQL 데이터베이스 연결을 관리합니다.
+ * PDO를 활용한 안전한 데이터베이스 접근과 쿼리 실행을 제공합니다.
+ *
+ * 주요 기능:
+ * - 싱글톤 패턴으로 연결 관리
+ * - 환경변수 기반 설정
+ * - PDO Prepared Statement 지원
+ * - 자동 에러 처리
+ * - UTF-8 문자셋 지원
+ * - 트랜잭션 지원
+ *
+ * 보안 기능:
+ * - SQL 인젝션 방지 (Prepared Statements)
+ * - 에러 정보 보호
+ * - 연결 풀링 최적화
+ *
+ * @package MoneyManager\Lib
+ * @version 1.0
+ * @author YeongHoon Kim
+ */
 
 class Database {
     private static $instance = null;

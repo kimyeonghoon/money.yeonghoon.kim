@@ -1,30 +1,53 @@
-/* 자산현황 페이지 스타일 */
+/**
+ * 자산현황 페이지 전용 스타일시트
+ *
+ * 현금, 투자, 연금 자산을 관리하는 메인 대시보드의 스타일을 정의합니다.
+ * 모바일 친화적인 반응형 디자인과 인터랙티브 기능을 지원합니다.
+ *
+ * 주요 기능:
+ * - 인라인 편집 (잔액 직접 수정)
+ * - 드래그 앤 드롭 순서 변경
+ * - 모바일 카드 레이아웃
+ * - 아카이브 모드 UI
+ * - 로딩 및 에러 상태 표시
+ *
+ * @package MoneyManager
+ * @version 1.0
+ * @author YeongHoon Kim
+ */
 
-/* 인라인 편집 스타일 */
+/* ================================
+   인라인 편집 기능
+   ================================ */
+
+/* 편집 가능한 잔액 셀 호버 효과 */
 .balance-cell.editable:hover {
-    background-color: #e3f2fd !important;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+    background-color: #e3f2fd !important;  /* 연한 파란색 배경 */
+    border-radius: 4px;                     /* 둥근 모서리 */
+    transition: background-color 0.2s ease; /* 부드러운 전환 효과 */
 }
 
+/* 편집 가능한 잔액 셀 기본 스타일 */
 .balance-cell.editable {
-    position: relative;
+    position: relative;  /* 편집 아이콘 위치 기준점 */
 }
 
+/* 편집 아이콘 (평상시 숨김) */
 .balance-cell.editable::after {
-    content: "✏️";
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    position: absolute;
-    right: -20px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
+    content: "✏️";                          /* 연필 이모지 */
+    font-size: 12px;                        /* 작은 크기 */
+    opacity: 0;                             /* 기본적으로 숨김 */
+    transition: opacity 0.2s ease;          /* 부드러운 나타남/사라짐 */
+    position: absolute;                     /* 절대 위치 */
+    right: -20px;                           /* 셀 오른쪽에 배치 */
+    top: 50%;                               /* 세로 중앙 */
+    transform: translateY(-50%);            /* 정확한 세로 중앙 정렬 */
+    pointer-events: none;                   /* 마우스 이벤트 차단 */
 }
 
+/* 호버시 편집 아이콘 표시 */
 .balance-cell.editable:hover::after {
-    opacity: 0.7;
+    opacity: 0.7;  /* 반투명하게 표시 */
 }
 
 /* 모바일 카드에서 잔액 컨테이너 우측 공간 확보 */
