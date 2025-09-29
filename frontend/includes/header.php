@@ -1,3 +1,11 @@
+<?php
+require_once __DIR__ . '/../lib/Auth.php';
+
+// 인증 확인 (로그인 페이지가 아닌 경우)
+if (basename($_SERVER['PHP_SELF']) !== 'login.php') {
+    Auth::requireAuth();
+}
+?>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -33,7 +41,7 @@
     <nav>
         <div class="nav-wrapper">
             <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-            <ul class="hide-on-med-and-down">
+            <ul class="left hide-on-med-and-down">
                 <li><a href="/assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'assets.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">dashboard</i>자산현황
                 </a></li>
@@ -44,6 +52,11 @@
                     <i class="material-icons left">receipt</i>변동지출
                 </a></li>
             </ul>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="#" onclick="logout()" title="로그아웃">
+                    <i class="material-icons left">exit_to_app</i><?php echo Auth::getUser()['email'] ?? '사용자'; ?>
+                </a></li>
+            </ul>
         </div>
     </nav>
 
@@ -52,6 +65,8 @@
         <li><a href="/assets.php"><i class="material-icons">dashboard</i>자산현황</a></li>
         <li><a href="/expense-status.php"><i class="material-icons">account_balance_wallet</i>지출현황</a></li>
         <li><a href="/expense-records.php"><i class="material-icons">receipt</i>일간지출내역</a></li>
+        <li><div class="divider"></div></li>
+        <li><a href="#" onclick="logout()"><i class="material-icons">exit_to_app</i>로그아웃</a></li>
     </ul>
 
     <!-- Bottom Navigation (Mobile) -->

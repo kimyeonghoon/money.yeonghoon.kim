@@ -92,6 +92,9 @@ function loadDailyExpenses() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 displayDailyExpenses(response.data);
@@ -164,6 +167,9 @@ function ensureMissingExpensesExist() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 const existingDates = response.data.map(expense => expense.expense_date);
@@ -202,6 +208,9 @@ function createMissingExpenses(dates) {
         $.ajax({
             url: 'http://localhost:8080/api/daily-expenses',
             type: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
             contentType: 'application/json',
             data: JSON.stringify({
                 expense_date: date,
@@ -276,6 +285,9 @@ function updateExpenseStatistics() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/statistics',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         data: {
             today: todayStr,
             week_start: weekStartStr,
@@ -301,6 +313,9 @@ function openEditDailyExpenseModal(expenseId) {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/' + expenseId,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 const expense = response.data;
@@ -355,6 +370,9 @@ function saveEditedDailyExpense() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/' + expenseId,
         type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
@@ -427,6 +445,9 @@ function saveAddedExpense() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/add-today',
         type: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify({
             expense_date: today,
@@ -488,6 +509,9 @@ function loadMonthlyExpenses() {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/by-month',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         data: {
             year: currentCalendarYear,
             month: currentCalendarMonth + 1, // API는 1-based month 사용
@@ -603,6 +627,9 @@ function openEditDailyExpenseByDate(date) {
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/by-date',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         data: { date: date },
         success: function(response) {
             if (response.success && response.data) {

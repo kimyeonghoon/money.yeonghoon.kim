@@ -6,6 +6,14 @@ $(document).ready(function() {
 
     // Initialize sidenav
     $('.sidenav').sidenav();
+
+    // AJAX 전역 설정 - 모든 요청에 쿠키 포함
+    $.ajaxSetup({
+        xhrFields: {
+            withCredentials: true
+        },
+        crossDomain: true
+    });
 });
 
 
@@ -21,6 +29,23 @@ window.formatDate = function(dateStr) {
     return date.getFullYear() + '-' +
            String(date.getMonth() + 1).padStart(2, '0') + '-' +
            String(date.getDate()).padStart(2, '0');
+};
+
+// 로그아웃 함수
+window.logout = function() {
+    if (confirm('정말 로그아웃 하시겠습니까?')) {
+        $.post({
+            url: '/logout.php',
+            xhrFields: {
+                withCredentials: true
+            }
+        }).done(function() {
+            window.location.href = '/login.php';
+        }).fail(function() {
+            // POST 실패해도 로그아웃 페이지로 이동
+            window.location.href = '/logout.php';
+        });
+    }
 };
 
 </script>

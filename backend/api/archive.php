@@ -2,9 +2,10 @@
 // Archive API 엔드포인트
 // 기존 API를 방해하지 않는 새로운 아카이브 전용 엔드포인트
 
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: http://localhost:3001');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json; charset=utf-8');
 
 // Preflight 요청 처리
@@ -14,6 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../controllers/ArchiveController.php';
+require_once '../lib/Auth.php';
+
+// API 인증 확인
+Auth::requireApiAuth();
 
 try {
     $controller = new ArchiveController();

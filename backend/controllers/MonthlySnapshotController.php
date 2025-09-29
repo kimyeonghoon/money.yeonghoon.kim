@@ -11,6 +11,7 @@ class MonthlySnapshotController extends BaseController {
     private $expensesModel;
 
     public function __construct() {
+        parent::__construct(null); // BaseController 인증 체크 먼저 실행
         $this->assetsModel = new AssetsMonthlySnapshot();
         $this->expensesModel = new ExpensesMonthlySummary();
     }

@@ -120,6 +120,9 @@ function loadAvailableArchiveMonths() {
     $.ajax({
         url: 'http://localhost:8080/api/expense-archive/available-months',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         timeout: 10000,
         success: function(response) {
             if (response.success && response.data) {
@@ -237,6 +240,9 @@ function loadFixedExpenses() {
     $.ajax({
         url: url,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 displayFixedExpenses(response.data);
@@ -356,6 +362,9 @@ function saveNewFixedExpense() {
     $.ajax({
         url: getAPIUrl('fixed-expenses'),
         type: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
@@ -398,6 +407,9 @@ function openEditExpenseModal(expenseId) {
     $.ajax({
         url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 const expense = response.data;
@@ -468,6 +480,9 @@ function saveEditedFixedExpense() {
     $.ajax({
         url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
@@ -508,6 +523,9 @@ function deleteFixedExpense() {
     $.ajax({
         url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'DELETE',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 showMessage('고정지출이 삭제되었습니다.', 'success');
@@ -542,6 +560,9 @@ function loadPrepaidExpenses() {
     $.ajax({
         url: url,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 displayPrepaidExpenses(response.data);
@@ -655,6 +676,9 @@ function saveNewPrepaidExpense() {
     $.ajax({
         url: getAPIUrl('prepaid-expenses'),
         type: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
@@ -685,6 +709,9 @@ function openEditPrepaidExpenseModal(expenseId) {
     $.ajax({
         url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 const expense = response.data;
@@ -755,6 +782,9 @@ function saveEditedPrepaidExpense() {
     $.ajax({
         url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
@@ -794,6 +824,9 @@ function deletePrepaidExpense() {
     $.ajax({
         url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'DELETE',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(response) {
             if (response.success) {
                 showMessage('선납지출이 삭제되었습니다.', 'success');
