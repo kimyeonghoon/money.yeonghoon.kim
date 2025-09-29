@@ -42,6 +42,8 @@ $pageTitle = '로그인';
 
     <!-- Custom CSS for overrides -->
     <link rel="stylesheet" href="/css/material-custom.css">
+    <!-- Login Page CSS -->
+    <link rel="stylesheet" href="/css/login.css">
 
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -50,110 +52,6 @@ $pageTitle = '로그인';
 
     <!-- 파비콘 -->
     <link rel="icon" type="image/gif" href="/img/money.gif">
-
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
-            max-width: 400px;
-            width: 90%;
-            margin: 20px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header h4 {
-            color: #333;
-            margin: 10px 0;
-            font-weight: 300;
-        }
-
-        .login-icon {
-            font-size: 48px !important;
-            color: #2196F3;
-            margin-bottom: 10px;
-        }
-
-        .input-field input:focus + label {
-            color: #2196F3 !important;
-        }
-
-        .input-field input:focus {
-            border-bottom: 2px solid #2196F3 !important;
-            box-shadow: 0 1px 0 0 #2196F3 !important;
-        }
-
-        .btn-login {
-            background: linear-gradient(45deg, #2196F3, #21CBF3);
-            width: 100%;
-            border-radius: 25px;
-            padding: 12px 0;
-            margin-top: 20px;
-            font-weight: 500;
-            text-transform: none;
-            font-size: 16px;
-        }
-
-        .btn-login:hover {
-            background: linear-gradient(45deg, #1976D2, #0097A7);
-        }
-
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #f44336;
-            font-size: 14px;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .login-container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
-
-            .login-header h4 {
-                font-size: 22px;
-            }
-
-            .login-icon {
-                font-size: 40px !important;
-            }
-        }
-
-        .app-info {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .loading {
-            display: none;
-        }
-
-        .loading .btn-login {
-            background-color: #ccc !important;
-            cursor: not-allowed;
-        }
-    </style>
 </head>
 <body>
     <div class="login-container">
@@ -207,44 +105,7 @@ $pageTitle = '로그인';
         </div>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            // Materialize 초기화
-            M.updateTextFields();
-
-            // 로그인 폼 제출 처리
-            $('#login-form').on('submit', function(e) {
-                const email = $('#email').val();
-                const password = $('#password').val();
-
-                if (!email || !password) {
-                    M.toast({html: '이메일과 비밀번호를 입력해주세요.', classes: 'red'});
-                    e.preventDefault();
-                    return;
-                }
-
-                // 로딩 상태 표시
-                $('#login-btn').addClass('loading');
-                $('.btn-text').text('로그인 중...');
-                $('.loading').show();
-            });
-
-            // 엔터키로 로그인
-            $('#password').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#login-form').submit();
-                }
-            });
-
-            // 입력 필드 포커스 효과
-            $('#email, #password').on('focus', function() {
-                $(this).parent().addClass('focused');
-            }).on('blur', function() {
-                if (!$(this).val()) {
-                    $(this).parent().removeClass('focused');
-                }
-            });
-        });
-    </script>
+    <!-- Login Page JavaScript -->
+    <script src="/js/login.js"></script>
 </body>
 </html>
