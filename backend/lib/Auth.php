@@ -79,31 +79,51 @@ class Auth {
         $envEmail = getenv('LOGIN_USERNAME');
         $envPasswordHash = getenv('LOGIN_PASSWORD_HASH');
 
+        // 보안 로그용 정보 수집
+        $clientIP = self::getSessionManager()->getUserIP();
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+
         if (!$envEmail || !$envPasswordHash) {
+            self::logSecurityEvent('LOGIN_CONFIG_ERROR', $email, $clientIP, 'Missing environment configuration');
             return false;
         }
 
         // 이메일 확인
         if ($email !== $envEmail) {
+            self::logSecurityEvent('LOGIN_FAILED', $email, $clientIP, 'Invalid email: ' . $email);
             return false;
         }
 
-        // 비밀번호 해시 확인 (SHA-512)
-        $inputPasswordHash = hash('sha512', $password);
-        if ($inputPasswordHash !== $envPasswordHash) {
-            return false;
+        // 비밀번호 해시 확인 (password_verify 사용)
+        // 기존 SHA-512 방식과 새로운 password_hash 방식 모두 지원
+        if (strlen($envPasswordHash) === 128) {
+            // 기존 SHA-512 해시인 경우 (하위 호환성)
+            $inputPasswordHash = hash('sha512', $password);
+            if (!hash_equals($inputPasswordHash, $envPasswordHash)) {
+                self::logSecurityEvent('LOGIN_FAILED', $email, $clientIP, 'Invalid password (SHA-512)');
+                return false;
+            }
+        } else {
+            // 새로운 password_hash 방식
+            if (!password_verify($password, $envPasswordHash)) {
+                self::logSecurityEvent('LOGIN_FAILED', $email, $clientIP, 'Invalid password (password_hash)');
+                return false;
+            }
         }
 
         // 로그인 성공 - 새 세션 생성
         $sessionManager = self::getSessionManager();
         $sessionData = [
             'login_time' => time(),
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-            'ip_address' => $sessionManager->getUserIP()
+            'user_agent' => $userAgent,
+            'ip_address' => $clientIP
         ];
 
         $sessionId = $sessionManager->createSession($email, $sessionData);
         self::setSessionCookie($sessionId);
+
+        // 성공 로그 기록
+        self::logSecurityEvent('LOGIN_SUCCESS', $email, $clientIP, 'Login successful');
 
         // 텔레그램 알림 전송
         self::sendTelegramNotification($email);
@@ -116,9 +136,16 @@ class Auth {
      */
     public static function logout() {
         $sessionId = self::getCurrentSessionId();
+        $user = self::getUser();
+
         if ($sessionId) {
             $sessionManager = self::getSessionManager();
             $sessionManager->invalidateSession($sessionId);
+
+            // 로그아웃 이벤트 로깅
+            if ($user) {
+                self::logSecurityEvent('LOGOUT', $user['email'], $sessionManager->getUserIP(), 'User logout');
+            }
         }
 
         self::clearSessionCookie();
@@ -162,6 +189,10 @@ class Auth {
      */
     public static function requireApiAuth() {
         if (!self::isAuthenticated()) {
+            // API 인증 실패 로깅
+            $sessionManager = self::getSessionManager();
+            self::logSecurityEvent('API_AUTH_FAILED', 'unknown', $sessionManager->getUserIP(), 'Unauthorized API access attempt: ' . $_SERVER['REQUEST_URI']);
+
             http_response_code(401);
             header('Content-Type: application/json');
             echo json_encode([
@@ -257,5 +288,30 @@ class Auth {
         ]);
 
         @file_get_contents($url, false, $context);
+    }
+
+    /**
+     * 보안 이벤트 로깅
+     */
+    private static function logSecurityEvent($eventType, $email, $ipAddress, $details) {
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = sprintf(
+            "[%s] SECURITY_EVENT: %s | Email: %s | IP: %s | Details: %s | UserAgent: %s",
+            $timestamp,
+            $eventType,
+            $email,
+            $ipAddress,
+            $details,
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        );
+
+        // PHP 에러 로그에 기록
+        error_log($logMessage);
+
+        // 선택적: 별도 보안 로그 파일에도 기록
+        if (defined('SECURITY_LOG_PATH')) {
+            $logFile = SECURITY_LOG_PATH . '/security.log';
+            @file_put_contents($logFile, $logMessage . PHP_EOL, FILE_APPEND | LOCK_EX);
+        }
     }
 }

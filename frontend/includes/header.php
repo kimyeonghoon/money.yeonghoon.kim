@@ -1,8 +1,32 @@
 <?php
 require_once __DIR__ . '/../lib/Auth.php';
 
+/**
+ * 안전한 페이지 이름 검증 함수
+ */
+function getSafeCurrentPage() {
+    $allowedPages = [
+        'assets.php',
+        'expense-status.php',
+        'expense-records.php',
+        'login.php',
+        'cash-assets.php',
+        'investment-assets.php',
+        'pension-assets.php',
+        'daily-expenses.php',
+        'fixed-expenses.php',
+        'prepaid-expenses.php',
+        'dashboard.php'
+    ];
+
+    $currentPage = basename($_SERVER['PHP_SELF']);
+    return in_array($currentPage, $allowedPages, true) ? $currentPage : 'unknown.php';
+}
+
+$currentPage = getSafeCurrentPage();
+
 // 인증 확인 (로그인 페이지가 아닌 경우)
-if (basename($_SERVER['PHP_SELF']) !== 'login.php') {
+if ($currentPage !== 'login.php') {
     Auth::requireAuth();
 }
 ?>
@@ -42,13 +66,13 @@ if (basename($_SERVER['PHP_SELF']) !== 'login.php') {
         <div class="nav-wrapper">
             <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul class="left hide-on-med-and-down">
-                <li><a href="/assets.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'assets.php') ? 'active' : ''; ?>">
+                <li><a href="/assets.php" class="<?php echo ($currentPage == 'assets.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">dashboard</i>자산현황
                 </a></li>
-                <li><a href="/expense-status.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-status.php') ? 'active' : ''; ?>">
+                <li><a href="/expense-status.php" class="<?php echo ($currentPage == 'expense-status.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">account_balance_wallet</i>고정지출
                 </a></li>
-                <li><a href="/expense-records.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'expense-records.php') ? 'active' : ''; ?>">
+                <li><a href="/expense-records.php" class="<?php echo ($currentPage == 'expense-records.php') ? 'active' : ''; ?>">
                     <i class="material-icons left">receipt</i>변동지출
                 </a></li>
             </ul>
@@ -71,15 +95,15 @@ if (basename($_SERVER['PHP_SELF']) !== 'login.php') {
 
     <!-- Bottom Navigation (Mobile) -->
     <nav class="bottom-nav">
-        <a href="/assets.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'assets.php') ? 'active' : ''; ?>">
+        <a href="/assets.php" class="bottom-nav-item <?php echo ($currentPage == 'assets.php') ? 'active' : ''; ?>">
             <i class="material-icons">dashboard</i>
             <span>자산</span>
         </a>
-        <a href="/expense-status.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'expense-status.php') ? 'active' : ''; ?>">
+        <a href="/expense-status.php" class="bottom-nav-item <?php echo ($currentPage == 'expense-status.php') ? 'active' : ''; ?>">
             <i class="material-icons">account_balance_wallet</i>
             <span>지출</span>
         </a>
-        <a href="/expense-records.php" class="bottom-nav-item <?php echo (basename($_SERVER['PHP_SELF']) == 'expense-records.php') ? 'active' : ''; ?>">
+        <a href="/expense-records.php" class="bottom-nav-item <?php echo ($currentPage == 'expense-records.php') ? 'active' : ''; ?>">
             <i class="material-icons">receipt</i>
             <span>기록</span>
         </a>
