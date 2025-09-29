@@ -33,6 +33,7 @@ composer.lock
 # MySQL
 *.sql.backup
 *.sql.bak
+all_dump.sql
 
 # Temporary files
 *.tmp
