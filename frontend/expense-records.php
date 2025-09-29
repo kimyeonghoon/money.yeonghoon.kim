@@ -237,14 +237,7 @@ include 'includes/header.php';
 </style>
 
 <main class="container">
-    <div class="section">
-        <div class="row">
-            <div class="col s12">
-                <h4 class="section-title"><i class="material-icons left">receipt</i>일간지출내역</h4>
-            </div>
-        </div>
-
-        <!-- 일간 지출현황 -->
+    <!-- 일간 지출현황 -->
         <div class="row">
             <div class="col s12">
                 <div class="card">
@@ -289,31 +282,6 @@ include 'includes/header.php';
                             </div>
                         </div>
 
-                        <!-- 데스크톱용 테이블 -->
-                        <div class="responsive-table hide-on-small-only">
-                            <table class="striped">
-                                <thead>
-                                    <tr>
-                                        <th>날짜</th>
-                                        <th>총 지출</th>
-                                        <th>식비</th>
-                                        <th>생필품</th>
-                                        <th>교통비</th>
-                                        <th>기타</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="daily-expenses-table">
-                                    <tr>
-                                        <td colspan="6" class="center-align">데이터를 불러오는 중...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- 모바일용 카드 -->
-                        <div class="hide-on-med-and-up" id="daily-expenses-cards">
-                            <div class="center-align">데이터를 불러오는 중...</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -854,6 +822,7 @@ function saveEditedDailyExpense() {
                 setTimeout(function() {
                     loadDailyExpenses();
                     updateExpenseStatistics();
+                    loadMonthlyExpenses();
                 }, 500);
             } else {
                 showMessage(response.message || '일간지출 저장에 실패했습니다.', 'error');
@@ -932,6 +901,7 @@ function saveAddedExpense() {
                 setTimeout(function() {
                     loadDailyExpenses();
                     updateExpenseStatistics();
+                    loadMonthlyExpenses();
                 }, 500);
             } else {
                 showMessage(response.message || '지출 추가에 실패했습니다.', 'error');

@@ -3,38 +3,78 @@ $pageTitle = '지출현황';
 include 'includes/header.php';
 ?>
 
-<main class="container">
-    <div class="section">
-        <div class="row">
-            <div class="col s12">
-                <h4 class="section-title"><i class="material-icons left">account_balance_wallet</i>지출현황</h4>
-            </div>
-        </div>
+<style>
+    /* 월 선택기 모바일 최적화 */
+    @media only screen and (max-width: 600px) {
+        .month-selector-row {
+            flex-direction: column !important;
+            gap: 10px;
+        }
 
+        .month-selector-title {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .month-selector-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #month-selector {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        #archive-mode-notice {
+            margin: 15px 0 0 0 !important;
+            padding: 12px !important;
+            font-size: 14px;
+        }
+
+        #archive-mode-notice .material-icons {
+            font-size: 18px !important;
+        }
+    }
+
+    @media only screen and (max-width: 480px) {
+        .month-selector-title {
+            font-size: 16px;
+        }
+
+        #archive-controls .btn {
+            font-size: 11px;
+            padding: 6px 12px;
+            white-space: nowrap;
+        }
+    }
+</style>
+
+<main class="container">
         <!-- 월별 선택기 -->
-        <div class="row">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content center-align">
-                        <h5 style="margin-bottom: 15px;">📅 조회 기간</h5>
-                        <div class="row">
-                            <div class="col s12 m6 offset-m3">
-                                <div class="input-field">
-                                    <select id="month-selector">
-                                        <!-- 동적으로 생성됨 -->
-                                    </select>
-                                    <label>조회 월 선택</label>
-                                </div>
+        <div class="section">
+            <div class="card">
+                <div class="card-content">
+                    <div class="row month-selector-row" style="margin-bottom: 0;">
+                        <div class="col s12 m6">
+                            <h6 class="month-selector-title" style="margin: 8px 0;"><i class="material-icons left">date_range</i>조회 기간</h6>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="month-selector-controls input-field" style="margin-top: 0;">
+                                <select id="month-selector" class="browser-default">
+                                    <option value="current" selected>현재 (실시간)</option>
+                                    <!-- 아카이브 월 목록은 JavaScript로 동적 로드 -->
+                                </select>
                             </div>
                         </div>
-                        <div id="archive-controls" style="display: none; margin-top: 10px;">
-                            <button class="btn blue" id="edit-archive-btn">
-                                <i class="material-icons left">edit</i>아카이브 수정
-                            </button>
-                            <button class="btn green" id="create-archive-btn" style="margin-left: 10px;">
-                                <i class="material-icons left">archive</i>스냅샷 생성
-                            </button>
-                        </div>
+                    </div>
+                    <div id="archive-mode-notice" class="card-panel orange lighten-4" style="display:none; margin: 10px 0 0 0; padding: 10px;">
+                        <i class="material-icons left" style="margin-right: 8px;">archive</i>
+                        <span id="archive-notice-text">과거 데이터 조회 중 - 수정 시 아카이브가 업데이트됩니다</span>
                     </div>
                 </div>
             </div>
@@ -348,14 +388,14 @@ $(document).ready(function() {
     // 모달 초기화
     M.Modal.init(document.querySelectorAll('.modal'));
 
-    // 셀렉트 박스 초기화
-    M.FormSelect.init(document.querySelectorAll('select'));
+    // 셀렉트 박스 초기화 (browser-default는 초기화 불필요)
+    M.FormSelect.init(document.querySelectorAll('select:not(.browser-default)'));
 
     // 월별 선택기 초기화
     initMonthSelector();
 
     // 현재 월 데이터 로드
-    loadCurrentMonthData();
+    loadMonthData('current');
 
     // 고정지출 추가 버튼 이벤트 핸들러
     $('#save-fixed-expense-add').on('click', function() {
@@ -443,209 +483,156 @@ $(document).ready(function() {
         loadMonthData(selectedMonth);
     });
 
-    // 아카이브 수정 버튼
-    $('#edit-archive-btn').on('click', function() {
-        editArchiveData();
-    });
-
-    // 스냅샷 생성 버튼
-    $('#create-archive-btn').on('click', function() {
-        createMonthlySnapshot();
-    });
 });
 
 let currentViewMode = 'current'; // 'current' or 'archive'
-let currentSelectedMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+let currentSelectedMonth = null;
+
+function getAPIUrl(endpoint) {
+    if (currentViewMode === 'current') {
+        return `http://localhost:8080/api/${endpoint}`;
+    } else {
+        // 아카이브 모드에서는 year와 month 파라미터가 필요
+        const [year, monthNum] = currentSelectedMonth.split('-');
+        return `http://localhost:8080/api/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
+    }
+}
 
 function initMonthSelector() {
-    const monthSelector = $('#month-selector');
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
+    loadAvailableArchiveMonths();
+}
 
-    // 현재 월부터 과거 12개월까지 생성
-    for (let i = 0; i < 12; i++) {
-        const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
-        const year = targetDate.getFullYear();
-        const month = targetDate.getMonth() + 1;
-        const value = year + '-' + String(month).padStart(2, '0');
-        const text = year + '년 ' + month + '월';
-        const isSelected = i === 0 ? 'selected' : '';
+function loadAvailableArchiveMonths() {
+    $.ajax({
+        url: 'http://localhost:8080/api/expense-archive/available-months',
+        type: 'GET',
+        timeout: 10000,
+        success: function(response) {
+            if (response.success && response.data) {
+                populateMonthSelector(response.data);
+            } else {
+                showMonthSelectorError('아카이브 월 목록을 불러올 수 없습니다: ' + (response.message || '알 수 없는 오류'));
+            }
+        },
+        error: function(xhr, status, error) {
+            showMonthSelectorError('서버 연결 실패: ' + error);
+        }
+    });
+}
 
-        monthSelector.append(`<option value="${value}" ${isSelected}>${text}</option>`);
+function populateMonthSelector(availableMonths) {
+    const selector = $('#month-selector');
+    // 기존 아카이브 옵션 제거 (current는 유지)
+    selector.find('option:not([value="current"])').remove();
+
+    // 아카이브 월 추가
+    availableMonths.forEach(function(month) {
+        selector.append(`<option value="${month.value}">${month.label}</option>`);
+    });
+}
+
+function showMonthSelectorError(message) {
+    const selector = $('#month-selector');
+    // 현재 옵션은 유지하고 오류 옵션만 추가
+    selector.find('option:not([value="current"])').remove();
+    selector.append(`<option disabled>오류: ${message}</option>`);
+
+    if (typeof M !== 'undefined' && M.toast) {
+        M.toast({
+            html: message,
+            classes: 'red white-text',
+            displayLength: 4000
+        });
     }
-
-    M.FormSelect.init(document.querySelectorAll('select'));
 }
 
 function loadCurrentMonthData() {
     currentViewMode = 'current';
-    $('#archive-controls').hide();
+    hideArchiveNotice();
     $('#add-fixed-expense-btn, #add-prepaid-expense-btn').show();
     loadFixedExpenses();
     loadPrepaidExpenses();
 }
 
 function loadMonthData(selectedMonth) {
-    currentSelectedMonth = selectedMonth;
-    const currentYearMonth = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0');
+    console.log('Loading month data for:', selectedMonth);
 
-    if (selectedMonth === currentYearMonth) {
+    // 기존 데이터 초기화
+    clearExpenseData();
+
+    currentSelectedMonth = selectedMonth;
+
+    if (selectedMonth === 'current') {
         // 현재 월 - 실시간 데이터
         currentViewMode = 'current';
-        $('#archive-controls').hide();
+        hideArchiveNotice();
         $('#add-fixed-expense-btn, #add-prepaid-expense-btn').show();
         loadFixedExpenses();
         loadPrepaidExpenses();
     } else {
         // 과거 월 - 아카이브 데이터
         currentViewMode = 'archive';
-        $('#archive-controls').show();
-        $('#add-fixed-expense-btn, #add-prepaid-expense-btn').hide();
+        showArchiveNotice(selectedMonth);
+        $('#add-fixed-expense-btn, #add-prepaid-expense-btn').show(); // 아카이브에서도 CRUD 허용
         loadArchiveData(selectedMonth);
     }
 }
 
-function loadArchiveData(month) {
-    const [year, monthNum] = month.split('-');
+function clearExpenseData() {
+    // 테이블과 카드 초기화
+    $('#fixed-expenses-table').html('<tr><td colspan="4" class="center-align">데이터를 불러오는 중...</td></tr>');
+    $('#prepaid-expenses-table').html('<tr><td colspan="4" class="center-align">데이터를 불러오는 중...</td></tr>');
+    $('#fixed-expenses-cards').html('<div class="center-align">데이터를 불러오는 중...</div>');
+    $('#prepaid-expenses-cards').html('<div class="center-align">데이터를 불러오는 중...</div>');
 
-    // 아카이브된 지출 요약 데이터 로드
-    $.ajax({
-        url: `http://localhost:8080/api/monthly-snapshots/expenses?year=${year}&month=${parseInt(monthNum)}`,
-        type: 'GET',
-        success: function(response) {
-            if (response.success && response.data) {
-                displayArchiveExpenseData(response.data);
-            } else {
-                displayNoArchiveMessage();
-            }
-        },
-        error: function() {
-            displayNoArchiveMessage();
-        }
-    });
-}
-
-function displayArchiveExpenseData(summary) {
-    // 고정지출과 선납지출을 아카이브 데이터로 표시 (읽기 전용)
-    let fixedTbody = $('#fixed-expenses-table');
-    let prepaidTbody = $('#prepaid-expenses-table');
-    let fixedCards = $('#fixed-expenses-cards');
-    let prepaidCards = $('#prepaid-expenses-cards');
-
-    fixedTbody.empty();
-    prepaidTbody.empty();
-    fixedCards.empty();
-    prepaidCards.empty();
-
-    // 아카이브 요약 정보 표시
-    fixedTbody.append(`
-        <tr>
-            <td colspan="4" class="center-align" style="padding: 20px;">
-                <h6>${currentSelectedMonth} 아카이브 데이터</h6>
-                <p>총 지출: ₩${parseInt(summary.total_expenses || 0).toLocaleString()}</p>
-                <p>지출 일수: ${summary.total_days || 0}일</p>
-                <p>일평균: ₩${parseInt(summary.avg_daily_expense || 0).toLocaleString()}</p>
-            </td>
-        </tr>
-    `);
-
-    prepaidTbody.append(`
-        <tr>
-            <td colspan="4" class="center-align" style="padding: 20px;">
-                <p>카테고리별 지출</p>
-                <p>식비: ₩${parseInt(summary.food_total || 0).toLocaleString()}</p>
-                <p>생필품: ₩${parseInt(summary.necessities_total || 0).toLocaleString()}</p>
-                <p>교통비: ₩${parseInt(summary.transportation_total || 0).toLocaleString()}</p>
-                <p>기타: ₩${parseInt(summary.other_total || 0).toLocaleString()}</p>
-            </td>
-        </tr>
-    `);
-
-    fixedCards.html(`
-        <div class="center-align" style="padding: 20px;">
-            <h6>${currentSelectedMonth} 아카이브 데이터</h6>
-            <p>총 지출: ₩${parseInt(summary.total_expenses || 0).toLocaleString()}</p>
-            <p>지출 일수: ${summary.total_days || 0}일</p>
-            <p>일평균: ₩${parseInt(summary.avg_daily_expense || 0).toLocaleString()}</p>
-        </div>
-    `);
-
-    prepaidCards.html(`
-        <div class="center-align" style="padding: 20px;">
-            <p><strong>카테고리별 지출</strong></p>
-            <p>식비: ₩${parseInt(summary.food_total || 0).toLocaleString()}</p>
-            <p>생필품: ₩${parseInt(summary.necessities_total || 0).toLocaleString()}</p>
-            <p>교통비: ₩${parseInt(summary.transportation_total || 0).toLocaleString()}</p>
-            <p>기타: ₩${parseInt(summary.other_total || 0).toLocaleString()}</p>
-        </div>
-    `);
-
-    // 총액 업데이트
-    $('#fixed-expenses-total').text('₩' + parseInt(summary.total_expenses || 0).toLocaleString());
-    $('#prepaid-expenses-total').text('₩0');
-    $('#total-monthly-expenses').text('₩' + parseInt(summary.total_expenses || 0).toLocaleString());
-}
-
-function displayNoArchiveMessage() {
-    let fixedTbody = $('#fixed-expenses-table');
-    let prepaidTbody = $('#prepaid-expenses-table');
-    let fixedCards = $('#fixed-expenses-cards');
-    let prepaidCards = $('#prepaid-expenses-cards');
-
-    const message = `${currentSelectedMonth}의 아카이브 데이터가 없습니다.`;
-
-    fixedTbody.html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
-    prepaidTbody.html(`<tr><td colspan="4" class="center-align">${message}</td></tr>`);
-    fixedCards.html(`<div class="center-align">${message}</div>`);
-    prepaidCards.html(`<div class="center-align">${message}</div>`);
-
+    // 총액 초기화
     $('#fixed-expenses-total').text('₩0');
     $('#prepaid-expenses-total').text('₩0');
     $('#total-monthly-expenses').text('₩0');
 }
 
-function createMonthlySnapshot() {
-    const [year, month] = currentSelectedMonth.split('-');
-
-    $.ajax({
-        url: 'http://localhost:8080/api/monthly-snapshots/create',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            year: parseInt(year),
-            month: parseInt(month)
-        }),
-        success: function(response) {
-            if (response.success) {
-                showMessage(`${currentSelectedMonth} 스냅샷이 생성되었습니다.`, 'success');
-                loadMonthData(currentSelectedMonth);
-            } else {
-                showMessage('스냅샷 생성에 실패했습니다.', 'error');
-            }
-        },
-        error: function() {
-            showMessage('서버 연결에 실패했습니다.', 'error');
-        }
-    });
+function showArchiveNotice(month) {
+    // 월 라벨 생성 (예: "2024-08" -> "2024년 8월")
+    const [year, monthNum] = month.split('-');
+    const monthLabel = `${year}년 ${parseInt(monthNum)}월`;
+    $('#archive-notice-text').text(`${monthLabel} 아카이브 데이터 조회 중 - 수정 시 아카이브가 업데이트됩니다`);
+    $('#archive-mode-notice').show();
 }
 
-function editArchiveData() {
-    showMessage('아카이브 수정 기능은 개발 중입니다.', 'info');
+function hideArchiveNotice() {
+    $('#archive-mode-notice').hide();
 }
+
+function loadArchiveData(month) {
+    // 아카이브 모드에서는 개별 함수로 데이터 로드
+    loadFixedExpenses();
+    loadPrepaidExpenses();
+}
+
+
 
 function loadFixedExpenses() {
+    let url;
+    if (currentViewMode === 'current') {
+        url = 'http://localhost:8080/api/fixed-expenses';
+    } else {
+        const [year, monthNum] = currentSelectedMonth.split('-');
+        url = `http://localhost:8080/api/expense-archive/fixed-expenses?year=${year}&month=${parseInt(monthNum)}`;
+    }
+
     $.ajax({
-        url: 'http://localhost:8080/api/fixed-expenses',
+        url: url,
         type: 'GET',
         success: function(response) {
             if (response.success) {
                 displayFixedExpenses(response.data);
             } else {
+                console.error('고정지출 API 오류:', response.message);
                 showMessage('고정지출 데이터를 불러올 수 없습니다.', 'error');
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('고정지출 서버 연결 오류:', {status, error});
             showMessage('서버 연결에 실패했습니다.', 'error');
         }
     });
@@ -663,7 +650,8 @@ function displayFixedExpenses(expenses) {
     if (!expenses || expenses.length === 0) {
         tbody.append('<tr><td colspan="4" class="center-align">고정지출이 없습니다.</td></tr>');
         cardsContainer.append('<div class="center-align">고정지출이 없습니다.</div>');
-        $('#fixed-expenses-total').text('총 ₩0');
+        $('#fixed-expenses-total').text('₩0');
+        updateMonthlyExpensesTotal();
         return;
     }
 
@@ -752,7 +740,7 @@ function saveNewFixedExpense() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/fixed-expenses',
+        url: getAPIUrl('fixed-expenses'),
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -787,14 +775,14 @@ function saveNewFixedExpense() {
 
 function clearFixedExpenseForm() {
     $('#add-fixed-expense-form')[0].reset();
-    M.FormSelect.init(document.querySelectorAll('select'));
+    M.FormSelect.init(document.querySelectorAll('select:not(.browser-default)'));
     M.updateTextFields();
 }
 
 function openEditExpenseModal(expenseId) {
     // API에서 고정지출 정보 가져오기
     $.ajax({
-        url: 'http://localhost:8080/api/fixed-expenses/' + expenseId,
+        url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'GET',
         success: function(response) {
             if (response.success) {
@@ -809,7 +797,7 @@ function openEditExpenseModal(expenseId) {
 
                 // 라벨 업데이트
                 M.updateTextFields();
-                M.FormSelect.init(document.querySelectorAll('select'));
+                M.FormSelect.init(document.querySelectorAll('select:not(.browser-default)'));
 
                 // 모달 열기
                 M.Modal.getInstance(document.getElementById('edit-fixed-expense-modal')).open();
@@ -864,7 +852,7 @@ function saveEditedFixedExpense() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/fixed-expenses/' + expenseId,
+        url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -904,7 +892,7 @@ function deleteFixedExpense() {
     }
 
     $.ajax({
-        url: 'http://localhost:8080/api/fixed-expenses/' + expenseId,
+        url: getAPIUrl('fixed-expenses') + '/' + expenseId,
         type: 'DELETE',
         success: function(response) {
             if (response.success) {
@@ -929,17 +917,27 @@ function deleteFixedExpense() {
 }
 
 function loadPrepaidExpenses() {
+    let url;
+    if (currentViewMode === 'current') {
+        url = 'http://localhost:8080/api/prepaid-expenses';
+    } else {
+        const [year, monthNum] = currentSelectedMonth.split('-');
+        url = `http://localhost:8080/api/expense-archive/prepaid-expenses?year=${year}&month=${parseInt(monthNum)}`;
+    }
+
     $.ajax({
-        url: 'http://localhost:8080/api/prepaid-expenses',
+        url: url,
         type: 'GET',
         success: function(response) {
             if (response.success) {
                 displayPrepaidExpenses(response.data);
             } else {
+                console.error('선납지출 API 오류:', response.message);
                 showMessage('선납지출 데이터를 불러올 수 없습니다.', 'error');
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('선납지출 서버 연결 오류:', {status, error});
             showMessage('서버 연결에 실패했습니다.', 'error');
         }
     });
@@ -955,6 +953,8 @@ function displayPrepaidExpenses(expenses) {
     if (!expenses || expenses.length === 0) {
         tbody.append('<tr><td colspan="4" class="center-align">선납지출이 없습니다.</td></tr>');
         cardsContainer.append('<div class="center-align">선납지출이 없습니다.</div>');
+        $('#prepaid-expenses-total').text('₩0');
+        updateMonthlyExpensesTotal();
         return;
     }
 
@@ -1039,7 +1039,7 @@ function saveNewPrepaidExpense() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/prepaid-expenses',
+        url: getAPIUrl('prepaid-expenses'),
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -1069,7 +1069,7 @@ function saveNewPrepaidExpense() {
 function openEditPrepaidExpenseModal(expenseId) {
     // API에서 선납지출 정보 가져오기
     $.ajax({
-        url: 'http://localhost:8080/api/prepaid-expenses/' + expenseId,
+        url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'GET',
         success: function(response) {
             if (response.success) {
@@ -1084,7 +1084,7 @@ function openEditPrepaidExpenseModal(expenseId) {
 
                 // 라벨 업데이트
                 M.updateTextFields();
-                M.FormSelect.init(document.querySelectorAll('select'));
+                M.FormSelect.init(document.querySelectorAll('select:not(.browser-default)'));
 
                 // 모달 열기
                 M.Modal.getInstance(document.getElementById('edit-prepaid-expense-modal')).open();
@@ -1139,7 +1139,7 @@ function saveEditedPrepaidExpense() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/prepaid-expenses/' + expenseId,
+        url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -1178,7 +1178,7 @@ function deletePrepaidExpense() {
     }
 
     $.ajax({
-        url: 'http://localhost:8080/api/prepaid-expenses/' + expenseId,
+        url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
         type: 'DELETE',
         success: function(response) {
             if (response.success) {
@@ -1204,7 +1204,7 @@ function deletePrepaidExpense() {
 
 function clearPrepaidExpenseForm() {
     $('#add-prepaid-expense-form')[0].reset();
-    M.FormSelect.init(document.querySelectorAll('select'));
+    M.FormSelect.init(document.querySelectorAll('select:not(.browser-default)'));
     M.updateTextFields();
 }
 
