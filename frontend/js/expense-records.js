@@ -2,9 +2,28 @@
  * 일간지출내역 페이지 JavaScript
  */
 
+// KST(한국 표준시) 기준 날짜 문자열 반환 (YYYY-MM-DD)
+function getTodayKST() {
+    const now = new Date();
+    // KST = UTC+9
+    const kstOffset = 9 * 60; // 분 단위
+    const kstTime = new Date(now.getTime() + (kstOffset + now.getTimezoneOffset()) * 60000);
+    return kstTime.toISOString().split('T')[0];
+}
+
+// KST 기준 Date 객체 반환
+function getDateKST(dateString) {
+    if (!dateString) {
+        const now = new Date();
+        const kstOffset = 9 * 60;
+        return new Date(now.getTime() + (kstOffset + now.getTimezoneOffset()) * 60000);
+    }
+    return new Date(dateString + 'T00:00:00+09:00');
+}
+
 // 달력 관련 변수
-let currentCalendarYear = new Date().getFullYear();
-let currentCalendarMonth = new Date().getMonth(); // 0-based (0=January)
+let currentCalendarYear = getDateKST().getFullYear();
+let currentCalendarMonth = getDateKST().getMonth(); // 0-based (0=January)
 let monthlyExpensesData = {};
 
 $(document).ready(function() {
@@ -85,6 +104,34 @@ $(document).ready(function() {
             // 해당 날짜의 지출 편집 모달 열기
             openEditDailyExpenseByDate(date);
         }
+    });
+
+    // 달력 날짜 더블클릭 이벤트 (인라인 편집)
+    $(document).on('dblclick', '.calendar-day:not(.other-month)', function(e) {
+        e.stopPropagation();
+        const date = $(this).data('date');
+        const $day = $(this);
+
+        if (!$day.hasClass('editing')) {
+            openInlineCalendarEdit($day, date);
+        }
+    });
+
+    // 달력 날짜 길게 터치 이벤트 (모바일)
+    let calendarTouchTimer;
+    $(document).on('touchstart', '.calendar-day:not(.other-month)', function(e) {
+        const $day = $(this);
+        const date = $day.data('date');
+
+        calendarTouchTimer = setTimeout(function() {
+            if (!$day.hasClass('editing')) {
+                openInlineCalendarEdit($day, date);
+            }
+        }, 600); // 600ms 길게 터치
+    });
+
+    $(document).on('touchend touchmove', '.calendar-day', function() {
+        clearTimeout(calendarTouchTimer);
     });
 });
 
@@ -269,17 +316,20 @@ function calculateEditTotalAmount() {
 }
 
 function updateExpenseStatistics() {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const today = getDateKST();
+    const todayStr = getTodayKST();
 
     // 이번 주 시작일 계산 (월요일)
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay() + 1);
-    const weekStartStr = startOfWeek.toISOString().split('T')[0];
+    const year = startOfWeek.getFullYear();
+    const month = String(startOfWeek.getMonth() + 1).padStart(2, '0');
+    const day = String(startOfWeek.getDate()).padStart(2, '0');
+    const weekStartStr = `${year}-${month}-${day}`;
 
     // 이번 달 시작일
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthStartStr = startOfMonth.toISOString().split('T')[0];
+    const monthStartStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
 
     // 통계 API 호출
     $.ajax({
@@ -366,6 +416,12 @@ function saveEditedDailyExpense() {
         other_cost: parseInt(otherCost)
     };
 
+    // 로딩 시작
+    const loadingId = 'save-daily-expense';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '일간지출 저장 중...');
+    }
+
     // API 호출
     $.ajax({
         url: 'http://localhost:8080/api/daily-expenses/' + expenseId,
@@ -376,6 +432,10 @@ function saveEditedDailyExpense() {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             if (response.success) {
                 showMessage('일간지출이 저장되었습니다.', 'success');
                 M.Modal.getInstance(document.getElementById('edit-daily-expense-modal')).close();
@@ -390,6 +450,10 @@ function saveEditedDailyExpense() {
             }
         },
         error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             let errorMessage = '서버 연결에 실패했습니다.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -439,7 +503,13 @@ function saveAddedExpense() {
         return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKST();
+
+    // 로딩 시작
+    const loadingId = 'add-daily-expense';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '지출 추가 중...');
+    }
 
     // 오늘 지출 추가 API 호출
     $.ajax({
@@ -457,6 +527,10 @@ function saveAddedExpense() {
             other_cost: otherCost
         }),
         success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             if (response.success) {
                 showMessage('지출이 추가되었습니다.', 'success');
                 M.Modal.getInstance(document.getElementById('add-expense-modal')).close();
@@ -472,6 +546,10 @@ function saveAddedExpense() {
             }
         },
         error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             let errorMessage = '서버 연결에 실패했습니다.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -544,8 +622,7 @@ function renderCalendar() {
     const firstDayWeekday = firstDayOfMonth.getDay(); // 0=Sunday
     const daysInMonth = lastDayOfMonth.getDate();
 
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = getTodayKST();
 
     // 이전 달의 날짜들 (빈 공간 채우기)
     const prevMonth = currentCalendarMonth === 0 ? 11 : currentCalendarMonth - 1;
@@ -654,15 +731,218 @@ function openAddExpenseModalForDate(date) {
     showMessage(`${date} 날짜의 지출을 추가하려면 "오늘 지출 추가" 기능을 사용하세요.`, 'info');
 }
 
+// 피드백 시스템 - feedback.js의 Feedback 객체 사용
 function showMessage(text, type) {
-    let colorClass = 'blue';
-    if (type === 'error') colorClass = 'red';
-    if (type === 'success') colorClass = 'green';
-    if (type === 'info') colorClass = 'blue';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showMessage(text, type);
+    } else {
+        // Fallback
+        let colorClass = 'blue';
+        if (type === 'error') colorClass = 'red';
+        if (type === 'success') colorClass = 'green';
+        if (type === 'info') colorClass = 'blue';
+        M.toast({
+            html: text,
+            classes: colorClass + ' white-text',
+            displayLength: 4000
+        });
+    }
+}
 
-    M.toast({
-        html: text,
-        classes: colorClass + ' white-text',
-        displayLength: 4000
+/**
+ * 달력 인라인 편집 기능
+ */
+function openInlineCalendarEdit($dayElement, date) {
+    // 다른 편집 모드 종료
+    $('.calendar-day.editing').each(function() {
+        closeInlineCalendarEdit($(this), false);
     });
+
+    $dayElement.addClass('editing');
+
+    // 현재 데이터 가져오기
+    const expense = monthlyExpensesData[date] || {
+        total_amount: 0,
+        food_cost: 0,
+        necessities_cost: 0,
+        transportation_cost: 0,
+        other_cost: 0
+    };
+
+    // 편집 인터페이스 생성
+    const editInterface = $(`
+        <div class="inline-expense-edit">
+            <input type="number" class="expense-edit-input" data-field="total_amount"
+                   value="${expense.total_amount}" placeholder="총액" min="0">
+            <div class="edit-actions">
+                <button class="edit-btn save-btn">저장</button>
+                <button class="edit-btn cancel-btn">취소</button>
+            </div>
+        </div>
+    `);
+
+    $dayElement.append(editInterface);
+
+    // 입력 필드에 포커스
+    editInterface.find('.expense-edit-input').focus().select();
+
+    // 이벤트 핸들러
+    editInterface.find('.save-btn').on('click', function(e) {
+        e.stopPropagation();
+        saveInlineCalendarEdit($dayElement, date);
+    });
+
+    editInterface.find('.cancel-btn').on('click', function(e) {
+        e.stopPropagation();
+        closeInlineCalendarEdit($dayElement, false);
+    });
+
+    // Enter 키로 저장
+    editInterface.find('.expense-edit-input').on('keypress', function(e) {
+        if (e.which === 13) { // Enter
+            e.preventDefault();
+            saveInlineCalendarEdit($dayElement, date);
+        }
+    });
+
+    // ESC 키로 취소
+    editInterface.find('.expense-edit-input').on('keydown', function(e) {
+        if (e.which === 27) { // ESC
+            e.preventDefault();
+            closeInlineCalendarEdit($dayElement, false);
+        }
+    });
+
+    // 외부 클릭시 취소
+    $(document).on('click.calendarEdit', function(e) {
+        if (!$(e.target).closest('.calendar-day.editing').length) {
+            closeInlineCalendarEdit($dayElement, false);
+        }
+    });
+}
+
+function saveInlineCalendarEdit($dayElement, date) {
+    const $input = $dayElement.find('.expense-edit-input');
+    const newAmount = parseInt($input.val()) || 0;
+
+    // 변경사항이 없으면 그냥 닫기
+    const currentAmount = monthlyExpensesData[date] ? parseInt(monthlyExpensesData[date].total_amount) : 0;
+    if (newAmount === currentAmount) {
+        closeInlineCalendarEdit($dayElement, false);
+        return;
+    }
+
+    // 버튼 비활성화
+    $dayElement.find('.edit-btn').prop('disabled', true);
+
+    // 로딩 시작
+    const loadingId = 'save-inline-expense-' + date;
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '저장 중...');
+    }
+
+    // API 데이터 준비
+    const apiData = {
+        expense_date: date,
+        total_amount: newAmount,
+        food_cost: 0,
+        necessities_cost: 0,
+        transportation_cost: 0,
+        other_cost: 0
+    };
+
+    // 기존 데이터가 있으면 업데이트, 없으면 생성
+    const expense = monthlyExpensesData[date];
+    const apiUrl = expense ?
+        `http://localhost:8080/api/daily-expenses/${expense.id}` :
+        'http://localhost:8080/api/daily-expenses';
+    const method = expense ? 'PUT' : 'POST';
+
+    $.ajax({
+        url: apiUrl,
+        type: method,
+        xhrFields: {
+            withCredentials: true
+        },
+        contentType: 'application/json',
+        data: JSON.stringify(apiData),
+        success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
+            if (response.success) {
+                // 로컬 데이터 업데이트
+                if (!monthlyExpensesData[date]) {
+                    monthlyExpensesData[date] = {};
+                }
+                monthlyExpensesData[date].total_amount = newAmount;
+                monthlyExpensesData[date].id = response.data ? response.data.id : expense.id;
+
+                // UI 업데이트
+                closeInlineCalendarEdit($dayElement, true);
+                updateCalendarDay($dayElement, date, newAmount);
+                updateMonthlyTotal();
+
+                showMessage('지출이 저장되었습니다.', 'success');
+
+                // 통계 업데이트
+                updateExpenseStatistics();
+            } else {
+                showMessage(response.message || '지출 저장에 실패했습니다.', 'error');
+                closeInlineCalendarEdit($dayElement, false);
+            }
+
+            // 버튼 활성화
+            $dayElement.find('.edit-btn').prop('disabled', false);
+        },
+        error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
+            let errorMessage = '서버 연결에 실패했습니다.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showMessage(errorMessage, 'error');
+            closeInlineCalendarEdit($dayElement, false);
+
+            // 버튼 활성화
+            $dayElement.find('.edit-btn').prop('disabled', false);
+        }
+    });
+}
+
+function closeInlineCalendarEdit($dayElement, saved) {
+    $dayElement.removeClass('editing');
+    $dayElement.find('.inline-expense-edit').remove();
+    $(document).off('click.calendarEdit');
+}
+
+function updateCalendarDay($dayElement, date, amount) {
+    // 기존 지출 정보 제거
+    $dayElement.find('.calendar-expense-amount, .calendar-expense-detail').remove();
+
+    // 새로운 지출 정보 추가
+    if (amount > 0) {
+        $dayElement.addClass('has-expense');
+
+        let amountClass = 'low';
+        if (amount >= 30000) amountClass = 'high';
+        else if (amount >= 10000) amountClass = 'medium';
+
+        const expenseContent = $(`
+            <div class="calendar-expense-amount ${amountClass}">
+                ₩${amount.toLocaleString()}
+            </div>
+            <div class="calendar-expense-detail">
+                🍽️0 🛒0
+            </div>
+        `);
+
+        $dayElement.append(expenseContent);
+    } else {
+        $dayElement.removeClass('has-expense');
+    }
 }

@@ -290,21 +290,21 @@ function displayFixedExpenses(expenses) {
         const paymentDate = expense.payment_date ? expense.payment_date + '일' : '-';
         const amount = parseInt(expense.amount || 0);
 
-        // 테이블 행 추가
-        let row = '<tr class="expense-row" data-id="' + expense.id + '" style="cursor: pointer;">' +
+        // 테이블 행 추가 (인라인 편집 기능 포함)
+        let row = '<tr class="expense-row" data-id="' + expense.id + '" data-expense-type="fixed" style="cursor: pointer;">' +
                   '<td style="color: #424242 !important;">' + (expense.item_name || '-') + '</td>' +
-                  '<td class="negative" style="font-weight: bold;">₩' + amount.toLocaleString() + '</td>' +
+                  '<td class="amount-cell editable negative" style="font-weight: bold; cursor: pointer;">₩' + amount.toLocaleString() + '</td>' +
                   '<td style="color: #424242 !important;">' + paymentDate + '</td>' +
                   '<td style="color: #424242 !important;">' + (expense.payment_method || '-') + '</td>' +
                   '</tr>';
         tbody.append(row);
 
-        // 모바일 카드 추가
-        let card = '<div class="expense-card" data-id="' + expense.id + '" style="margin-bottom: 10px; border-left: 4px solid #f44336; cursor: pointer;">' +
+        // 모바일 카드 추가 (인라인 편집 기능 포함)
+        let card = '<div class="expense-card" data-id="' + expense.id + '" data-expense-type="fixed" style="margin-bottom: 10px; border-left: 4px solid #f44336; cursor: pointer;">' +
                    '<div class="card-content" style="padding: 12px;">' +
                        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                            '<span style="font-weight: bold; color: #424242;">' + (expense.item_name || '-') + '</span>' +
-                           '<span style="font-weight: bold; color: #f44336;">₩' + amount.toLocaleString() + '</span>' +
+                           '<span class="amount-cell editable" style="font-weight: bold; color: #f44336; cursor: pointer; padding: 8px; border-radius: 4px;">₩' + amount.toLocaleString() + '</span>' +
                        '</div>' +
                        '<div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">' +
                            '<span>📅 ' + paymentDate + '</span>' +
@@ -318,6 +318,9 @@ function displayFixedExpenses(expenses) {
     // 총액 업데이트
     $('#fixed-expenses-total').text('₩' + totalAmount.toLocaleString());
     updateMonthlyExpensesTotal();
+
+    // 드래그앤드롭 초기화 (데이터 로드 후)
+    setTimeout(initializeSortable, 100);
 }
 
 function saveNewFixedExpense() {
@@ -358,6 +361,12 @@ function saveNewFixedExpense() {
     }
     // 빈 값이면 payment_date 필드를 포함하지 않음 (NULL로 처리됨)
 
+    // 로딩 시작
+    const loadingId = 'save-fixed-expense';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '고정지출 저장 중...');
+    }
+
     // API 호출
     $.ajax({
         url: getAPIUrl('fixed-expenses'),
@@ -368,6 +377,10 @@ function saveNewFixedExpense() {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             if (response.success) {
                 // 성공 메시지
                 showMessage('새 고정지출이 추가되었습니다.', 'success');
@@ -387,6 +400,10 @@ function saveNewFixedExpense() {
             }
         },
         error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             let errorMessage = '서버 연결에 실패했습니다.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -476,6 +493,12 @@ function saveEditedFixedExpense() {
         data.payment_date = null; // 빈 값일 때 명시적으로 null 전송
     }
 
+    // 로딩 시작
+    const loadingId = 'update-fixed-expense';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '고정지출 수정 중...');
+    }
+
     // API 호출
     $.ajax({
         url: getAPIUrl('fixed-expenses') + '/' + expenseId,
@@ -486,6 +509,10 @@ function saveEditedFixedExpense() {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             if (response.success) {
                 showMessage('고정지출이 수정되었습니다.', 'success');
                 M.Modal.getInstance(document.getElementById('edit-fixed-expense-modal')).close();
@@ -498,6 +525,10 @@ function saveEditedFixedExpense() {
             }
         },
         error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             let errorMessage = '서버 연결에 실패했습니다.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -516,8 +547,24 @@ function deleteFixedExpense() {
         return;
     }
 
-    if (!confirm('정말로 이 고정지출을 삭제하시겠습니까?')) {
-        return;
+    // 확인 다이얼로그
+    if (typeof Feedback !== 'undefined') {
+        Feedback.confirm('정말로 이 고정지출을 삭제하시겠습니까?', function() {
+            deleteFixedExpenseConfirmed(expenseId);
+        });
+    } else {
+        if (!confirm('정말로 이 고정지출을 삭제하시겠습니까?')) {
+            return;
+        }
+        deleteFixedExpenseConfirmed(expenseId);
+    }
+}
+
+function deleteFixedExpenseConfirmed(expenseId) {
+    // 로딩 시작
+    const loadingId = 'delete-fixed-expense';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showLoading(loadingId, '고정지출 삭제 중...');
     }
 
     $.ajax({
@@ -527,6 +574,10 @@ function deleteFixedExpense() {
             withCredentials: true
         },
         success: function(response) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             if (response.success) {
                 showMessage('고정지출이 삭제되었습니다.', 'success');
                 M.Modal.getInstance(document.getElementById('edit-fixed-expense-modal')).close();
@@ -539,6 +590,10 @@ function deleteFixedExpense() {
             }
         },
         error: function(xhr) {
+            if (typeof Feedback !== 'undefined') {
+                Feedback.hideLoading(loadingId);
+            }
+
             let errorMessage = '서버 연결에 실패했습니다.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -602,21 +657,21 @@ function displayPrepaidExpenses(expenses) {
         const paymentDate = expense.payment_date + '일';
         const amount = parseInt(expense.amount || 0);
 
-        // 테이블 행 추가
-        let row = '<tr class="prepaid-expense-row" data-id="' + expense.id + '" style="cursor: pointer;">' +
+        // 테이블 행 추가 (인라인 편집 기능 포함)
+        let row = '<tr class="prepaid-expense-row" data-id="' + expense.id + '" data-expense-type="prepaid" style="cursor: pointer;">' +
                   '<td style="color: #424242 !important;">' + (expense.item_name || '-') + '</td>' +
-                  '<td class="negative" style="font-weight: bold;">₩' + amount.toLocaleString() + '</td>' +
+                  '<td class="amount-cell editable negative" style="font-weight: bold; cursor: pointer;">₩' + amount.toLocaleString() + '</td>' +
                   '<td style="color: #424242 !important;">' + paymentDate + '</td>' +
                   '<td style="color: #424242 !important;">' + (expense.payment_method || '-') + '</td>' +
                   '</tr>';
         tbody.append(row);
 
-        // 모바일 카드 추가
-        let card = '<div class="prepaid-expense-card" data-id="' + expense.id + '" style="margin-bottom: 10px; border-left: 4px solid #2196F3; cursor: pointer;">' +
+        // 모바일 카드 추가 (인라인 편집 기능 포함)
+        let card = '<div class="prepaid-expense-card" data-id="' + expense.id + '" data-expense-type="prepaid" style="margin-bottom: 10px; border-left: 4px solid #2196F3; cursor: pointer;">' +
                    '<div class="card-content" style="padding: 12px;">' +
                        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                            '<span style="font-weight: bold; color: #424242;">' + (expense.item_name || '-') + '</span>' +
-                           '<span style="font-weight: bold; color: #2196F3;">₩' + amount.toLocaleString() + '</span>' +
+                           '<span class="amount-cell editable" style="font-weight: bold; color: #2196F3; cursor: pointer; padding: 8px; border-radius: 4px;">₩' + amount.toLocaleString() + '</span>' +
                        '</div>' +
                        '<div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">' +
                            '<span>📅 ' + paymentDate + '</span>' +
@@ -631,6 +686,9 @@ function displayPrepaidExpenses(expenses) {
     let totalAmount = expenses.reduce((sum, expense) => sum + parseInt(expense.amount || 0), 0);
     $('#prepaid-expenses-total').text('₩' + totalAmount.toLocaleString());
     updateMonthlyExpensesTotal();
+
+    // 드래그앤드롭 초기화 (데이터 로드 후)
+    setTimeout(initializeSortable, 100);
 }
 
 function saveNewPrepaidExpense() {
@@ -868,14 +926,364 @@ function updateMonthlyExpensesTotal() {
     $('#total-monthly-expenses').text('₩' + totalAmount.toLocaleString());
 }
 
+// 피드백 시스템 - feedback.js의 Feedback 객체 사용
 function showMessage(text, type) {
-    let colorClass = 'blue';
-    if (type === 'error') colorClass = 'red';
-    if (type === 'success') colorClass = 'green';
+    if (typeof Feedback !== 'undefined') {
+        Feedback.showMessage(text, type);
+    } else {
+        // Fallback
+        let colorClass = 'blue';
+        if (type === 'error') colorClass = 'red';
+        if (type === 'success') colorClass = 'green';
+        M.toast({
+            html: text,
+            classes: colorClass + ' white-text',
+            displayLength: 3000
+        });
+    }
+}
 
-    M.toast({
-        html: text,
-        classes: colorClass + ' white-text',
-        displayLength: 3000
+// ================================
+// 인라인 편집 기능 (assets.php에서 가져옴)
+// ================================
+
+// 인라인 편집 상태 관리
+let isInlineEditing = false;
+let currentEditingCell = null;
+
+// 금액 셀 클릭 이벤트 (인라인 편집 시작)
+$(document).on('click', '.amount-cell.editable', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInlineEditing) {
+        return; // 이미 편집 중이면 무시
+    }
+
+    startInlineEdit($(this));
+});
+
+function startInlineEdit($cell) {
+    if (isInlineEditing) {
+        cancelInlineEdit(); // 기존 편집 취소
+    }
+
+    isInlineEditing = true;
+    currentEditingCell = $cell;
+
+    const currentValue = $cell.text().replace(/[₩,]/g, '');
+    const expenseId = $cell.closest('tr, .expense-card').data('id');
+    const isFixed = $cell.closest('[data-expense-type]').data('expense-type') === 'fixed';
+
+    // 셀 내용을 입력 필드로 교체
+    $cell.html(`
+        <input type="number" class="inline-edit-input" value="${currentValue}" data-original="${currentValue}">
+        <div class="inline-edit-actions">
+            <button class="btn waves-effect waves-light green inline-edit-btn inline-edit-save" type="button">
+                <i class="material-icons left">check</i>저장
+            </button>
+            <button class="btn waves-effect waves-light red inline-edit-btn inline-edit-cancel" type="button">
+                <i class="material-icons left">close</i>취소
+            </button>
+        </div>
+    `);
+
+    // 입력 필드에 포커스
+    const $input = $cell.find('.inline-edit-input');
+    $input.focus().select();
+
+    // Enter 키로 저장, Esc 키로 취소
+    $input.on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveInlineEdit($cell, expenseId, isFixed);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelInlineEdit();
+        }
+    });
+
+    // 저장 버튼 클릭
+    $cell.find('.inline-edit-save').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveInlineEdit($cell, expenseId, isFixed);
+    });
+
+    // 취소 버튼 클릭
+    $cell.find('.inline-edit-cancel').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        cancelInlineEdit();
+    });
+}
+
+function saveInlineEdit($cell, expenseId, isFixed) {
+    const $input = $cell.find('.inline-edit-input');
+    const newValue = $input.val();
+    const originalValue = $input.data('original');
+
+    if (newValue === originalValue) {
+        cancelInlineEdit(); // 값이 변경되지 않았으면 취소
+        return;
+    }
+
+    if (!newValue || isNaN(newValue) || parseFloat(newValue) < 0) {
+        showMessage('올바른 금액을 입력해주세요.', 'error');
+        $input.focus().select();
+        return;
+    }
+
+    // 로딩 상태 표시
+    $cell.html('<div class="preloader-wrapper small active"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div>');
+
+    // API 호출
+    const endpoint = isFixed ? 'fixed-expenses' : 'prepaid-expenses';
+    const data = {
+        amount: parseFloat(newValue)
+    };
+
+    $.ajax({
+        url: getAPIUrl(endpoint) + '/' + expenseId,
+        type: 'PATCH',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(response) {
+            if (response.success) {
+                // 성공시 새 값으로 업데이트
+                $cell.html('₩' + parseInt(newValue).toLocaleString());
+                showMessage('금액이 성공적으로 수정되었습니다.', 'success');
+
+                // 총액 업데이트
+                if (isFixed) {
+                    loadFixedExpenses();
+                } else {
+                    loadPrepaidExpenses();
+                }
+            } else {
+                // 실패시 원래 값으로 복구
+                $cell.html('₩' + parseInt(originalValue).toLocaleString());
+                showMessage(response.message || '수정에 실패했습니다.', 'error');
+            }
+
+            isInlineEditing = false;
+            currentEditingCell = null;
+        },
+        error: function(xhr) {
+            // 에러시 원래 값으로 복구
+            $cell.html('₩' + parseInt(originalValue).toLocaleString());
+
+            let errorMessage = '서버 연결에 실패했습니다.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showMessage(errorMessage, 'error');
+
+            isInlineEditing = false;
+            currentEditingCell = null;
+        }
+    });
+}
+
+function cancelInlineEdit() {
+    if (!isInlineEditing || !currentEditingCell) {
+        return;
+    }
+
+    const $input = currentEditingCell.find('.inline-edit-input');
+    const originalValue = $input.data('original');
+
+    // 원래 값으로 복구
+    currentEditingCell.html('₩' + parseInt(originalValue).toLocaleString());
+
+    isInlineEditing = false;
+    currentEditingCell = null;
+}
+
+// 다른 곳 클릭시 편집 취소
+$(document).on('click', function(e) {
+    if (isInlineEditing && !$(e.target).closest('.amount-cell').length) {
+        cancelInlineEdit();
+    }
+});
+
+// ================================
+// 드래그 앤 드롭 기능 (assets.php에서 가져옴)
+// ================================
+
+let fixedExpensesSortable = null;
+let prepaidExpensesSortable = null;
+let fixedExpensesCardsSortable = null;
+let prepaidExpensesCardsSortable = null;
+
+function initializeSortable() {
+    // 기존 Sortable 인스턴스 제거
+    destroySortableInstances();
+
+    // 고정지출 테이블 드래그앤드롭
+    const fixedExpensesTable = document.getElementById('fixed-expenses-table');
+    if (fixedExpensesTable) {
+        fixedExpensesSortable = new Sortable(fixedExpensesTable, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: 'tr',
+            filter: '.no-drag',
+            onEnd: function(evt) {
+                if (evt.oldIndex !== evt.newIndex) {
+                    updateExpenseOrder('fixed-expenses', evt.oldIndex, evt.newIndex);
+                }
+            }
+        });
+    }
+
+    // 선납지출 테이블 드래그앤드롭
+    const prepaidExpensesTable = document.getElementById('prepaid-expenses-table');
+    if (prepaidExpensesTable) {
+        prepaidExpensesSortable = new Sortable(prepaidExpensesTable, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: 'tr',
+            filter: '.no-drag',
+            onEnd: function(evt) {
+                if (evt.oldIndex !== evt.newIndex) {
+                    updateExpenseOrder('prepaid-expenses', evt.oldIndex, evt.newIndex);
+                }
+            }
+        });
+    }
+
+    // 고정지출 모바일 카드 드래그앤드롭
+    const fixedExpensesCards = document.getElementById('fixed-expenses-cards');
+    if (fixedExpensesCards) {
+        fixedExpensesCardsSortable = new Sortable(fixedExpensesCards, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.expense-card',
+            filter: '.no-drag',
+            onEnd: function(evt) {
+                if (evt.oldIndex !== evt.newIndex) {
+                    updateExpenseOrder('fixed-expenses', evt.oldIndex, evt.newIndex);
+                }
+            }
+        });
+    }
+
+    // 선납지출 모바일 카드 드래그앤드롭
+    const prepaidExpensesCards = document.getElementById('prepaid-expenses-cards');
+    if (prepaidExpensesCards) {
+        prepaidExpensesCardsSortable = new Sortable(prepaidExpensesCards, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.prepaid-expense-card',
+            filter: '.no-drag',
+            onEnd: function(evt) {
+                if (evt.oldIndex !== evt.newIndex) {
+                    updateExpenseOrder('prepaid-expenses', evt.oldIndex, evt.newIndex);
+                }
+            }
+        });
+    }
+}
+
+function destroySortableInstances() {
+    if (fixedExpensesSortable) {
+        fixedExpensesSortable.destroy();
+        fixedExpensesSortable = null;
+    }
+    if (prepaidExpensesSortable) {
+        prepaidExpensesSortable.destroy();
+        prepaidExpensesSortable = null;
+    }
+    if (fixedExpensesCardsSortable) {
+        fixedExpensesCardsSortable.destroy();
+        fixedExpensesCardsSortable = null;
+    }
+    if (prepaidExpensesCardsSortable) {
+        prepaidExpensesCardsSortable.destroy();
+        prepaidExpensesCardsSortable = null;
+    }
+}
+
+function updateExpenseOrder(type, oldIndex, newIndex) {
+    // 아카이브 모드에서는 순서 변경 비활성화
+    if (currentViewMode === 'archive') {
+        showMessage('아카이브 모드에서는 순서를 변경할 수 없습니다.', 'error');
+        // 순서 복원
+        if (type === 'fixed-expenses') {
+            loadFixedExpenses();
+        } else {
+            loadPrepaidExpenses();
+        }
+        return;
+    }
+
+    // 현재 표시된 지출 목록에서 ID 순서 추출
+    let expenseIds = [];
+    if (type === 'fixed-expenses') {
+        $('#fixed-expenses-table tr[data-id], #fixed-expenses-cards .expense-card[data-id]').each(function() {
+            const id = $(this).data('id');
+            if (id) expenseIds.push(id);
+        });
+    } else {
+        $('#prepaid-expenses-table tr[data-id], #prepaid-expenses-cards .prepaid-expense-card[data-id]').each(function() {
+            const id = $(this).data('id');
+            if (id) expenseIds.push(id);
+        });
+    }
+
+    // 중복 제거 (테이블과 카드에서 같은 ID가 나올 수 있음)
+    expenseIds = [...new Set(expenseIds)];
+
+    if (expenseIds.length === 0) {
+        return;
+    }
+
+    // API 호출
+    $.ajax({
+        url: getAPIUrl(type) + '/reorder',
+        type: 'PUT',
+        data: JSON.stringify({ order: expenseIds }),
+        contentType: 'application/json',
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(response) {
+            if (response.success) {
+                showMessage('순서가 변경되었습니다.', 'success');
+            } else {
+                showMessage(response.message || '순서 변경에 실패했습니다.', 'error');
+                // 실패시 원래 순서로 복원
+                if (type === 'fixed-expenses') {
+                    loadFixedExpenses();
+                } else {
+                    loadPrepaidExpenses();
+                }
+            }
+        },
+        error: function(xhr) {
+            let errorMessage = '서버 연결에 실패했습니다.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showMessage(errorMessage, 'error');
+
+            // 실패시 원래 순서로 복원
+            if (type === 'fixed-expenses') {
+                loadFixedExpenses();
+            } else {
+                loadPrepaidExpenses();
+            }
+        }
     });
 }

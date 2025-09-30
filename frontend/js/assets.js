@@ -684,21 +684,45 @@ function handleEditComplete(cell) {
     let assetId = cell.data('asset-id');
 
     if (newBalance !== originalBalance) {
+        // 클릭 이벤트 리스너 일시적으로 제거 (confirm 다이얼로그 버튼 클릭 중복 방지)
+        $(document).off('click.balance-edit');
+
         // 변경사항이 있으면 확인
-        if (confirm('잔액을 ₩' + newBalance.toLocaleString() + '(으)로 수정하시겠습니까?')) {
-            updateAssetBalance(assetId, newBalance, cell);
+        if (typeof Feedback !== 'undefined') {
+            Feedback.confirm('잔액을 ₩' + newBalance.toLocaleString() + '(으)로 수정하시겠습니까?', function() {
+                // 확인
+                updateAssetBalance(assetId, newBalance, cell);
+                currentlyEditing = null;
+                // 이벤트 리스너 재등록
+                setupBalanceEditListeners();
+            }, function() {
+                // 취소
+                restoreOriginalBalance(cell);
+                currentlyEditing = null;
+                // 이벤트 리스너 재등록
+                setupBalanceEditListeners();
+            });
         } else {
-            // 취소 시 원래 값으로 복원
-            restoreOriginalBalance(cell);
+            // Fallback
+            if (confirm('잔액을 ₩' + newBalance.toLocaleString() + '(으)로 수정하시겠습니까?')) {
+                updateAssetBalance(assetId, newBalance, cell);
+            } else {
+                restoreOriginalBalance(cell);
+            }
+            currentlyEditing = null;
+            // 이벤트 리스너 재등록
+            setupBalanceEditListeners();
         }
     } else {
         // 변경사항 없으면 그냥 복원
         restoreOriginalBalance(cell);
+        currentlyEditing = null;
     }
 }
 
 function handleEditCancel(cell) {
     restoreOriginalBalance(cell);
+    currentlyEditing = null;
 }
 
 function restoreOriginalBalance(cell) {
