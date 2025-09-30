@@ -117,7 +117,7 @@ log_success "프론트엔드 설정 완료 (경로: $FRONTEND_TARGET)"
 # =====================================
 log_info "Nginx 설정 확인 중..."
 
-NGINX_CONF="/etc/nginx/sites-available/money.yeonghoon.kim"
+NGINX_CONF="/etc/nginx/conf.d/money.yeonghoon.kim.conf"
 
 if [ ! -f "$NGINX_CONF" ]; then
     log_warning "Nginx 설정 파일이 없습니다."
@@ -126,7 +126,6 @@ if [ ! -f "$NGINX_CONF" ]; then
     # 템플릿 파일을 Nginx 설정 위치로 복사
     if [ -f "nginx-production.conf" ]; then
         sudo cp nginx-production.conf "$NGINX_CONF"
-        sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
         log_info "Nginx 설정 테스트 중..."
         sudo nginx -t
         log_info "Nginx 재시작 중..."

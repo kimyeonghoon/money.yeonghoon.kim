@@ -90,16 +90,13 @@ mysql -h <PROD_DB_HOST> -u <PROD_DB_USER> -p money_management < all_dump.sql
 ### Step 4: Nginx 설정
 ```bash
 # Nginx 설정 파일 복사
-sudo cp nginx-production.conf /etc/nginx/sites-available/money.yeonghoon.kim
-
-# 심볼릭 링크 생성
-sudo ln -sf /etc/nginx/sites-available/money.yeonghoon.kim /etc/nginx/sites-enabled/
+sudo cp nginx-production.conf /etc/nginx/conf.d/money.yeonghoon.kim.conf
 
 # SSL 인증서 발급 (Let's Encrypt)
 sudo certbot --nginx -d money.yeonghoon.kim
 
 # 설정 파일 편집 (필요시)
-sudo nano /etc/nginx/sites-available/money.yeonghoon.kim
+sudo nano /etc/nginx/conf.d/money.yeonghoon.kim.conf
 
 # 주요 수정 사항:
 # - SSL 인증서 경로
