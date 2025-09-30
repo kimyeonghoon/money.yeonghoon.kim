@@ -98,32 +98,19 @@ else
 fi
 
 # =====================================
-# 4. 프론트엔드 파일 배포
+# 4. 프론트엔드 설정
 # =====================================
-log_info "프론트엔드 파일 배포 중..."
+log_info "프론트엔드 설정 중..."
 
-# 프론트엔드 배포 대상 디렉토리
-FRONTEND_TARGET="/var/www/money.yeonghoon.kim"
+# 프론트엔드는 프로젝트 디렉토리의 frontend 폴더 직접 사용
+FRONTEND_TARGET="$PROJECT_ROOT/frontend"
 
-# 디렉토리가 없으면 생성
-if [ ! -d "$FRONTEND_TARGET" ]; then
-    log_warning "프론트엔드 디렉토리가 없습니다. 생성 중..."
-    sudo mkdir -p "$FRONTEND_TARGET"
-fi
-
-# 프론트엔드 파일 복사
-log_info "파일 동기화 중..."
-sudo rsync -av --delete \
-    --exclude='.git' \
-    --exclude='node_modules' \
-    --exclude='*.log' \
-    frontend/ "$FRONTEND_TARGET/"
-
-# 권한 설정
+# 권한 설정 (Nginx/PHP-FPM이 읽을 수 있도록)
+log_info "파일 권한 설정 중..."
 sudo chown -R www-data:www-data "$FRONTEND_TARGET"
 sudo chmod -R 755 "$FRONTEND_TARGET"
 
-log_success "프론트엔드 파일 배포 완료"
+log_success "프론트엔드 설정 완료 (경로: $FRONTEND_TARGET)"
 
 # =====================================
 # 5. Nginx 설정 확인
