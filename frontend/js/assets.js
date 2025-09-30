@@ -190,6 +190,7 @@ function loadInvestmentAssets() {
                 console.log('[DEBUG] updateInvestmentAssetsTable 호출 시작');
                 updateInvestmentAssetsTable(data);
                 console.log('[DEBUG] updateInvestmentAssetsTable 호출 완료');
+                setupBalanceEditing(); // 투자자산 balance 인라인 편집 활성화
             } else {
                 console.error('투자 자산 데이터 로드 실패: ' + response.message);
             }
@@ -613,7 +614,7 @@ function setupBalanceEditing() {
     let currentlyEditing = null;
 
     // 잔액 셀 클릭 이벤트
-    $('.balance-cell.editable').off('click').on('click', function() {
+    $('#cash-assets-detail-table .balance-cell.editable, #cash-assets-detail-cards .balance-cell.editable').off('click').on('click', function() {
         if (currentlyEditing && currentlyEditing[0] !== this) {
             // 다른 셀이 편집중이면 먼저 처리
             handleEditCancel(currentlyEditing);
@@ -719,14 +720,22 @@ function updateAssetBalance(assetId, newBalance, cell) {
     // 로딩 표시 - 더 구체적인 스피너 사용
     cell.html('<div class="preloader-wrapper active" style="width: 20px; height: 20px; display: inline-block;"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div> 수정중...');
 
+    // 자산 유형 판별 (어느 테이블에 속해있는지 확인)
+    let assetType = 'cash'; // 기본값
+    let reloadFunction = loadCashAssets;
+    if (cell.closest('#investment-assets-detail-table, #investment-assets-detail-cards').length > 0) {
+        assetType = 'investment';
+        reloadFunction = loadInvestmentAssets;
+    }
+
     // 아카이브 모드인지 확인하여 적절한 API 사용
     let apiUrl, successMessage;
 
     if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
-        apiUrl = `${API_BASE_URL}/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
+        apiUrl = `${API_BASE_URL}/archive/${assetType}-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
         successMessage = '아카이브 잔액이 수정되었습니다.';
     } else {
-        apiUrl = `${API_BASE_URL}/cash-assets/${assetId}`;
+        apiUrl = `${API_BASE_URL}/${assetType}-assets/${assetId}`;
         successMessage = '잔액이 수정되었습니다.';
     }
 
@@ -752,7 +761,7 @@ function updateAssetBalance(assetId, newBalance, cell) {
 
                 // 전체 테이블 새로고침 (비중 재계산을 위해)
                 setTimeout(function() {
-                    loadCashAssets();
+                    reloadFunction();
                 }, 500);
             } else {
                 let errorMessage = response.message || '알 수 없는 오류가 발생했습니다';
