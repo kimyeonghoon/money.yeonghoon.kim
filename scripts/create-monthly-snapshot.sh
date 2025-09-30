@@ -36,9 +36,33 @@ fi
 API_URL="https://money.yeonghoon.kim/api/archive/create-snapshot?year=${YEAR}&month=${MONTH}"
 log "API 호출: $API_URL"
 
-# 쿠키 파일 (로그인 필요시)
-# 주의: 보안상 실제 운영 환경에서는 API 토큰 방식 권장
-COOKIE_FILE="/home/kim-yeonghoon/workspace/money.yeonghoon.kim/scripts/.snapshot_cookies"
+# 쿠키 파일 (임시)
+COOKIE_FILE="/tmp/snapshot_session_$(date +%s).txt"
+
+# 로그인 정보 (환경변수에서 읽기)
+if [ -z "$SNAPSHOT_EMAIL" ] || [ -z "$SNAPSHOT_PASSWORD" ]; then
+    log "✗ 환경변수 미설정: SNAPSHOT_EMAIL, SNAPSHOT_PASSWORD"
+    log "사용법: SNAPSHOT_EMAIL=your@email SNAPSHOT_PASSWORD=yourpass $0"
+    exit 1
+fi
+
+# 로그인하여 세션 쿠키 생성
+log "로그인 중..."
+LOGIN_RESPONSE=$(curl -X POST "https://money.yeonghoon.kim/login.php" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "email=$(printf %s "$SNAPSHOT_EMAIL" | sed 's/@/%40/g')&password=$(printf %s "$SNAPSHOT_PASSWORD" | sed 's/=/%3D/g')" \
+    -c "$COOKIE_FILE" \
+    --max-time 10 \
+    --silent \
+    --show-error 2>&1)
+
+if [ ! -s "$COOKIE_FILE" ]; then
+    log "✗ 로그인 실패"
+    rm -f "$COOKIE_FILE"
+    exit 1
+fi
+
+log "✓ 로그인 성공"
 
 # API 호출 (타임아웃 30초)
 RESPONSE=$(curl -X POST "$API_URL" \
@@ -46,6 +70,9 @@ RESPONSE=$(curl -X POST "$API_URL" \
     --max-time 30 \
     --silent \
     --show-error 2>&1)
+
+# 임시 쿠키 파일 삭제
+rm -f "$COOKIE_FILE"
 
 # 응답 확인
 if echo "$RESPONSE" | grep -q '"success":true'; then

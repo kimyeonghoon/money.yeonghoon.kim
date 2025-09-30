@@ -40,17 +40,23 @@ tail -f /home/kim-yeonghoon/workspace/money.yeonghoon.kim/logs/cron.log
 
 #### 인증 설정
 
-스크립트는 다음 쿠키 파일을 사용합니다:
-```
-/home/kim-yeonghoon/workspace/money.yeonghoon.kim/scripts/.snapshot_cookies
+스크립트는 환경변수를 통해 로그인 정보를 받습니다:
+- `SNAPSHOT_EMAIL`: 로그인 이메일
+- `SNAPSHOT_PASSWORD`: 로그인 비밀번호
+
+**Cron 환경변수 설정**:
+```bash
+# crontab -e
+SNAPSHOT_EMAIL=your@email.com
+SNAPSHOT_PASSWORD=yourpassword
+
+1 0 1 * * /home/kim-yeonghoon/workspace/money.yeonghoon.kim/scripts/create-monthly-snapshot.sh >> /home/kim-yeonghoon/workspace/money.yeonghoon.kim/logs/cron.log 2>&1
 ```
 
-**쿠키 갱신이 필요한 경우**:
+**수동 실행 시**:
 ```bash
-curl -X POST https://money.yeonghoon.kim/login.php \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "email=me%40yeonghoon.kim&password=YOUR_PASSWORD" \
-  -c /home/kim-yeonghoon/workspace/money.yeonghoon.kim/scripts/.snapshot_cookies
+SNAPSHOT_EMAIL=your@email.com SNAPSHOT_PASSWORD=yourpass \
+  /home/kim-yeonghoon/workspace/money.yeonghoon.kim/scripts/create-monthly-snapshot.sh
 ```
 
 #### 수동 실행 예제

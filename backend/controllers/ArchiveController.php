@@ -240,7 +240,7 @@ class ArchiveController {
 
             return $this->jsonResponse(true, '스냅샷 생성 완료', [
                 'archive_id' => $archiveId,
-                'month' => $month,
+                'month' => sprintf('%04d-%02d', $year, $monthNum),
                 'created_at' => date('Y-m-d H:i:s')
             ]);
 
