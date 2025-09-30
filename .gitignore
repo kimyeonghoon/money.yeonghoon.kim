@@ -56,3 +56,4 @@ config/database.local.php
 *.orig
 test-data/
 sample-data/
+scripts/.snapshot_cookies
