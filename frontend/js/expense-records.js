@@ -533,6 +533,8 @@ function saveAddedExpense() {
         }),
         success: function(response) {
             console.log('[DEBUG] add-today API 응답:', response);
+            console.log('[DEBUG] response 타입:', typeof response);
+            console.log('[DEBUG] response.success:', response ? response.success : 'response is null/undefined');
 
             // 로딩 숨기기 (항상 실행)
             if (typeof Feedback !== 'undefined') {
@@ -540,6 +542,7 @@ function saveAddedExpense() {
             }
 
             if (response && response.success) {
+                console.log('[DEBUG] 성공 조건 통과');
                 // 성공 메시지
                 if (typeof showMessage === 'function') {
                     showMessage('지출이 추가되었습니다.', 'success');
