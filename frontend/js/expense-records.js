@@ -1,3 +1,6 @@
+// API Base URL (프로덕션: /api, 개발: ' + API_BASE_URL + ')
+const API_BASE_URL = window.location.hostname === 'localhost' ? '' + API_BASE_URL + '' : '/api';
+
 /**
  * 일간지출내역 페이지 JavaScript
  */
@@ -137,7 +140,7 @@ $(document).ready(function() {
 
 function loadDailyExpenses() {
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses',
+        url: '' + API_BASE_URL + '/daily-expenses',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -212,7 +215,7 @@ function displayDailyExpenses(expenses) {
 function ensureMissingExpensesExist() {
     // 기존 데이터를 먼저 로드하여 누락된 날짜를 확인
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses',
+        url: '' + API_BASE_URL + '/daily-expenses',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -253,7 +256,7 @@ function createMissingExpenses(dates) {
 
     dates.forEach(function(date) {
         $.ajax({
-            url: 'http://localhost:8080/api/daily-expenses',
+            url: '' + API_BASE_URL + '/daily-expenses',
             type: 'POST',
         xhrFields: {
             withCredentials: true
@@ -333,7 +336,7 @@ function updateExpenseStatistics() {
 
     // 통계 API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/statistics',
+        url: '' + API_BASE_URL + '/daily-expenses/statistics',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -361,7 +364,7 @@ function updateExpenseStatistics() {
 function openEditDailyExpenseModal(expenseId) {
     // API에서 일간지출 정보 가져오기
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/' + expenseId,
+        url: '' + API_BASE_URL + '/daily-expenses/' + expenseId,
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -424,7 +427,7 @@ function saveEditedDailyExpense() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/' + expenseId,
+        url: '' + API_BASE_URL + '/daily-expenses/' + expenseId,
         type: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -513,7 +516,7 @@ function saveAddedExpense() {
 
     // 오늘 지출 추가 API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/add-today',
+        url: '' + API_BASE_URL + '/daily-expenses/add-today',
         type: 'POST',
         xhrFields: {
             withCredentials: true
@@ -585,7 +588,7 @@ function updateCalendarDisplay() {
 
 function loadMonthlyExpenses() {
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/by-month',
+        url: '' + API_BASE_URL + '/daily-expenses/by-month',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -702,7 +705,7 @@ function updateMonthlyTotal() {
 function openEditDailyExpenseByDate(date) {
     // 해당 날짜의 지출 데이터가 있는지 확인
     $.ajax({
-        url: 'http://localhost:8080/api/daily-expenses/by-date',
+        url: '' + API_BASE_URL + '/daily-expenses/by-date',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -854,8 +857,8 @@ function saveInlineCalendarEdit($dayElement, date) {
     // 기존 데이터가 있으면 업데이트, 없으면 생성
     const expense = monthlyExpensesData[date];
     const apiUrl = expense ?
-        `http://localhost:8080/api/daily-expenses/${expense.id}` :
-        'http://localhost:8080/api/daily-expenses';
+        `' + API_BASE_URL + '/daily-expenses/${expense.id}` :
+        '' + API_BASE_URL + '/daily-expenses';
     const method = expense ? 'PUT' : 'POST';
 
     $.ajax({

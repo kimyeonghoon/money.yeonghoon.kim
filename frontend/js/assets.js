@@ -1,3 +1,6 @@
+// API Base URL (프로덕션: /api, 개발: ' + API_BASE_URL + ')
+const API_BASE_URL = window.location.hostname === 'localhost' ? '' + API_BASE_URL + '' : '/api';
+
 /**
  * 자산현황 페이지 JavaScript - 머니매니저 시스템
  *
@@ -132,7 +135,7 @@ $(document).ready(function() {
 
 function loadCashAssets() {
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets',
+        url: '' + API_BASE_URL + '/cash-assets',
         method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -161,7 +164,7 @@ function loadCashAssets() {
 function loadInvestmentAssets() {
     console.log('[DEBUG] loadInvestmentAssets() 호출됨');
     $.ajax({
-        url: 'http://localhost:8080/api/investment-assets',
+        url: '' + API_BASE_URL + '/investment-assets',
         method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -212,7 +215,7 @@ function loadInvestmentAssets() {
 function loadPensionAssets() {
     console.log('[DEBUG] 연금자산 로딩 함수 호출됨');
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets',
+        url: '' + API_BASE_URL + '/pension-assets',
         method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -738,10 +741,10 @@ function updateAssetBalance(assetId, newBalance, cell) {
     let apiUrl, successMessage;
 
     if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
-        apiUrl = `http://localhost:8080/api/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
+        apiUrl = `' + API_BASE_URL + '/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
         successMessage = '아카이브 잔액이 수정되었습니다.';
     } else {
-        apiUrl = `http://localhost:8080/api/cash-assets/${assetId}`;
+        apiUrl = `' + API_BASE_URL + '/cash-assets/${assetId}`;
         successMessage = '잔액이 수정되었습니다.';
     }
 
@@ -979,7 +982,7 @@ function saveEditedAsset() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets/' + assetId,
+        url: '' + API_BASE_URL + '/cash-assets/' + assetId,
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1028,7 +1031,7 @@ function saveNewAsset() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets',
+        url: '' + API_BASE_URL + '/cash-assets',
         method: 'POST',
         xhrFields: {
             withCredentials: true
@@ -1218,7 +1221,7 @@ function updatePensionAssetValue(assetId, field, newValue, cell) {
     updateData[field] = newValue;
 
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets/' + assetId,
+        url: '' + API_BASE_URL + '/pension-assets/' + assetId,
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1277,7 +1280,7 @@ function saveNewPensionAsset() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets',
+        url: '' + API_BASE_URL + '/pension-assets',
         method: 'POST',
         xhrFields: {
             withCredentials: true
@@ -1288,7 +1291,7 @@ function saveNewPensionAsset() {
         contentType: 'application/json',
         data: JSON.stringify(formData),
         beforeSend: function() {
-            console.log('[DEBUG] 연금자산 API 호출 시작, URL: http://localhost:8080/api/pension-assets');
+            console.log('[DEBUG] 연금자산 API 호출 시작, URL: ' + API_BASE_URL + '/pension-assets');
             console.log('[DEBUG] 전송 데이터:', JSON.stringify(formData));
         },
         success: function(response) {
@@ -1350,7 +1353,7 @@ function saveNewInvestmentAsset() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/investment-assets',
+        url: '' + API_BASE_URL + '/investment-assets',
         method: 'POST',
         xhrFields: {
             withCredentials: true
@@ -1361,7 +1364,7 @@ function saveNewInvestmentAsset() {
         contentType: 'application/json',
         data: JSON.stringify(formData),
         beforeSend: function() {
-            console.log('[DEBUG] 투자자산 API 호출 시작, URL: http://localhost:8080/api/investment-assets');
+            console.log('[DEBUG] 투자자산 API 호출 시작, URL: ' + API_BASE_URL + '/investment-assets');
             console.log('[DEBUG] 전송 데이터:', JSON.stringify(formData));
         },
         success: function(response) {
@@ -1509,7 +1512,7 @@ function saveNewOrder() {
 
     // API 호출하여 순서 저장
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets/reorder',
+        url: '' + API_BASE_URL + '/cash-assets/reorder',
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1642,7 +1645,7 @@ function saveInvestmentNewOrder() {
 
     // API 호출하여 순서 저장
     $.ajax({
-        url: 'http://localhost:8080/api/investment-assets/reorder',
+        url: '' + API_BASE_URL + '/investment-assets/reorder',
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1775,7 +1778,7 @@ function savePensionNewOrder() {
 
     // API 호출하여 순서 저장
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets/reorder',
+        url: '' + API_BASE_URL + '/pension-assets/reorder',
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1844,7 +1847,7 @@ function saveEditedPensionAsset() {
 
     // API 호출
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets/' + assetId,
+        url: '' + API_BASE_URL + '/pension-assets/' + assetId,
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -1886,7 +1889,7 @@ function deleteAsset() {
     }
 
     $.ajax({
-        url: 'http://localhost:8080/api/cash-assets/' + assetId,
+        url: '' + API_BASE_URL + '/cash-assets/' + assetId,
         method: 'DELETE',
         xhrFields: {
             withCredentials: true
@@ -1926,7 +1929,7 @@ function deletePensionAsset() {
     }
 
     $.ajax({
-        url: 'http://localhost:8080/api/pension-assets/' + assetId,
+        url: '' + API_BASE_URL + '/pension-assets/' + assetId,
         method: 'DELETE',
         xhrFields: {
             withCredentials: true
@@ -1981,7 +1984,7 @@ function saveEditedInvestmentAsset() {
     formData.deposit_amount = formData.current_value;
 
     $.ajax({
-        url: 'http://localhost:8080/api/investment-assets/' + assetId,
+        url: '' + API_BASE_URL + '/investment-assets/' + assetId,
         method: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -2029,7 +2032,7 @@ function deleteInvestmentAsset() {
     console.log('[DEBUG] 투자자산 삭제 요청:', assetId);
 
     $.ajax({
-        url: 'http://localhost:8080/api/investment-assets/' + assetId,
+        url: '' + API_BASE_URL + '/investment-assets/' + assetId,
         method: 'DELETE',
         xhrFields: {
             withCredentials: true
@@ -2216,7 +2219,7 @@ function showError(message) {
 const OriginalAssetAPI = {
     loadCashAssets: function() {
         $.ajax({
-            url: 'http://localhost:8080/api/cash-assets',
+            url: '' + API_BASE_URL + '/cash-assets',
             method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -2242,7 +2245,7 @@ const OriginalAssetAPI = {
     loadInvestmentAssets: function() {
         console.log('[DEBUG] OriginalAssetAPI.loadInvestmentAssets() 호출됨');
         $.ajax({
-            url: 'http://localhost:8080/api/investment-assets',
+            url: '' + API_BASE_URL + '/investment-assets',
             method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -2274,7 +2277,7 @@ const OriginalAssetAPI = {
     loadPensionAssets: function() {
         console.log('[DEBUG] OriginalAssetAPI.loadPensionAssets() 호출됨');
         $.ajax({
-            url: 'http://localhost:8080/api/pension-assets',
+            url: '' + API_BASE_URL + '/pension-assets',
             method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -2321,7 +2324,7 @@ class ArchiveManager {
         this.showMonthSelectorLoading();
 
         $.ajax({
-            url: 'http://localhost:8080/api/archive/months',
+            url: '' + API_BASE_URL + '/archive/months',
             method: 'GET',
         xhrFields: {
             withCredentials: true
@@ -2447,9 +2450,9 @@ class ArchiveManager {
     // API URL 생성
     static getAPIUrl(endpoint) {
         if (this.currentMode === 'current') {
-            return `http://localhost:8080/api/${endpoint}`;
+            return `' + API_BASE_URL + '/${endpoint}`;
         } else {
-            return `http://localhost:8080/api/archive/${endpoint}?month=${this.selectedMonth}`;
+            return `' + API_BASE_URL + '/archive/${endpoint}?month=${this.selectedMonth}`;
         }
     }
 
@@ -2601,7 +2604,7 @@ class ArchiveManager {
         const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
         $.ajax({
-            url: `http://localhost:8080/api/archive/create-snapshot?month=${month}`,
+            url: `' + API_BASE_URL + '/archive/create-snapshot?month=${month}`,
             method: 'POST',
         xhrFields: {
             withCredentials: true

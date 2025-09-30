@@ -1,3 +1,6 @@
+// API Base URL (프로덕션: /api, 개발: ' + API_BASE_URL + ')
+const API_BASE_URL = window.location.hostname === 'localhost' ? '' + API_BASE_URL + '' : '/api';
+
 $(document).ready(function() {
     // 모달 초기화
     M.Modal.init(document.querySelectorAll('.modal'));
@@ -104,11 +107,11 @@ let currentSelectedMonth = null;
 
 function getAPIUrl(endpoint) {
     if (currentViewMode === 'current') {
-        return `http://localhost:8080/api/${endpoint}`;
+        return `' + API_BASE_URL + '/${endpoint}`;
     } else {
         // 아카이브 모드에서는 year와 month 파라미터가 필요
         const [year, monthNum] = currentSelectedMonth.split('-');
-        return `http://localhost:8080/api/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
+        return `' + API_BASE_URL + '/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
     }
 }
 
@@ -118,7 +121,7 @@ function initMonthSelector() {
 
 function loadAvailableArchiveMonths() {
     $.ajax({
-        url: 'http://localhost:8080/api/expense-archive/available-months',
+        url: '' + API_BASE_URL + '/expense-archive/available-months',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -231,10 +234,10 @@ function loadArchiveData(month) {
 function loadFixedExpenses() {
     let url;
     if (currentViewMode === 'current') {
-        url = 'http://localhost:8080/api/fixed-expenses';
+        url = '' + API_BASE_URL + '/fixed-expenses';
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        url = `http://localhost:8080/api/expense-archive/fixed-expenses?year=${year}&month=${parseInt(monthNum)}`;
+        url = `' + API_BASE_URL + '/expense-archive/fixed-expenses?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     $.ajax({
@@ -423,10 +426,10 @@ function openEditExpenseModal(expenseId) {
     // API URL 생성 (아카이브 모드 고려)
     let apiUrl;
     if (currentViewMode === 'current') {
-        apiUrl = `http://localhost:8080/api/fixed-expenses/${expenseId}`;
+        apiUrl = `' + API_BASE_URL + '/fixed-expenses/${expenseId}`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `http://localhost:8080/api/expense-archive/fixed-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
+        apiUrl = `' + API_BASE_URL + '/expense-archive/fixed-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     // API에서 고정지출 정보 가져오기
@@ -627,10 +630,10 @@ function deleteFixedExpenseConfirmed(expenseId) {
 function loadPrepaidExpenses() {
     let url;
     if (currentViewMode === 'current') {
-        url = 'http://localhost:8080/api/prepaid-expenses';
+        url = '' + API_BASE_URL + '/prepaid-expenses';
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        url = `http://localhost:8080/api/expense-archive/prepaid-expenses?year=${year}&month=${parseInt(monthNum)}`;
+        url = `' + API_BASE_URL + '/expense-archive/prepaid-expenses?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     $.ajax({
@@ -787,10 +790,10 @@ function openEditPrepaidExpenseModal(expenseId) {
     // API URL 생성 (아카이브 모드 고려)
     let apiUrl;
     if (currentViewMode === 'current') {
-        apiUrl = `http://localhost:8080/api/prepaid-expenses/${expenseId}`;
+        apiUrl = `' + API_BASE_URL + '/prepaid-expenses/${expenseId}`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `http://localhost:8080/api/expense-archive/prepaid-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
+        apiUrl = `' + API_BASE_URL + '/expense-archive/prepaid-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     // API에서 선납지출 정보 가져오기
