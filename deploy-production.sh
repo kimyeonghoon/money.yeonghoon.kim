@@ -107,7 +107,24 @@ FRONTEND_TARGET="$PROJECT_ROOT/frontend"
 
 # 권한 설정 (Nginx/PHP-FPM이 읽을 수 있도록)
 log_info "파일 권한 설정 중..."
-sudo chown -R www-data:www-data "$FRONTEND_TARGET"
+
+# 웹 서버 사용자 자동 감지 (CentOS/RHEL: nginx, Ubuntu/Debian: www-data)
+if id "nginx" &>/dev/null; then
+    WEB_USER="nginx"
+    WEB_GROUP="nginx"
+elif id "www-data" &>/dev/null; then
+    WEB_USER="www-data"
+    WEB_GROUP="www-data"
+elif id "apache" &>/dev/null; then
+    WEB_USER="apache"
+    WEB_GROUP="apache"
+else
+    log_error "웹 서버 사용자를 찾을 수 없습니다 (nginx, www-data, apache 중 하나 필요)"
+    exit 1
+fi
+
+log_info "웹 서버 사용자: $WEB_USER:$WEB_GROUP"
+sudo chown -R $WEB_USER:$WEB_GROUP "$FRONTEND_TARGET"
 sudo chmod -R 755 "$FRONTEND_TARGET"
 
 log_success "프론트엔드 설정 완료 (경로: $FRONTEND_TARGET)"
