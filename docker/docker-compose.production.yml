@@ -1,0 +1,112 @@
+# =====================================
+# Docker Compose 프로덕션 설정
+# =====================================
+#
+# 실서버 환경에서 백엔드 API만 Docker로 실행
+# 프론트엔드는 기존 Nginx에서 직접 서빙
+#
+# 사용법:
+#   docker-compose -f docker/docker-compose.production.yml up -d
+#   docker-compose -f docker/docker-compose.production.yml down
+#   docker-compose -f docker/docker-compose.production.yml logs -f
+#
+# 주요 차이점 (개발 환경 대비):
+# - MySQL 컨테이너 제외 (외부 DB 사용)
+# - phpMyAdmin 제외
+# - 프론트엔드 컨테이너 제외 (Nginx 직접 서빙)
+# - 재시작 정책: always
+# - 로그 제한 설정
+
+version: '3.8'
+
+services:
+  # =====================================
+  # 백엔드 PHP-FPM 서비스
+  # =====================================
+  backend-php:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    container_name: money_backend_php
+    restart: always                                   # 자동 재시작
+    volumes:
+      - ../backend:/var/www/html
+      - ../logs:/var/log/app
+    environment:
+      - PHP_TIMEZONE=${PHP_TIMEZONE:-Asia/Seoul}
+      # 프로덕션 설정
+      - PHP_DISPLAY_ERRORS=Off
+      - PHP_LOG_ERRORS=On
+      - PHP_ERROR_LOG=/var/log/app/php-error.log
+    env_file:
+      - ../.env                                      # 프로덕션 환경변수
+    networks:
+      - money_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"                              # 로그 파일 최대 크기
+        max-file: "3"                                # 로그 파일 개수
+    healthcheck:
+      test: ["CMD-SHELL", "php -v || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================
+  # 백엔드 Nginx 서비스 (API 게이트웨이)
+  # =====================================
+  backend-nginx:
+    image: nginx:alpine
+    container_name: money_backend_nginx
+    restart: always
+    ports:
+      - "8080:80"                                    # API 전용 포트
+    volumes:
+      - ../backend:/var/www/html
+      - ./nginx-backend.conf:/etc/nginx/conf.d/default.conf
+      - ../logs:/var/log/nginx
+    depends_on:
+      - backend-php
+    networks:
+      - money_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# =====================================
+# 네트워크 정의
+# =====================================
+networks:
+  money_network:
+    driver: bridge
+
+# =====================================
+# 참고사항
+# =====================================
+#
+# 1. 환경변수 설정:
+#    - .env 파일에서 USE_DOCKER_MYSQL=false 설정
+#    - PROD_DB_HOST, PROD_DB_USER 등 외부 DB 정보 설정
+#
+# 2. 로그 확인:
+#    docker-compose -f docker/docker-compose.production.yml logs -f backend-php
+#    docker-compose -f docker/docker-compose.production.yml logs -f backend-nginx
+#
+# 3. 컨테이너 재시작:
+#    docker-compose -f docker/docker-compose.production.yml restart
+#
+# 4. 컨테이너 상태 확인:
+#    docker ps --filter "name=money_backend"
+#
+# 5. 리소스 사용량 확인:
+#    docker stats money_backend_php money_backend_nginx
