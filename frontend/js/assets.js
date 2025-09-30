@@ -739,6 +739,11 @@ function updateAssetBalance(assetId, newBalance, cell) {
         successMessage = '잔액이 수정되었습니다.';
     }
 
+    // 자산 유형에 따라 필드명 결정
+    let fieldName = (assetType === 'investment') ? 'current_value' : 'balance';
+    let payload = {};
+    payload[fieldName] = newBalance;
+
     $.ajax({
         url: apiUrl,
         method: 'PATCH',
@@ -747,9 +752,7 @@ function updateAssetBalance(assetId, newBalance, cell) {
         },
         contentType: 'application/json',
         timeout: 15000, // 15초 타임아웃
-        data: JSON.stringify({
-            balance: newBalance
-        }),
+        data: JSON.stringify(payload),
         success: function(response) {
             if (response.success) {
                 // 성공 시 새로운 값으로 업데이트

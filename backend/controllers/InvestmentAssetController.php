@@ -11,7 +11,11 @@ class InvestmentAssetController extends BaseController {
     }
 
     protected function validateData($data, $id = null) {
-        return Validator::validateInvestmentAsset($data);
+        return Validator::validateInvestmentAsset($data, false);
+    }
+
+    protected function validateDataForPartialUpdate($data, $id = null) {
+        return Validator::validateInvestmentAsset($data, true);
     }
 
     protected function index() {
