@@ -157,6 +157,6 @@ $pageTitle = '로그인';
     </div>
 
     <!-- 로그인 페이지 전용 JavaScript -->
-    <script src="/js/login.js"></script>
+    <script src="/js/login.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

@@ -228,6 +228,6 @@ include 'includes/header.php';
     </div>
 </div>
 
-<script src="js/expense-records.js"></script>
+<script src="js/expense-records.js?v=<?php echo time(); ?>"></script>
 
 <?php include 'includes/footer.php'; ?>

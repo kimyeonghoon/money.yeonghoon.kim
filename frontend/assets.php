@@ -559,6 +559,6 @@ include 'includes/header.php';
         </div>
     </div>
 
-<script src="js/assets.js"></script>
+<script src="js/assets.js?v=<?php echo time(); ?>"></script>
 
 <?php include 'includes/footer.php'; ?>
