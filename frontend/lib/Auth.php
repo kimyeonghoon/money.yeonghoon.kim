@@ -73,9 +73,52 @@ class Auth {
     }
 
     /**
+     * 환경변수 로드 (.env 파일에서)
+     */
+    private static function loadEnv() {
+        static $loaded = false;
+        if ($loaded) {
+            return;
+        }
+
+        // 프로젝트 루트의 .env 파일 경로
+        $envFile = __DIR__ . '/../../.env';
+
+        if (file_exists($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                // 주석 제거
+                if (strpos(trim($line), '#') === 0) {
+                    continue;
+                }
+
+                // KEY=VALUE 파싱
+                if (strpos($line, '=') !== false) {
+                    list($key, $value) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $value = trim($value);
+
+                    // 따옴표 제거
+                    $value = trim($value, "'\"");
+
+                    // 환경변수에 설정 (이미 없는 경우만)
+                    if (!getenv($key)) {
+                        putenv("$key=$value");
+                    }
+                }
+            }
+        }
+
+        $loaded = true;
+    }
+
+    /**
      * 로그인 처리
      */
     public static function login($email, $password) {
+        // .env 파일 로드
+        self::loadEnv();
+
         $envEmail = getenv('LOGIN_USERNAME');
         $envPasswordHash = getenv('LOGIN_PASSWORD_HASH');
 
@@ -222,6 +265,9 @@ class Auth {
      * 텔레그램 로그인 알림 전송
      */
     private static function sendTelegramNotification($email) {
+        // .env 파일 로드
+        self::loadEnv();
+
         $botToken = getenv('TELEGRAM_BOT_TOKEN');
         $chatId = getenv('TELEGRAM_CHAT_ID');
 
