@@ -28,10 +28,22 @@ class Database {
     private $pdo;
 
     private function __construct() {
-        $host = getenv('DB_HOST') ?: 'localhost';
-        $dbname = getenv('DB_NAME') ?: 'money_management';
-        $username = getenv('DB_USER') ?: 'root';
-        $password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: '';
+        // 프로덕션 환경 체크
+        $useDocker = getenv('USE_DOCKER_MYSQL');
+
+        if ($useDocker === 'false') {
+            // 프로덕션: 외부 MySQL 서버 사용
+            $host = getenv('PROD_DB_HOST') ?: getenv('DB_HOST') ?: 'localhost';
+            $dbname = getenv('PROD_DB_NAME') ?: getenv('DB_NAME') ?: 'money_management';
+            $username = getenv('PROD_DB_USER') ?: getenv('DB_USER') ?: 'root';
+            $password = getenv('PROD_DB_PASSWORD') ?: getenv('DB_PASSWORD') ?: '';
+        } else {
+            // 개발: Docker MySQL 컨테이너 사용
+            $host = getenv('DB_HOST') ?: 'localhost';
+            $dbname = getenv('DB_NAME') ?: 'money_management';
+            $username = getenv('DB_USER') ?: 'root';
+            $password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: '';
+        }
 
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
 
