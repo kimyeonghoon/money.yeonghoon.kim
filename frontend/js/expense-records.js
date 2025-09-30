@@ -539,6 +539,11 @@ function saveAddedExpense() {
             // 로딩 숨기기 (항상 실행)
             if (typeof Feedback !== 'undefined') {
                 Feedback.hideLoading(loadingId);
+                // 강제로 모든 로딩 오버레이 제거
+                const overlay = document.querySelector('.feedback-loading-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
             }
 
             if (response && response.success) {
