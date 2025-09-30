@@ -315,3 +315,52 @@ When adding a new entity (e.g., "Insurance Policies"):
   - Expense Tracking: 60% 🔧 (UI/UX improvements needed)
 - **Mobile Optimization**: 70% 🔧 (assets.php완성, 나머지 페이지 진행 중)
 - **Code Quality**: High (comprehensive documentation, security best practices)
+
+## Security Guidelines
+
+### ⚠️ CRITICAL: Pre-commit Security Checks
+
+**Before every `git add` or `git commit`, you MUST verify:**
+
+1. **No hardcoded credentials** - Check for:
+   - Passwords, API keys, tokens
+   - Email addresses with passwords
+   - Database credentials
+   - Session IDs or cookies
+
+2. **No sensitive data** - Check for:
+   - `.env` file contents
+   - Cookie files (`*.txt` with session data)
+   - Private keys or certificates
+   - Personal identification information
+
+3. **Use environment variables** - For sensitive data:
+   - Database passwords → `.env` (gitignored)
+   - API credentials → Environment variables
+   - Login credentials → Cron environment or secure vault
+
+4. **Review all file changes before commit:**
+   ```bash
+   # Always review staged changes
+   git diff --cached
+
+   # Check for common patterns
+   grep -r "password.*=" staged-files
+   grep -r "api.*key" staged-files
+   ```
+
+5. **Emergency response** - If credentials committed:
+   ```bash
+   # Immediately revert and force push
+   git reset --hard HEAD~1
+   git push --force
+
+   # Then rotate compromised credentials
+   ```
+
+### Files to NEVER commit
+- `.env`, `.env.*` (production credentials)
+- `*.cookies`, `*.session` (session files)
+- `cookies.txt`, `*_cookies.txt` (curl cookie files)
+- Private keys (`.pem`, `.key`)
+- Database dumps with sensitive data
