@@ -30,6 +30,11 @@ class Database {
                     $key = trim($key);
                     $value = trim($value);
 
+                    // 인라인 주석 제거 (따옴표로 감싸지 않은 경우만)
+                    if (strpos($value, '#') !== false && $value[0] !== '"' && $value[0] !== "'") {
+                        $value = trim(explode('#', $value)[0]);
+                    }
+
                     // 따옴표 제거
                     $value = trim($value, "'\"");
 
