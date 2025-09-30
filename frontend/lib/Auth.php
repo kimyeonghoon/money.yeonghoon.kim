@@ -131,10 +131,19 @@ class Auth {
             return false;
         }
 
-        // 비밀번호 해시 확인 (SHA-512)
-        $inputPasswordHash = hash('sha512', $password);
-        if ($inputPasswordHash !== $envPasswordHash) {
-            return false;
+        // 비밀번호 확인 (bcrypt 우선, SHA-512 fallback)
+        // bcrypt 해시 형식: $2y$로 시작
+        if (strpos($envPasswordHash, '$2y$') === 0) {
+            // bcrypt 검증
+            if (!password_verify($password, $envPasswordHash)) {
+                return false;
+            }
+        } else {
+            // SHA-512 검증 (하위 호환성)
+            $inputPasswordHash = hash('sha512', $password);
+            if ($inputPasswordHash !== $envPasswordHash) {
+                return false;
+            }
         }
 
         // 로그인 성공 - 새 세션 생성
