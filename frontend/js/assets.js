@@ -1243,7 +1243,6 @@ function saveNewPensionAsset() {
 
     const formData = {
         type: $('#add-pension-type').val(),
-        account_name: $('#add-pension-account').val() || '-',
         item_name: $('#add-pension-item-name').val(),
         current_value: parseInt($('#add-pension-current-value').val()) || 0,
         deposit_amount: parseInt($('#add-pension-deposit-amount').val()) || 0
@@ -1802,7 +1801,6 @@ function saveEditedPensionAsset() {
     const assetId = $('#edit-pension-modal').data('asset-id');
     const formData = {
         type: $('#edit-pension-type').val(),
-        account_name: $('#edit-pension-account').val() || '',
         item_name: $('#edit-pension-item-name').val()
     };
 

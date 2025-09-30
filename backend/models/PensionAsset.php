@@ -6,7 +6,6 @@ class PensionAsset extends BaseModel {
     protected $table = 'pension_assets';
     protected $fillable = [
         'type',
-        'account_name',
         'item_name',
         'current_value',
         'deposit_amount',
