@@ -140,12 +140,6 @@ function loadCashAssets() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
-        xhrFields: {
-            withCredentials: true
-        },
         success: function(response) {
             if (response.success) {
                 updateCashAssetsTable(response.data.data);
@@ -166,12 +160,6 @@ function loadInvestmentAssets() {
     $.ajax({
         url: '' + API_BASE_URL + '/investment-assets',
         method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -217,12 +205,6 @@ function loadPensionAssets() {
     $.ajax({
         url: '' + API_BASE_URL + '/pension-assets',
         method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -750,10 +732,7 @@ function updateAssetBalance(assetId, newBalance, cell) {
 
     $.ajax({
         url: apiUrl,
-        method: 'PUT',
-        xhrFields: {
-            withCredentials: true
-        },
+        method: 'PATCH',
         xhrFields: {
             withCredentials: true
         },
@@ -987,9 +966,6 @@ function saveEditedAsset() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify(formData),
         success: function(response) {
@@ -1033,9 +1009,6 @@ function saveNewAsset() {
     $.ajax({
         url: '' + API_BASE_URL + '/cash-assets',
         method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -1226,9 +1199,6 @@ function updatePensionAssetValue(assetId, field, newValue, cell) {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify(updateData),
         success: function(response) {
@@ -1282,9 +1252,6 @@ function saveNewPensionAsset() {
     $.ajax({
         url: '' + API_BASE_URL + '/pension-assets',
         method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -1355,9 +1322,6 @@ function saveNewInvestmentAsset() {
     $.ajax({
         url: '' + API_BASE_URL + '/investment-assets',
         method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -1517,9 +1481,6 @@ function saveNewOrder() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify({
             orders: orders
@@ -1647,9 +1608,6 @@ function saveInvestmentNewOrder() {
     $.ajax({
         url: '' + API_BASE_URL + '/investment-assets/reorder',
         method: 'PUT',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -1783,9 +1741,6 @@ function savePensionNewOrder() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify({
             orders: orders
@@ -1852,9 +1807,6 @@ function saveEditedPensionAsset() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify(formData),
         success: function(response) {
@@ -1894,9 +1846,6 @@ function deleteAsset() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         success: function(response) {
             if (response.success) {
                 // 모달 닫기
@@ -1931,9 +1880,6 @@ function deletePensionAsset() {
     $.ajax({
         url: '' + API_BASE_URL + '/pension-assets/' + assetId,
         method: 'DELETE',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -1989,9 +1935,6 @@ function saveEditedInvestmentAsset() {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
         contentType: 'application/json',
         data: JSON.stringify(formData),
         success: function(response) {
@@ -2034,9 +1977,6 @@ function deleteInvestmentAsset() {
     $.ajax({
         url: '' + API_BASE_URL + '/investment-assets/' + assetId,
         method: 'DELETE',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -2224,9 +2164,6 @@ const OriginalAssetAPI = {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
             success: function(response) {
                 if (response.success) {
                     updateCashAssetsTable(response.data.data);
@@ -2247,9 +2184,6 @@ const OriginalAssetAPI = {
         $.ajax({
             url: '' + API_BASE_URL + '/investment-assets',
             method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -2279,9 +2213,6 @@ const OriginalAssetAPI = {
         $.ajax({
             url: '' + API_BASE_URL + '/pension-assets',
             method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -2326,9 +2257,6 @@ class ArchiveManager {
         $.ajax({
             url: '' + API_BASE_URL + '/archive/months',
             method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -2467,9 +2395,6 @@ class ArchiveManager {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
             timeout: 10000, // 10초 타임아웃
             success: (response) => {
                 this.hideDataLoading();
@@ -2520,9 +2445,6 @@ class ArchiveManager {
         xhrFields: {
             withCredentials: true
         },
-        xhrFields: {
-            withCredentials: true
-        },
             timeout: 10000,
             success: (response) => {
                 this.hideDataLoading();
@@ -2561,9 +2483,6 @@ class ArchiveManager {
         $.ajax({
             url: this.getAPIUrl('pension-assets'),
             method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
@@ -2606,9 +2525,6 @@ class ArchiveManager {
         $.ajax({
             url: `' + API_BASE_URL + '/archive/create-snapshot?month=${month}`,
             method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
         xhrFields: {
             withCredentials: true
         },
