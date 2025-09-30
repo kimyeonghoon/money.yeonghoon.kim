@@ -169,11 +169,11 @@ if [ -f "all_dump.sql" ]; then
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         log_info "데이터베이스 임포트 중..."
 
-        # .env에서 DB 정보 읽기
-        DB_HOST=$(grep DB_HOST .env | cut -d '=' -f2)
-        DB_USER=$(grep DB_USER .env | cut -d '=' -f2)
-        DB_PASSWORD=$(grep DB_PASSWORD .env | cut -d '=' -f2)
-        DB_NAME=$(grep DB_NAME .env | cut -d '=' -f2)
+        # .env에서 DB 정보 읽기 (주석 제거)
+        DB_HOST=$(grep "^PROD_DB_HOST=" .env | cut -d '=' -f2 | sed 's/#.*//' | xargs)
+        DB_USER=$(grep "^PROD_DB_USER=" .env | cut -d '=' -f2 | sed 's/#.*//' | xargs)
+        DB_PASSWORD=$(grep "^PROD_DB_PASSWORD=" .env | cut -d '=' -f2 | sed 's/#.*//' | xargs)
+        DB_NAME=$(grep "^PROD_DB_NAME=" .env | cut -d '=' -f2 | sed 's/#.*//' | xargs)
 
         mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < all_dump.sql
         log_success "데이터베이스 임포트 완료"
