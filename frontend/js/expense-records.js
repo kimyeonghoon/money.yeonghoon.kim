@@ -540,22 +540,44 @@ function saveAddedExpense() {
             }
 
             if (response && response.success) {
-                showMessage('지출이 추가되었습니다.', 'success');
+                // 성공 메시지
+                if (typeof showMessage === 'function') {
+                    showMessage('지출이 추가되었습니다.', 'success');
+                } else {
+                    M.toast({html: '지출이 추가되었습니다.', classes: 'green'});
+                }
 
                 // 모달 닫기
-                const modal = M.Modal.getInstance(document.getElementById('add-expense-modal'));
-                if (modal) {
-                    modal.close();
+                try {
+                    const modalEl = document.getElementById('add-expense-modal');
+                    if (modalEl) {
+                        const modal = M.Modal.getInstance(modalEl);
+                        if (modal) {
+                            modal.close();
+                        }
+                    }
+                } catch (e) {
+                    console.error('[ERROR] 모달 닫기 실패:', e);
                 }
 
                 // 데이터 새로고침
+                console.log('[DEBUG] 데이터 새로고침 시작');
                 setTimeout(function() {
-                    loadDailyExpenses();
-                    updateExpenseStatistics();
-                    loadMonthlyExpenses();
+                    try {
+                        if (typeof loadDailyExpenses === 'function') loadDailyExpenses();
+                        if (typeof updateExpenseStatistics === 'function') updateExpenseStatistics();
+                        if (typeof loadMonthlyExpenses === 'function') loadMonthlyExpenses();
+                        console.log('[DEBUG] 데이터 새로고침 완료');
+                    } catch (e) {
+                        console.error('[ERROR] 데이터 새로고침 실패:', e);
+                    }
                 }, 500);
             } else {
-                showMessage(response.message || '지출 추가에 실패했습니다.', 'error');
+                if (typeof showMessage === 'function') {
+                    showMessage(response.message || '지출 추가에 실패했습니다.', 'error');
+                } else {
+                    M.toast({html: response.message || '지출 추가에 실패했습니다.', classes: 'red'});
+                }
             }
         },
         error: function(xhr) {
