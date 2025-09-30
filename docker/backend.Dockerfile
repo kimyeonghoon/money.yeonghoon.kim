@@ -34,21 +34,28 @@ FROM php:8.2-fpm-alpine
 # =====================================
 # 개발 도구 및 MySQL 클라이언트 설치
 # Alpine 패키지 관리자(apk) 사용으로 빠른 설치와 작은 이미지 크기 확보
+# - mysql-client: MySQL 명령줄 도구 (디버깅용)
+# - curl: HTTP 클라이언트 (헬스체크, API 테스트)
+# - zip/unzip: 압축 파일 처리 (Composer 의존성)
+# - git: 버전 관리 (Composer 소스 코드 다운로드)
 RUN apk add --no-cache \
-    mysql-client \     # MySQL 명령줄 도구 (디버깅용)
-    curl \             # HTTP 클라이언트 (헬스체크, API 테스트)
-    zip \              # 압축 파일 처리 (Composer 의존성)
-    unzip \            # 압축 해제 (Composer 패키지)
-    git                # 버전 관리 (Composer 소스 코드 다운로드)
+    mysql-client \
+    curl \
+    zip \
+    unzip \
+    git
 
 # =====================================
 # PHP 확장 모듈 설치
 # =====================================
 # 데이터베이스 연결을 위한 필수 PHP 확장 설치
+# - pdo: PHP Data Objects (추상 데이터베이스 레이어)
+# - pdo_mysql: MySQL용 PDO 드라이버 (Prepared Statement 지원)
+# - mysqli: MySQL Improved 확장 (레거시 호환성)
 RUN docker-php-ext-install \
-    pdo \              # PHP Data Objects (추상 데이터베이스 레이어)
-    pdo_mysql \        # MySQL용 PDO 드라이버 (Prepared Statement 지원)
-    mysqli             # MySQL Improved 확장 (레거시 호환성)
+    pdo \
+    pdo_mysql \
+    mysqli
 
 # =====================================
 # 보안 및 암호화 지원
