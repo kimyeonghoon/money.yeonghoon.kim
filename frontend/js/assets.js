@@ -697,13 +697,13 @@ function handleEditComplete(cell) {
                 updateAssetBalance(assetId, newBalance, cell);
                 currentlyEditing = null;
                 // 이벤트 리스너 재등록
-                setupBalanceEditListeners();
+                setupBalanceEditing();
             }, function() {
                 // 취소
                 restoreOriginalBalance(cell);
                 currentlyEditing = null;
                 // 이벤트 리스너 재등록
-                setupBalanceEditListeners();
+                setupBalanceEditing();
             });
         } else {
             // Fallback
@@ -714,7 +714,7 @@ function handleEditComplete(cell) {
             }
             currentlyEditing = null;
             // 이벤트 리스너 재등록
-            setupBalanceEditListeners();
+            setupBalanceEditing();
         }
     } else {
         // 변경사항 없으면 그냥 복원
