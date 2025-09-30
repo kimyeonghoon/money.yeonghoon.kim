@@ -276,6 +276,61 @@ class ArchiveController {
     }
 
     /**
+     * 아카이브 삭제
+     * DELETE /api/archive/delete?month=2025-09
+     */
+    public function deleteArchive() {
+        try {
+            // 월 파라미터 받기
+            $monthParam = $_GET['month'] ?? null;
+            $yearParam = $_GET['year'] ?? null;
+
+            if ($monthParam && strpos($monthParam, '-') !== false) {
+                $parts = explode('-', $monthParam);
+                $year = (int)$parts[0];
+                $monthNum = (int)($parts[1] ?? 0);
+            } elseif ($yearParam && $monthParam) {
+                $year = (int)$yearParam;
+                $monthNum = (int)$monthParam;
+            } else {
+                return $this->jsonResponse(false, 'month 파라미터가 필요합니다 (예: ?month=2025-09)');
+            }
+
+            $archiveMonth = sprintf('%04d-%02d-01', $year, $monthNum);
+
+            // 아카이브 존재 확인
+            $db = Database::getInstance();
+            $stmt = $db->query("SELECT id FROM monthly_archives WHERE archive_month = ?", [$archiveMonth]);
+            $archive = $stmt->fetch();
+
+            if (!$archive) {
+                return $this->jsonResponse(false, '해당 월의 아카이브를 찾을 수 없습니다');
+            }
+
+            $archiveId = $archive['id'];
+
+            // 관련 데이터 모두 삭제
+            $db->query("DELETE FROM cash_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM investment_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM pension_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM fixed_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM prepaid_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM assets_archive_data WHERE archive_id = ?", [$archiveId]);
+            $db->query("DELETE FROM archive_summary_cache WHERE archive_month = ?", [$archiveMonth]);
+            $db->query("DELETE FROM monthly_archives WHERE id = ?", [$archiveId]);
+
+            return $this->jsonResponse(true, '아카이브가 삭제되었습니다', [
+                'month' => sprintf('%04d-%02d', $year, $monthNum),
+                'archive_id' => $archiveId
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Archive deletion failed: " . $e->getMessage());
+            return $this->jsonResponse(false, '아카이브 삭제 실패: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * JSON 응답 생성
      */
     private function jsonResponse($success, $message, $data = null) {

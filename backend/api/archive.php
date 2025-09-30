@@ -111,6 +111,22 @@ try {
             }
             break;
 
+        case 'DELETE':
+            switch ($route) {
+                case 'delete':
+                    $response = $controller->deleteArchive();
+                    break;
+
+                default:
+                    http_response_code(404);
+                    $response = json_encode([
+                        'success' => false,
+                        'message' => '지원하지 않는 DELETE 엔드포인트입니다: ' . $route
+                    ], JSON_UNESCAPED_UNICODE);
+                    break;
+            }
+            break;
+
         default:
             http_response_code(405);
             $response = json_encode([
