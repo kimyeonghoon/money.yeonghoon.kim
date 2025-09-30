@@ -204,14 +204,26 @@ class ArchiveController {
      */
     public function createSnapshot() {
         try {
-            $month = $_GET['month'] ?? null;
-            if (!$month) {
-                return $this->jsonResponse(false, 'month 파라미터가 필요합니다');
+            // 두 가지 형식 지원: ?month=2025-09 또는 ?year=2025&month=9
+            $monthParam = $_GET['month'] ?? null;
+            $yearParam = $_GET['year'] ?? null;
+
+            if ($monthParam && strpos($monthParam, '-') !== false) {
+                // 형식: ?month=2025-09
+                $parts = explode('-', $monthParam);
+                $year = (int)$parts[0];
+                $monthNum = (int)($parts[1] ?? 0);
+            } elseif ($yearParam && $monthParam) {
+                // 형식: ?year=2025&month=9
+                $year = (int)$yearParam;
+                $monthNum = (int)$monthParam;
+            } else {
+                return $this->jsonResponse(false, 'month 파라미터가 필요합니다 (예: ?month=2025-09 또는 ?year=2025&month=9)');
             }
 
-            $parts = explode('-', $month);
-            $year = (int)$parts[0];
-            $monthNum = (int)$parts[1];
+            if ($year < 2000 || $year > 2100 || $monthNum < 1 || $monthNum > 12) {
+                return $this->jsonResponse(false, '유효하지 않은 년도 또는 월입니다');
+            }
 
             // 아카이브 생성 또는 업데이트
             $archiveId = $this->archiveModel->createOrUpdate($year, $monthNum, "현재 데이터 기반 스냅샷 생성");

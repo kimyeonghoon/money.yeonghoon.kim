@@ -2390,9 +2390,9 @@ class ArchiveManager {
     // API URL 생성
     static getAPIUrl(endpoint) {
         if (this.currentMode === 'current') {
-            return `' + API_BASE_URL + '/${endpoint}`;
+            return `${API_BASE_URL}/${endpoint}`;
         } else {
-            return `' + API_BASE_URL + '/archive/${endpoint}?month=${this.selectedMonth}`;
+            return `${API_BASE_URL}/archive/${endpoint}?month=${this.selectedMonth}`;
         }
     }
 
@@ -2535,7 +2535,7 @@ class ArchiveManager {
         const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
         $.ajax({
-            url: `' + API_BASE_URL + '/archive/create-snapshot?month=${month}`,
+            url: `${API_BASE_URL}/archive/create-snapshot?month=${month}`,
             method: 'POST',
         xhrFields: {
             withCredentials: true
