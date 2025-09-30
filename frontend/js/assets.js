@@ -613,8 +613,8 @@ function updateCashAssetsTable(assets) {
 function setupBalanceEditing() {
     let currentlyEditing = null;
 
-    // 잔액 셀 클릭 이벤트
-    $('#cash-assets-detail-table .balance-cell.editable, #cash-assets-detail-cards .balance-cell.editable').off('click').on('click', function() {
+    // 잔액 셀 클릭 이벤트 (현금자산 + 투자자산)
+    $('#cash-assets-detail-table .balance-cell.editable, #cash-assets-detail-cards .balance-cell.editable, #investment-assets-detail-table .balance-cell.editable, #investment-assets-detail-cards .balance-cell.editable').off('click').on('click', function() {
         if (currentlyEditing && currentlyEditing[0] !== this) {
             // 다른 셀이 편집중이면 먼저 처리
             handleEditCancel(currentlyEditing);
