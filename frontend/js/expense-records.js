@@ -429,6 +429,7 @@ function saveEditedDailyExpense() {
     $.ajax({
         url: '' + API_BASE_URL + '/daily-expenses/' + expenseId,
         type: 'PUT',
+        timeout: 10000,  // 10초 타임아웃
         xhrFields: {
             withCredentials: true
         },
