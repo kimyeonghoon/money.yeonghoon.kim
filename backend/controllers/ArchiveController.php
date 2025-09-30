@@ -309,14 +309,42 @@ class ArchiveController {
 
             $archiveId = $archive['id'];
 
-            // 관련 데이터 모두 삭제
-            $db->query("DELETE FROM cash_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
-            $db->query("DELETE FROM investment_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
-            $db->query("DELETE FROM pension_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
-            $db->query("DELETE FROM fixed_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
-            $db->query("DELETE FROM prepaid_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            // 관련 데이터 모두 삭제 (archive_id 기준)
             $db->query("DELETE FROM assets_archive_data WHERE archive_id = ?", [$archiveId]);
-            $db->query("DELETE FROM archive_summary_cache WHERE archive_month = ?", [$archiveMonth]);
+
+            // 오래된 스키마 테이블도 체크 (존재하면 삭제)
+            try {
+                $db->query("DELETE FROM cash_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+            try {
+                $db->query("DELETE FROM investment_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+            try {
+                $db->query("DELETE FROM pension_assets_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+            try {
+                $db->query("DELETE FROM fixed_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+            try {
+                $db->query("DELETE FROM prepaid_expenses_archive WHERE snapshot_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+            try {
+                $db->query("DELETE FROM archive_summary_cache WHERE archive_month = ?", [$archiveMonth]);
+            } catch (Exception $e) {
+                // 테이블이 없으면 무시
+            }
+
+            // 메인 아카이브 레코드 삭제
             $db->query("DELETE FROM monthly_archives WHERE id = ?", [$archiveId]);
 
             return $this->jsonResponse(true, '아카이브가 삭제되었습니다', [
