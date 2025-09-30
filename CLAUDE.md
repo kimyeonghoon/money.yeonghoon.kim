@@ -22,38 +22,91 @@ This is a personal financial management web application (`money.yeonghoon.kim`) 
   - Route: `/api/` → PHP API container
 - **Database**: Environment-specific (container vs external server)
 
-### Project Structure (Current)
+### Project Structure
 ```
 /project-root
-├── backend/          # PHP API server (runs in Docker)
-│   ├── api/         # RESTful API endpoints
-│   │   ├── cash-assets.php
+├── backend/                    # PHP API server (runs in Docker)
+│   ├── api/                   # Entry point scripts for each endpoint
+│   │   ├── cash-assets.php    # → CashAssetController
 │   │   ├── investment-assets.php
 │   │   ├── pension-assets.php
 │   │   ├── daily-expenses.php
 │   │   ├── fixed-expenses.php
-│   │   └── archive.php
-│   ├── lib/         # Core libraries
-│   │   ├── Auth.php         # Authentication & security
-│   │   ├── Database.php     # Database connection
-│   │   └── SessionManager.php
-│   └── config/
-├── frontend/         # Web application
-│   ├── assets.php           # ✅ Main asset dashboard (완성)
-│   ├── expense-status.php   # 🔧 Fixed expenses (기본 구조)
-│   ├── expense-records.php  # 🔧 Daily expenses (기본 구조)
-│   ├── login.php           # ✅ Authentication (완성)
-│   ├── css/               # Responsive stylesheets
-│   ├── js/                # jQuery interactions
-│   ├── includes/          # Common components
-│   │   ├── header.php     # Navigation & auth
+│   │   ├── prepaid-expenses.php
+│   │   ├── dashboard.php
+│   │   ├── archive.php        # Asset archive API
+│   │   ├── expense-archive.php
+│   │   └── monthly-snapshots.php
+│   ├── controllers/           # RESTful controllers (MVC pattern)
+│   │   ├── BaseController.php # Abstract base with CRUD operations
+│   │   ├── CashAssetController.php
+│   │   ├── InvestmentAssetController.php
+│   │   ├── PensionAssetController.php
+│   │   ├── DailyExpenseController.php
+│   │   ├── FixedExpenseController.php
+│   │   ├── PrepaidExpenseController.php
+│   │   ├── DashboardController.php
+│   │   ├── ArchiveController.php
+│   │   ├── ExpenseArchiveController.php
+│   │   └── MonthlySnapshotController.php
+│   ├── models/               # Database models (Active Record pattern)
+│   │   ├── BaseModel.php     # Abstract base with soft-delete support
+│   │   ├── CashAsset.php
+│   │   ├── InvestmentAsset.php
+│   │   ├── PensionAsset.php
+│   │   ├── DailyExpense.php
+│   │   ├── FixedExpense.php
+│   │   ├── PrepaidExpense.php
+│   │   ├── MonthlyArchive.php # Archive metadata
+│   │   ├── ArchiveData.php   # Archive storage
+│   │   ├── CashAssetsArchive.php
+│   │   ├── InvestmentAssetsArchive.php
+│   │   ├── PensionAssetsArchive.php
+│   │   ├── FixedExpensesArchive.php
+│   │   ├── PrepaidExpensesArchive.php
+│   │   ├── AssetsMonthlySnapshot.php
+│   │   └── ExpensesMonthlySummary.php
+│   ├── lib/                  # Core libraries
+│   │   ├── Database.php      # PDO singleton with query builder
+│   │   ├── Auth.php          # Authentication & authorization
+│   │   ├── SessionManager.php
+│   │   ├── Response.php      # Standardized JSON responses
+│   │   ├── Router.php        # Simple URL routing
+│   │   ├── Validator.php     # Input validation
+│   │   └── Pagination.php    # Pagination helper
+│   ├── config/
+│   │   └── database.php      # Database configuration
+│   └── index.php             # Main API entry point
+├── frontend/                  # Web application (PHP + jQuery)
+│   ├── assets.php            # ✅ Main asset dashboard (완성)
+│   ├── expense-status.php    # 🔧 Fixed expenses (기본 구조)
+│   ├── expense-records.php   # 🔧 Daily expenses (기본 구조)
+│   ├── login.php             # ✅ Authentication (완성)
+│   ├── logout.php
+│   ├── index.php
+│   ├── css/                  # Responsive stylesheets
+│   ├── js/                   # jQuery interactions
+│   │   ├── assets.js
+│   │   ├── expense-status.js
+│   │   ├── expense-records.js
+│   │   ├── login.js
+│   │   └── feedback.js
+│   ├── includes/             # Common components
+│   │   ├── header.php        # Navigation & auth
 │   │   └── footer.php
-│   └── lib/              # Shared PHP libraries
-├── docker/           # Container configuration
+│   └── lib/                  # Shared PHP libraries
+│       ├── Auth.php
+│       ├── Database.php
+│       └── SessionManager.php
+├── docker/                    # Container configuration
 │   ├── docker-compose.yml
-│   ├── nginx-backend.conf  # ✅ Security headers configured
-│   └── backend.Dockerfile
-└── .env             # Environment variables
+│   ├── docker-compose.production.yml
+│   ├── nginx-backend.conf    # ✅ Security headers configured
+│   ├── backend.Dockerfile
+│   └── frontend.Dockerfile
+├── logs/                      # Application logs
+├── schema.sql                 # Database schema
+└── .env                       # Environment variables
 ```
 
 ## Environment Configuration
@@ -77,23 +130,45 @@ This is a personal financial management web application (`money.yeonghoon.kim`) 
 
 ### Container Management
 ```bash
-# Start development environment
-docker-compose up -d
+# Start development environment (from project root)
+cd docker && docker-compose up -d
+
+# Start with phpMyAdmin (development profile)
+cd docker && docker-compose --profile dev up -d
 
 # View logs
-docker-compose logs -f
+cd docker && docker-compose logs -f
+
+# View specific service logs
+cd docker && docker-compose logs -f backend-php
 
 # Restart after configuration changes
-docker-compose restart
+cd docker && docker-compose restart
 
 # Stop containers
-docker-compose down
+cd docker && docker-compose down
+
+# Stop and remove volumes (⚠️ deletes all database data)
+cd docker && docker-compose down -v
 ```
 
 ### Database Management
-- **Development**: MySQL container with persistent volume
+```bash
+# Access MySQL CLI
+docker exec -it money_mysql mysql -u root -p
+
+# Access phpMyAdmin
+# http://localhost:8081 (when started with --profile dev)
+
+# Reinitialize database with schema and sample data
+cd docker && docker-compose down -v && docker-compose up -d
+```
+
+**Database Configuration**:
+- **Development**: MySQL 8.0 container with persistent volume
 - **Production**: External MySQL server (configure in .env)
 - **Archive System**: Monthly snapshots for historical data analysis
+- **Auto-initialization**: `schema.sql` and `test-sample-data.sql` run on first startup
 
 ## Current Implementation Status
 
@@ -133,20 +208,76 @@ docker-compose down
 - **Mobile**: 하단 네비게이션 바 + 사이드 메뉴
 - **Responsive**: 화면 크기에 따른 적응형 네비게이션
 
+## Backend Architecture Patterns
+
+### MVC Structure
+The backend follows a **Model-View-Controller** pattern with RESTful conventions:
+
+1. **Entry Points** (`backend/api/*.php`): Thin entry scripts that instantiate controllers
+   ```php
+   require_once __DIR__ . '/../controllers/CashAssetController.php';
+   $controller = new CashAssetController();
+   $controller->handleRequest();
+   ```
+
+2. **Controllers** (`backend/controllers/*Controller.php`): Extend `BaseController` for automatic CRUD operations
+   - `BaseController::handleRequest()`: Routes HTTP methods (GET/POST/PUT/PATCH/DELETE) to appropriate methods
+   - `BaseController::index()`: List resources with pagination
+   - `BaseController::show($id)`: Get single resource
+   - `BaseController::store()`: Create resource with validation
+   - `BaseController::update($id)`: Full update (PUT)
+   - `BaseController::partialUpdate($id)`: Partial update (PATCH)
+   - `BaseController::destroy($id)`: Soft delete
+   - Override `validateData($data, $id)` in child controllers for custom validation
+
+3. **Models** (`backend/models/*.php`): Extend `BaseModel` for database operations
+   - `BaseModel` provides: `findAll()`, `findById()`, `create()`, `update()`, `softDelete()`, `restore()`, `forceDelete()`
+   - Soft-delete pattern: All queries filter `deleted_at IS NULL` automatically
+   - Define `$table`, `$fillable`, and `$defaults` properties in child models
+   - Use PDO prepared statements for SQL injection prevention
+
+4. **Shared Libraries**:
+   - `Database.php`: Singleton PDO wrapper with `query($sql, $params)` method
+   - `Response.php`: Standardized JSON responses (`success()`, `error()`, `notFound()`, etc.)
+   - `Auth.php`: Session-based authentication with `requireApiAuth()`
+   - `Pagination.php`: Automatic pagination with `fromRequest($params)` helper
+
+### Archive System Architecture
+Monthly snapshots preserve historical data for trend analysis:
+- `MonthlyArchive`: Metadata table tracking archive months
+- `ArchiveData`: Generic storage for all archived entities
+- `*Archive` models: Type-specific archive operations
+- Archive workflow: Create snapshot → Store data → Query by month
+
+### API Response Format
+All API responses follow a consistent JSON structure:
+```json
+{
+  "success": true,
+  "message": "Success message",
+  "data": { /* response data */ },
+  "pagination": { "page": 1, "limit": 20, "total": 100, "totalPages": 5 }
+}
+```
+
 ## Development Guidelines
 
 ### Code Standards
 - **Frontend**: jQuery + Materialize CSS for responsive mobile-first design
-- **Backend**: Vanilla PHP with PDO prepared statements (SQL injection prevention)
+- **Backend**: Vanilla PHP 8.2+ with PDO prepared statements (SQL injection prevention)
 - **Security**: OWASP compliance - XSS protection, secure headers, proper authentication
-- **API Design**: RESTful conventions with consistent JSON responses
-- **Database**: Archive system for historical data, soft delete for data integrity
+- **API Design**: RESTful conventions with consistent JSON responses (via `Response` class)
+- **Database**: Archive system for historical data, soft delete pattern for data integrity
+- **Validation**: Use `Validator` class in controllers before model operations
 
-### Performance Optimization
-- **Responsive Images**: Optimize for mobile bandwidth
-- **API Caching**: Implement caching for archive data
-- **Database Indexing**: Optimize queries for large datasets
-- **Progressive Loading**: Load critical content first
+### Adding New Resources
+When adding a new entity (e.g., "Insurance Policies"):
+
+1. Create model: `backend/models/InsurancePolicy.php` extending `BaseModel`
+2. Create controller: `backend/controllers/InsurancePolicyController.php` extending `BaseController`
+3. Create API entry: `backend/api/insurance-policies.php` instantiating the controller
+4. Add validation: Override `validateData()` in controller
+5. Configure Nginx routing if needed (RESTful URLs are handled automatically)
 
 ## 🎯 Next Phase: UI/UX Testing & Optimization
 

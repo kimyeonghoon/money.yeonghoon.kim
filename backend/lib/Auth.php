@@ -33,7 +33,7 @@ class Auth {
         $expire = time() + 3600; // 1시간
         $path = '/';
         $domain = '';
-        $secure = false; // HTTPS에서만 true로 설정
+        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'; // HTTPS 자동 감지
         $httpOnly = true;
         $sameSite = 'Lax';
 
