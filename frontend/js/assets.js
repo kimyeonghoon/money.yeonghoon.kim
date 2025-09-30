@@ -1,5 +1,5 @@
 // API Base URL (프로덕션: /api, 개발: ' + API_BASE_URL + ')
-const API_BASE_URL = window.location.hostname === 'localhost' ? '' + API_BASE_URL + '' : '/api';
+const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:8080/api' : '/api';
 
 /**
  * 자산현황 페이지 JavaScript - 머니매니저 시스템
@@ -723,10 +723,10 @@ function updateAssetBalance(assetId, newBalance, cell) {
     let apiUrl, successMessage;
 
     if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
-        apiUrl = `' + API_BASE_URL + '/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
+        apiUrl = `${API_BASE_URL}/archive/cash-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
         successMessage = '아카이브 잔액이 수정되었습니다.';
     } else {
-        apiUrl = `' + API_BASE_URL + '/cash-assets/${assetId}`;
+        apiUrl = `${API_BASE_URL}/cash-assets/${assetId}`;
         successMessage = '잔액이 수정되었습니다.';
     }
 
