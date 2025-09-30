@@ -519,6 +519,7 @@ function saveAddedExpense() {
     $.ajax({
         url: '' + API_BASE_URL + '/daily-expenses/add-today',
         type: 'POST',
+        timeout: 10000,  // 10초 타임아웃
         xhrFields: {
             withCredentials: true
         },
@@ -531,13 +532,21 @@ function saveAddedExpense() {
             other_cost: otherCost
         }),
         success: function(response) {
+            console.log('[DEBUG] add-today API 응답:', response);
+
+            // 로딩 숨기기 (항상 실행)
             if (typeof Feedback !== 'undefined') {
                 Feedback.hideLoading(loadingId);
             }
 
-            if (response.success) {
+            if (response && response.success) {
                 showMessage('지출이 추가되었습니다.', 'success');
-                M.Modal.getInstance(document.getElementById('add-expense-modal')).close();
+
+                // 모달 닫기
+                const modal = M.Modal.getInstance(document.getElementById('add-expense-modal'));
+                if (modal) {
+                    modal.close();
+                }
 
                 // 데이터 새로고침
                 setTimeout(function() {
