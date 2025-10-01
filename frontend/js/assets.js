@@ -726,12 +726,24 @@ function updateAssetBalance(assetId, newBalance, cell) {
     if (cell.closest('#investment-assets-detail-table, #investment-assets-detail-cards').length > 0) {
         assetType = 'investment';
         reloadFunction = loadInvestmentAssets;
+    } else if (cell.closest('#pension-assets-detail-table, #pension-assets-detail-cards').length > 0) {
+        assetType = 'pension';
+        reloadFunction = loadPensionAssets;
     }
 
     // 아카이브 모드인지 확인하여 적절한 API 사용
     let apiUrl, successMessage;
+    const isArchive = (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode());
 
-    if (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode()) {
+    console.log('[DEBUG] 인라인 편집:', {
+        assetType,
+        assetId,
+        isArchive,
+        currentMode: typeof ArchiveManager !== 'undefined' ? ArchiveManager.currentMode : 'undefined',
+        selectedMonth: typeof ArchiveManager !== 'undefined' ? ArchiveManager.selectedMonth : 'undefined'
+    });
+
+    if (isArchive) {
         apiUrl = `${API_BASE_URL}/archive/${assetType}-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
         successMessage = '아카이브 잔액이 수정되었습니다.';
     } else {
@@ -740,7 +752,10 @@ function updateAssetBalance(assetId, newBalance, cell) {
     }
 
     // 자산 유형에 따라 필드명 결정
-    let fieldName = (assetType === 'investment') ? 'current_value' : 'balance';
+    let fieldName = 'balance'; // 기본값 (cash)
+    if (assetType === 'investment' || assetType === 'pension') {
+        fieldName = 'current_value';
+    }
     let payload = {};
     payload[fieldName] = newBalance;
 
