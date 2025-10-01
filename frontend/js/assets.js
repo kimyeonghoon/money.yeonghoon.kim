@@ -236,6 +236,10 @@ function updatePensionAssetsTable(assets) {
     let totalCurrentValue = 0;
     let totalDepositAmount = 0;
 
+    // 아카이브 모드 확인
+    const isArchiveMode = (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode());
+    const editableClass = isArchiveMode ? '' : 'editable';
+
     if (!assets || assets.length === 0) {
         tbody.append('<tr><td colspan="6" class="center-align">연금자산이 없습니다.</td></tr>');
         cardsContainer.append('<div class="center-align">연금자산이 없습니다.</div>');
@@ -265,11 +269,11 @@ function updatePensionAssetsTable(assets) {
                      '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.account_name || '-') + '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
-                     '<td class="positive balance-cell editable current-value-cell" style="font-weight: bold; cursor: pointer;" ' +
+                     '<td class="positive balance-cell ' + editableClass + ' current-value-cell" style="font-weight: bold;' + (editableClass ? ' cursor: pointer;' : '') + '" ' +
                          'data-asset-id="' + asset.id + '" data-original-value="' + currentValue + '" data-field="current_value">' +
                          '₩' + currentValue.toLocaleString() +
                      '</td>' +
-                     '<td class="positive balance-cell editable deposit-amount-cell" style="font-weight: bold; cursor: pointer;" ' +
+                     '<td class="positive balance-cell ' + editableClass + ' deposit-amount-cell" style="font-weight: bold;' + (editableClass ? ' cursor: pointer;' : '') + '" ' +
                          'data-asset-id="' + asset.id + '" data-original-value="' + depositAmount + '" data-field="deposit_amount">' +
                          '₩' + depositAmount.toLocaleString() +
                      '</td>' +
@@ -376,6 +380,10 @@ function updateInvestmentAssetsTable(assets) {
 
     let totalBalance = 0;
 
+    // 아카이브 모드 확인
+    const isArchiveMode = (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode());
+    const editableClass = isArchiveMode ? '' : 'editable';
+
     if (!assets || assets.length === 0) {
         console.log('[DEBUG] 투자자산 데이터가 비어있음');
         tbody.append('<tr><td colspan="5" class="center-align">저축 + 투자 자산이 없습니다.</td></tr>');
@@ -415,7 +423,7 @@ function updateInvestmentAssetsTable(assets) {
                      '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.account_name || '-') + '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
-                     '<td class="positive balance-cell editable" style="font-weight: bold; cursor: pointer;" ' +
+                     '<td class="positive balance-cell ' + editableClass + '" style="font-weight: bold;' + (editableClass ? ' cursor: pointer;' : '') + '" ' +
                          'data-asset-id="' + asset.id + '" data-original-balance="' + assetBalance + '">' +
                          '₩' + assetBalance.toLocaleString() +
                      '</td>' +
@@ -442,7 +450,7 @@ function updateInvestmentAssetsTable(assets) {
                       '</div>' +
                       '<div class="asset-card-row">' +
                           '<div class="asset-card-label">잔액</div>' +
-                          '<div class="asset-card-balance balance-cell editable" ' +
+                          '<div class="asset-card-balance balance-cell ' + editableClass + '" ' +
                               'data-asset-id="' + asset.id + '" data-original-balance="' + assetBalance + '">' +
                               '₩' + assetBalance.toLocaleString() +
                           '</div>' +
@@ -511,6 +519,10 @@ function updateCashAssetsTable(assets) {
 
     let totalBalance = 0;
 
+    // 아카이브 모드 확인
+    const isArchiveMode = (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode());
+    const editableClass = isArchiveMode ? '' : 'editable';
+
     if (assets.length === 0) {
         tbody.append('<tr><td colspan="5" class="center-align">현금성 자산이 없습니다.</td></tr>');
         cardsContainer.append('<div class="center-align">현금성 자산이 없습니다.</div>');
@@ -533,7 +545,7 @@ function updateCashAssetsTable(assets) {
                      '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.account_name || '-') + '</td>' +
                      '<td style="color: #424242 !important;">' + (asset.item_name || '-') + '</td>' +
-                     '<td class="positive balance-cell editable" style="font-weight: bold; cursor: pointer;" ' +
+                     '<td class="positive balance-cell ' + editableClass + '" style="font-weight: bold;' + (editableClass ? ' cursor: pointer;' : '') + '" ' +
                          'data-asset-id="' + asset.id + '" data-original-balance="' + asset.balance + '">' +
                          '₩' + parseInt(asset.balance || 0).toLocaleString() +
                      '</td>' +
@@ -558,7 +570,7 @@ function updateCashAssetsTable(assets) {
                       '</div>' +
                       '<div class="asset-card-row">' +
                           '<div class="asset-card-label">잔액</div>' +
-                          '<div class="asset-card-balance balance-cell editable" ' +
+                          '<div class="asset-card-balance balance-cell ' + editableClass + '" ' +
                               'data-asset-id="' + asset.id + '" data-original-balance="' + asset.balance + '">' +
                               '₩' + parseInt(asset.balance || 0).toLocaleString() +
                           '</div>' +
@@ -731,25 +743,18 @@ function updateAssetBalance(assetId, newBalance, cell) {
         reloadFunction = loadPensionAssets;
     }
 
-    // 아카이브 모드인지 확인하여 적절한 API 사용
-    let apiUrl, successMessage;
+    // 아카이브 모드에서는 수정 불가
     const isArchive = (typeof ArchiveManager !== 'undefined' && ArchiveManager.isArchiveMode());
 
-    console.log('[DEBUG] 인라인 편집:', {
-        assetType,
-        assetId,
-        isArchive,
-        currentMode: typeof ArchiveManager !== 'undefined' ? ArchiveManager.currentMode : 'undefined',
-        selectedMonth: typeof ArchiveManager !== 'undefined' ? ArchiveManager.selectedMonth : 'undefined'
-    });
-
     if (isArchive) {
-        apiUrl = `${API_BASE_URL}/archive/${assetType}-assets/${assetId}?month=${ArchiveManager.getCurrentMonth()}`;
-        successMessage = '아카이브 잔액이 수정되었습니다.';
-    } else {
-        apiUrl = `${API_BASE_URL}/${assetType}-assets/${assetId}`;
-        successMessage = '잔액이 수정되었습니다.';
+        cell.html('₩' + cell.data('original-balance').toLocaleString());
+        M.toast({html: '아카이브 데이터는 수정할 수 없습니다', classes: 'orange'});
+        return;
     }
+
+    // 현재 모드에서만 수정 가능
+    let apiUrl = `${API_BASE_URL}/${assetType}-assets/${assetId}`;
+    let successMessage = '잔액이 수정되었습니다.';
 
     // 자산 유형에 따라 필드명 결정
     let fieldName = 'balance'; // 기본값 (cash)
