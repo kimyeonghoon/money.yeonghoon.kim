@@ -1,5 +1,5 @@
-// API Base URL (프로덕션: /api, 개발: ' + API_BASE_URL + ')
-const API_BASE_URL = window.location.hostname === 'localhost' ? '' + API_BASE_URL + '' : '/api';
+// API Base URL (프로덕션: /api, 개발: http://localhost:8080/api)
+const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:8080/api' : '/api';
 
 $(document).ready(function() {
     // 모달 초기화
@@ -107,11 +107,11 @@ let currentSelectedMonth = null;
 
 function getAPIUrl(endpoint) {
     if (currentViewMode === 'current') {
-        return `' + API_BASE_URL + '/${endpoint}`;
+        return `${API_BASE_URL}/${endpoint}`;
     } else {
         // 아카이브 모드에서는 year와 month 파라미터가 필요
         const [year, monthNum] = currentSelectedMonth.split('-');
-        return `' + API_BASE_URL + '/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
+        return `${API_BASE_URL}/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
     }
 }
 
@@ -121,7 +121,7 @@ function initMonthSelector() {
 
 function loadAvailableArchiveMonths() {
     $.ajax({
-        url: '' + API_BASE_URL + '/expense-archive/available-months',
+        url: `${API_BASE_URL}/expense-archive/available-months`,
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -234,10 +234,10 @@ function loadArchiveData(month) {
 function loadFixedExpenses() {
     let url;
     if (currentViewMode === 'current') {
-        url = '' + API_BASE_URL + '/fixed-expenses';
+        url = `${API_BASE_URL}/fixed-expenses`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        url = `' + API_BASE_URL + '/expense-archive/fixed-expenses?year=${year}&month=${parseInt(monthNum)}`;
+        url = `${API_BASE_URL}/expense-archive/fixed-expenses?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     $.ajax({
@@ -426,10 +426,10 @@ function openEditExpenseModal(expenseId) {
     // API URL 생성 (아카이브 모드 고려)
     let apiUrl;
     if (currentViewMode === 'current') {
-        apiUrl = `' + API_BASE_URL + '/fixed-expenses/${expenseId}`;
+        apiUrl = `${API_BASE_URL}/fixed-expenses/${expenseId}`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `' + API_BASE_URL + '/expense-archive/fixed-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
+        apiUrl = `${API_BASE_URL}/expense-archive/fixed-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     // API에서 고정지출 정보 가져오기
@@ -630,10 +630,10 @@ function deleteFixedExpenseConfirmed(expenseId) {
 function loadPrepaidExpenses() {
     let url;
     if (currentViewMode === 'current') {
-        url = '' + API_BASE_URL + '/prepaid-expenses';
+        url = `${API_BASE_URL}/prepaid-expenses`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        url = `' + API_BASE_URL + '/expense-archive/prepaid-expenses?year=${year}&month=${parseInt(monthNum)}`;
+        url = `${API_BASE_URL}/expense-archive/prepaid-expenses?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     $.ajax({
@@ -790,10 +790,10 @@ function openEditPrepaidExpenseModal(expenseId) {
     // API URL 생성 (아카이브 모드 고려)
     let apiUrl;
     if (currentViewMode === 'current') {
-        apiUrl = `' + API_BASE_URL + '/prepaid-expenses/${expenseId}`;
+        apiUrl = `${API_BASE_URL}/prepaid-expenses/${expenseId}`;
     } else {
         const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `' + API_BASE_URL + '/expense-archive/prepaid-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
+        apiUrl = `${API_BASE_URL}/expense-archive/prepaid-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
     }
 
     // API에서 선납지출 정보 가져오기
@@ -1168,94 +1168,106 @@ function initializeSortable() {
     // 기존 Sortable 인스턴스 제거
     destroySortableInstances();
 
-    // 고정지출 테이블 드래그앤드롭
-    const fixedExpensesTable = document.getElementById('fixed-expenses-table');
-    if (fixedExpensesTable) {
-        fixedExpensesSortable = new Sortable(fixedExpensesTable, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
+    // 고정지출 테이블 드래그앤드롭 (jQuery UI sortable 사용)
+    const $fixedExpensesTable = $('#fixed-expenses-table');
+    if ($fixedExpensesTable.length) {
+        $fixedExpensesTable.sortable({
+            items: 'tr:not(.no-drag)',
             handle: 'tr',
-            filter: '.no-drag',
-            onEnd: function(evt) {
-                if (evt.oldIndex !== evt.newIndex) {
-                    updateExpenseOrder('fixed-expenses', evt.oldIndex, evt.newIndex);
+            placeholder: 'sortable-placeholder',
+            update: function(event, ui) {
+                const oldIndex = ui.item.data('old-index');
+                const newIndex = ui.item.index();
+                if (oldIndex !== newIndex) {
+                    updateExpenseOrder('fixed-expenses', oldIndex, newIndex);
                 }
+            },
+            start: function(event, ui) {
+                ui.item.data('old-index', ui.item.index());
             }
         });
+        fixedExpensesSortable = $fixedExpensesTable;
     }
 
-    // 선납지출 테이블 드래그앤드롭
-    const prepaidExpensesTable = document.getElementById('prepaid-expenses-table');
-    if (prepaidExpensesTable) {
-        prepaidExpensesSortable = new Sortable(prepaidExpensesTable, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
+    // 선납지출 테이블 드래그앤드롭 (jQuery UI sortable 사용)
+    const $prepaidExpensesTable = $('#prepaid-expenses-table');
+    if ($prepaidExpensesTable.length) {
+        $prepaidExpensesTable.sortable({
+            items: 'tr:not(.no-drag)',
             handle: 'tr',
-            filter: '.no-drag',
-            onEnd: function(evt) {
-                if (evt.oldIndex !== evt.newIndex) {
-                    updateExpenseOrder('prepaid-expenses', evt.oldIndex, evt.newIndex);
+            placeholder: 'sortable-placeholder',
+            update: function(event, ui) {
+                const oldIndex = ui.item.data('old-index');
+                const newIndex = ui.item.index();
+                if (oldIndex !== newIndex) {
+                    updateExpenseOrder('prepaid-expenses', oldIndex, newIndex);
                 }
+            },
+            start: function(event, ui) {
+                ui.item.data('old-index', ui.item.index());
             }
         });
+        prepaidExpensesSortable = $prepaidExpensesTable;
     }
 
-    // 고정지출 모바일 카드 드래그앤드롭
-    const fixedExpensesCards = document.getElementById('fixed-expenses-cards');
-    if (fixedExpensesCards) {
-        fixedExpensesCardsSortable = new Sortable(fixedExpensesCards, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
+    // 고정지출 모바일 카드 드래그앤드롭 (jQuery UI sortable 사용)
+    const $fixedExpensesCards = $('#fixed-expenses-cards');
+    if ($fixedExpensesCards.length) {
+        $fixedExpensesCards.sortable({
+            items: '.expense-card:not(.no-drag)',
             handle: '.expense-card',
-            filter: '.no-drag',
-            onEnd: function(evt) {
-                if (evt.oldIndex !== evt.newIndex) {
-                    updateExpenseOrder('fixed-expenses', evt.oldIndex, evt.newIndex);
+            placeholder: 'sortable-placeholder',
+            update: function(event, ui) {
+                const oldIndex = ui.item.data('old-index');
+                const newIndex = ui.item.index();
+                if (oldIndex !== newIndex) {
+                    updateExpenseOrder('fixed-expenses', oldIndex, newIndex);
                 }
+            },
+            start: function(event, ui) {
+                ui.item.data('old-index', ui.item.index());
             }
         });
+        fixedExpensesCardsSortable = $fixedExpensesCards;
     }
 
-    // 선납지출 모바일 카드 드래그앤드롭
-    const prepaidExpensesCards = document.getElementById('prepaid-expenses-cards');
-    if (prepaidExpensesCards) {
-        prepaidExpensesCardsSortable = new Sortable(prepaidExpensesCards, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
+    // 선납지출 모바일 카드 드래그앤드롭 (jQuery UI sortable 사용)
+    const $prepaidExpensesCards = $('#prepaid-expenses-cards');
+    if ($prepaidExpensesCards.length) {
+        $prepaidExpensesCards.sortable({
+            items: '.prepaid-expense-card:not(.no-drag)',
             handle: '.prepaid-expense-card',
-            filter: '.no-drag',
-            onEnd: function(evt) {
-                if (evt.oldIndex !== evt.newIndex) {
-                    updateExpenseOrder('prepaid-expenses', evt.oldIndex, evt.newIndex);
+            placeholder: 'sortable-placeholder',
+            update: function(event, ui) {
+                const oldIndex = ui.item.data('old-index');
+                const newIndex = ui.item.index();
+                if (oldIndex !== newIndex) {
+                    updateExpenseOrder('prepaid-expenses', oldIndex, newIndex);
                 }
+            },
+            start: function(event, ui) {
+                ui.item.data('old-index', ui.item.index());
             }
         });
+        prepaidExpensesCardsSortable = $prepaidExpensesCards;
     }
 }
 
 function destroySortableInstances() {
-    if (fixedExpensesSortable) {
-        fixedExpensesSortable.destroy();
+    if (fixedExpensesSortable && fixedExpensesSortable.sortable) {
+        fixedExpensesSortable.sortable('destroy');
         fixedExpensesSortable = null;
     }
-    if (prepaidExpensesSortable) {
-        prepaidExpensesSortable.destroy();
+    if (prepaidExpensesSortable && prepaidExpensesSortable.sortable) {
+        prepaidExpensesSortable.sortable('destroy');
         prepaidExpensesSortable = null;
     }
-    if (fixedExpensesCardsSortable) {
-        fixedExpensesCardsSortable.destroy();
+    if (fixedExpensesCardsSortable && fixedExpensesCardsSortable.sortable) {
+        fixedExpensesCardsSortable.sortable('destroy');
         fixedExpensesCardsSortable = null;
     }
-    if (prepaidExpensesCardsSortable) {
-        prepaidExpensesCardsSortable.destroy();
+    if (prepaidExpensesCardsSortable && prepaidExpensesCardsSortable.sortable) {
+        prepaidExpensesCardsSortable.sortable('destroy');
         prepaidExpensesCardsSortable = null;
     }
 }

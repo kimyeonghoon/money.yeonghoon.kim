@@ -3,7 +3,7 @@
 // 기존 API를 방해하지 않는 새로운 아카이브 전용 엔드포인트
 
 header('Access-Control-Allow-Origin: http://localhost:3001');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json; charset=utf-8');
@@ -81,7 +81,8 @@ try {
             break;
 
         case 'PUT':
-            // PUT /api/archive/cash-assets/123 형태 처리
+        case 'PATCH':
+            // PUT/PATCH /api/archive/cash-assets/123 형태 처리
             $parts = explode('/', $route);
 
             if (count($parts) >= 2) {
@@ -106,7 +107,7 @@ try {
                 http_response_code(400);
                 $response = json_encode([
                     'success' => false,
-                    'message' => '잘못된 PUT 요청 형식입니다'
+                    'message' => '잘못된 PUT/PATCH 요청 형식입니다'
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;

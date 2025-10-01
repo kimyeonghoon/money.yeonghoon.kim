@@ -13,6 +13,7 @@ class ExpenseArchiveController {
      */
     public function getMonths() {
         try {
+            // 모든 아카이브 월 조회 (자산/지출 통합)
             $query = "
                 SELECT DISTINCT
                     ma.archive_month as month,
@@ -20,11 +21,6 @@ class ExpenseArchiveController {
                     ma.created_at,
                     ma.modification_notes
                 FROM monthly_archives ma
-                WHERE EXISTS (
-                    SELECT 1 FROM fixed_expenses_archive fea WHERE fea.archive_id = ma.id
-                    UNION
-                    SELECT 1 FROM prepaid_expenses_archive pea WHERE pea.archive_id = ma.id
-                )
                 ORDER BY ma.archive_month DESC
             ";
 
