@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 쿠키 및 세션 데이터는 백업하지 않음 (보안상) -->
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="database" path="webview.db" />
+    <exclude domain="database" path="webviewCache.db" />
+</full-backup-content>
