@@ -43,6 +43,47 @@ class ExpenseArchiveController {
     }
 
     /**
+     * 아카이브된 특정 지출 항목 조회
+     */
+    public function getExpenseById($table, $id) {
+        try {
+            $archiveTable = $table . '_archive';
+            $allowedTables = ['fixed_expenses_archive', 'prepaid_expenses_archive'];
+
+            if (!in_array($archiveTable, $allowedTables)) {
+                return json_encode([
+                    'success' => false,
+                    'message' => '잘못된 테이블입니다.'
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
+            $query = "SELECT * FROM $archiveTable WHERE id = ?";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([$id]);
+            $expense = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($expense) {
+                return json_encode([
+                    'success' => true,
+                    'data' => $expense
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                return json_encode([
+                    'success' => false,
+                    'message' => '해당 데이터를 찾을 수 없습니다.'
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
+        } catch (Exception $e) {
+            error_log("Error getting archived expense by ID: " . $e->getMessage());
+            return json_encode([
+                'success' => false,
+                'message' => '데이터를 가져올 수 없습니다.'
+            ], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
      * 아카이브된 고정지출 조회
      */
     public function getFixedExpenses() {

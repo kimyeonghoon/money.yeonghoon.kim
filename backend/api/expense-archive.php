@@ -37,34 +37,57 @@ try {
 
     switch ($method) {
         case 'GET':
-            switch ($route) {
-                case 'months':
-                    $response = $controller->getMonths();
-                    break;
+            // GET /api/expense-archive/fixed-expenses/123 형태 처리
+            $parts = explode('/', $route);
 
-                case 'available-months':
-                    $response = $controller->getAvailableMonths();
-                    break;
+            if (count($parts) >= 2 && is_numeric($parts[1])) {
+                // 특정 ID 조회
+                $expenseType = $parts[0]; // fixed-expenses, prepaid-expenses
+                $expenseId = $parts[1];   // 지출 ID
 
-                case 'fixed-expenses':
-                    $response = $controller->getFixedExpenses();
-                    break;
+                $expenseTable = str_replace('-', '_', $expenseType);
+                $validTables = ['fixed_expenses', 'prepaid_expenses'];
 
-                case 'prepaid-expenses':
-                    $response = $controller->getPrepaidExpenses();
-                    break;
-
-                case 'summary':
-                    $response = $controller->getExpenseSummary();
-                    break;
-
-                default:
-                    http_response_code(404);
+                if (in_array($expenseTable, $validTables)) {
+                    $response = $controller->getExpenseById($expenseTable, $expenseId);
+                } else {
+                    http_response_code(400);
                     $response = json_encode([
                         'success' => false,
-                        'message' => '존재하지 않는 엔드포인트입니다: ' . $route
+                        'message' => '잘못된 지출 유형입니다: ' . $expenseType
                     ], JSON_UNESCAPED_UNICODE);
-                    break;
+                }
+            } else {
+                // 일반 엔드포인트
+                switch ($route) {
+                    case 'months':
+                        $response = $controller->getMonths();
+                        break;
+
+                    case 'available-months':
+                        $response = $controller->getAvailableMonths();
+                        break;
+
+                    case 'fixed-expenses':
+                        $response = $controller->getFixedExpenses();
+                        break;
+
+                    case 'prepaid-expenses':
+                        $response = $controller->getPrepaidExpenses();
+                        break;
+
+                    case 'summary':
+                        $response = $controller->getExpenseSummary();
+                        break;
+
+                    default:
+                        http_response_code(404);
+                        $response = json_encode([
+                            'success' => false,
+                            'message' => '존재하지 않는 엔드포인트입니다: ' . $route
+                        ], JSON_UNESCAPED_UNICODE);
+                        break;
+                }
             }
             break;
 

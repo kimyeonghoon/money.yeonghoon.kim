@@ -105,13 +105,20 @@ $(document).ready(function() {
 let currentViewMode = 'current'; // 'current' or 'archive'
 let currentSelectedMonth = null;
 
-function getAPIUrl(endpoint) {
+function getAPIUrl(endpoint, id = null) {
     if (currentViewMode === 'current') {
-        return `${API_BASE_URL}/${endpoint}`;
+        // 현재 모드: /api/fixed-expenses 또는 /api/fixed-expenses/123
+        return id ? `${API_BASE_URL}/${endpoint}/${id}` : `${API_BASE_URL}/${endpoint}`;
     } else {
-        // 아카이브 모드에서는 year와 month 파라미터가 필요
-        const [year, monthNum] = currentSelectedMonth.split('-');
-        return `${API_BASE_URL}/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
+        // 아카이브 모드
+        if (id) {
+            // PUT/PATCH/DELETE: /api/expense-archive/fixed-expenses/123
+            return `${API_BASE_URL}/expense-archive/${endpoint}/${id}`;
+        } else {
+            // GET: /api/expense-archive/fixed-expenses?year=2024&month=9
+            const [year, monthNum] = currentSelectedMonth.split('-');
+            return `${API_BASE_URL}/expense-archive/${endpoint}?year=${year}&month=${parseInt(monthNum)}`;
+        }
     }
 }
 
@@ -423,18 +430,9 @@ function clearFixedExpenseForm() {
 }
 
 function openEditExpenseModal(expenseId) {
-    // API URL 생성 (아카이브 모드 고려)
-    let apiUrl;
-    if (currentViewMode === 'current') {
-        apiUrl = `${API_BASE_URL}/fixed-expenses/${expenseId}`;
-    } else {
-        const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `${API_BASE_URL}/expense-archive/fixed-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
-    }
-
     // API에서 고정지출 정보 가져오기
     $.ajax({
-        url: apiUrl,
+        url: getAPIUrl('fixed-expenses', expenseId),
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -472,12 +470,6 @@ function saveEditedFixedExpense() {
     const amount = $('#edit-fixed-amount').val();
     const paymentDate = $('#edit-fixed-payment-date').val();
     const paymentMethod = $('#edit-fixed-payment-method').val();
-
-    // 아카이브 모드에서는 수정 불가
-    if (currentViewMode !== 'current') {
-        showMessage('아카이브 모드에서는 수정할 수 없습니다.', 'error');
-        return;
-    }
 
     // 유효성 검사
     if (!itemName) {
@@ -519,7 +511,7 @@ function saveEditedFixedExpense() {
 
     // API 호출
     $.ajax({
-        url: getAPIUrl('fixed-expenses') + '/' + expenseId,
+        url: getAPIUrl('fixed-expenses', expenseId),
         type: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -565,12 +557,6 @@ function deleteFixedExpense() {
         return;
     }
 
-    // 아카이브 모드에서는 삭제 불가
-    if (currentViewMode !== 'current') {
-        showMessage('아카이브 모드에서는 삭제할 수 없습니다.', 'error');
-        return;
-    }
-
     // 확인 다이얼로그
     if (typeof Feedback !== 'undefined') {
         Feedback.confirm('정말로 이 고정지출을 삭제하시겠습니까?', function() {
@@ -592,7 +578,7 @@ function deleteFixedExpenseConfirmed(expenseId) {
     }
 
     $.ajax({
-        url: getAPIUrl('fixed-expenses') + '/' + expenseId,
+        url: getAPIUrl('fixed-expenses', expenseId),
         type: 'DELETE',
         xhrFields: {
             withCredentials: true
@@ -787,18 +773,9 @@ function saveNewPrepaidExpense() {
 }
 
 function openEditPrepaidExpenseModal(expenseId) {
-    // API URL 생성 (아카이브 모드 고려)
-    let apiUrl;
-    if (currentViewMode === 'current') {
-        apiUrl = `${API_BASE_URL}/prepaid-expenses/${expenseId}`;
-    } else {
-        const [year, monthNum] = currentSelectedMonth.split('-');
-        apiUrl = `${API_BASE_URL}/expense-archive/prepaid-expenses/${expenseId}?year=${year}&month=${parseInt(monthNum)}`;
-    }
-
     // API에서 선납지출 정보 가져오기
     $.ajax({
-        url: apiUrl,
+        url: getAPIUrl('prepaid-expenses', expenseId),
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -837,12 +814,6 @@ function saveEditedPrepaidExpense() {
     const paymentDate = $('#edit-prepaid-payment-date').val();
     const paymentMethod = $('#edit-prepaid-payment-method').val();
 
-    // 아카이브 모드에서는 수정 불가
-    if (currentViewMode !== 'current') {
-        showMessage('아카이브 모드에서는 수정할 수 없습니다.', 'error');
-        return;
-    }
-
     // 유효성 검사
     if (!itemName) {
         showMessage('항목명을 입력해주세요.', 'error');
@@ -877,7 +848,7 @@ function saveEditedPrepaidExpense() {
 
     // API 호출
     $.ajax({
-        url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
+        url: getAPIUrl('prepaid-expenses', expenseId),
         type: 'PUT',
         xhrFields: {
             withCredentials: true
@@ -914,18 +885,12 @@ function deletePrepaidExpense() {
         return;
     }
 
-    // 아카이브 모드에서는 삭제 불가
-    if (currentViewMode !== 'current') {
-        showMessage('아카이브 모드에서는 삭제할 수 없습니다.', 'error');
-        return;
-    }
-
     if (!confirm('정말로 이 선납지출을 삭제하시겠습니까?')) {
         return;
     }
 
     $.ajax({
-        url: getAPIUrl('prepaid-expenses') + '/' + expenseId,
+        url: getAPIUrl('prepaid-expenses', expenseId),
         type: 'DELETE',
         xhrFields: {
             withCredentials: true
@@ -1089,7 +1054,7 @@ function saveInlineEdit($cell, expenseId, isFixed) {
     };
 
     $.ajax({
-        url: getAPIUrl(endpoint) + '/' + expenseId,
+        url: getAPIUrl(endpoint, expenseId),
         type: 'PATCH',
         data: JSON.stringify(data),
         contentType: 'application/json',
@@ -1273,18 +1238,6 @@ function destroySortableInstances() {
 }
 
 function updateExpenseOrder(type, oldIndex, newIndex) {
-    // 아카이브 모드에서는 순서 변경 비활성화
-    if (currentViewMode === 'archive') {
-        showMessage('아카이브 모드에서는 순서를 변경할 수 없습니다.', 'error');
-        // 순서 복원
-        if (type === 'fixed-expenses') {
-            loadFixedExpenses();
-        } else {
-            loadPrepaidExpenses();
-        }
-        return;
-    }
-
     // 현재 표시된 지출 목록에서 ID 순서 추출
     let expenseIds = [];
     if (type === 'fixed-expenses') {
