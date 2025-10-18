@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.user import User
+from app.models.verification_code import VerificationCode
 
 
 class TestUserRegistration:
@@ -147,3 +148,162 @@ class TestUserLogin:
 
         # Then: 401 Unauthorized
         assert response.status_code == 401
+
+
+class TestTwoFactorLogin:
+    """2FA 로그인 테스트"""
+
+    def test_request_login_success(self, client: TestClient, test_user: User, db: Session):
+        """2FA 로그인 요청 성공 - 인증 코드 발송"""
+        # Given: 올바른 자격 증명
+        login_data = {
+            "username": "testuser",
+            "password": "testpassword123"
+        }
+
+        # When: 로그인 요청
+        response = client.post("/api/v1/auth/request-login", json=login_data)
+
+        # Then: 200 OK, 메시지 반환
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "verification code" in data["message"].lower()
+
+        # 인증 코드가 DB에 생성되었는지 확인
+        code = VerificationCode.get_latest_for_user(db, test_user.id)
+        assert code is not None
+        assert len(code.code) == 6
+        assert code.is_used is False
+        assert not code.is_expired()
+
+    def test_request_login_wrong_password(self, client: TestClient, test_user: User):
+        """2FA 로그인 요청 실패 - 잘못된 비밀번호"""
+        # Given: 잘못된 비밀번호
+        login_data = {
+            "username": "testuser",
+            "password": "wrongpassword"
+        }
+
+        # When: 로그인 요청
+        response = client.post("/api/v1/auth/request-login", json=login_data)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+        assert "incorrect" in response.json()["detail"].lower()
+
+    def test_request_login_nonexistent_user(self, client: TestClient):
+        """2FA 로그인 요청 실패 - 존재하지 않는 사용자"""
+        # Given: 존재하지 않는 사용자
+        login_data = {
+            "username": "nonexistent",
+            "password": "password123"
+        }
+
+        # When: 로그인 요청
+        response = client.post("/api/v1/auth/request-login", json=login_data)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
+    def test_verify_login_success(self, client: TestClient, test_user: User, db: Session):
+        """2FA 로그인 검증 성공 - 토큰 발급"""
+        # Given: 인증 코드 발급
+        login_data = {
+            "username": "testuser",
+            "password": "testpassword123"
+        }
+        client.post("/api/v1/auth/request-login", json=login_data)
+
+        # 생성된 코드 조회
+        code_obj = VerificationCode.get_latest_for_user(db, test_user.id)
+        assert code_obj is not None
+
+        # When: 인증 코드로 검증 요청
+        verify_data = {
+            "username": "testuser",
+            "code": code_obj.code
+        }
+        response = client.post("/api/v1/auth/verify-login", json=verify_data)
+
+        # Then: 200 OK, 토큰 반환
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert data["token_type"] == "bearer"
+
+        # 코드가 사용 처리되었는지 확인
+        db.refresh(code_obj)
+        assert code_obj.is_used is True
+
+    def test_verify_login_wrong_code(self, client: TestClient, test_user: User, db: Session):
+        """2FA 로그인 검증 실패 - 잘못된 코드"""
+        # Given: 인증 코드 발급 후 잘못된 코드로 검증
+        client.post("/api/v1/auth/request-login", json={
+            "username": "testuser",
+            "password": "testpassword123"
+        })
+
+        # When: 잘못된 코드로 검증 요청
+        verify_data = {
+            "username": "testuser",
+            "code": "000000"
+        }
+        response = client.post("/api/v1/auth/verify-login", json=verify_data)
+
+        # Then: 400 Bad Request
+        assert response.status_code == 400
+        assert "invalid" in response.json()["detail"].lower()
+
+    def test_verify_login_expired_code(self, client: TestClient, test_user: User, db: Session):
+        """2FA 로그인 검증 실패 - 만료된 코드"""
+        # Given: 만료된 인증 코드 생성
+        from datetime import datetime, timedelta
+        import random
+        expired_code = VerificationCode(
+            user_id=test_user.id,
+            code=str(random.randint(100000, 999999)),
+            expires_at=datetime.now() - timedelta(minutes=1),
+            is_used=False
+        )
+        db.add(expired_code)
+        db.commit()
+        db.refresh(expired_code)
+
+        # When: 만료된 코드로 검증 요청
+        verify_data = {
+            "username": "testuser",
+            "code": expired_code.code
+        }
+        response = client.post("/api/v1/auth/verify-login", json=verify_data)
+
+        # Then: 400 Bad Request
+        assert response.status_code == 400
+        assert "expired" in response.json()["detail"].lower()
+
+    def test_verify_login_already_used_code(self, client: TestClient, test_user: User, db: Session):
+        """2FA 로그인 검증 실패 - 이미 사용된 코드"""
+        # Given: 이미 사용된 인증 코드
+        from datetime import datetime, timedelta
+        import random
+        used_code = VerificationCode(
+            user_id=test_user.id,
+            code=str(random.randint(100000, 999999)),
+            expires_at=datetime.now() + timedelta(minutes=5),
+            is_used=True
+        )
+        db.add(used_code)
+        db.commit()
+        db.refresh(used_code)
+
+        # When: 이미 사용된 코드로 검증 요청
+        verify_data = {
+            "username": "testuser",
+            "code": used_code.code
+        }
+        response = client.post("/api/v1/auth/verify-login", json=verify_data)
+
+        # Then: 400 Bad Request
+        assert response.status_code == 400
+        assert "invalid" in response.json()["detail"].lower()

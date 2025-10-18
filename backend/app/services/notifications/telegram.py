@@ -69,6 +69,38 @@ class TelegramNotificationService(BaseNotificationService):
         """
         return config.TELEGRAM_ENABLED
 
+    async def send_verification_code(self, user_email: str, code: str) -> bool:
+        """인증 코드를 Telegram으로 전송
+
+        Args:
+            user_email (str): 사용자 이메일
+            code (str): 6자리 인증 코드
+
+        Returns:
+            bool: 전송 성공 시 True, 실패 또는 비활성화 시 False
+
+        Example:
+            >>> service = TelegramNotificationService()
+            >>> success = await service.send_verification_code(
+            ...     "user@example.com",
+            ...     "123456"
+            ... )
+
+        Note:
+            - 비활성화 상태에서는 False 반환
+            - API 오류 시 예외를 catch하여 False 반환
+        """
+        if not self.is_enabled():
+            logger.debug("Telegram notifications are disabled")
+            return False
+
+        try:
+            message = self._format_verification_message(user_email, code)
+            return await self._send_message(message)
+        except Exception as e:
+            logger.error(f"Failed to send Telegram verification code: {e}")
+            return False
+
     async def send_login_alert(
         self, user_email: str, ip_address: str, user_agent: str
     ) -> bool:
@@ -105,6 +137,35 @@ class TelegramNotificationService(BaseNotificationService):
         except Exception as e:
             logger.error(f"Failed to send Telegram login alert: {e}")
             return False
+
+    def _format_verification_message(self, user_email: str, code: str) -> str:
+        """인증 코드 메시지 포맷팅
+
+        Args:
+            user_email (str): 사용자 이메일
+            code (str): 인증 코드
+
+        Returns:
+            str: 포맷팅된 메시지 (Markdown 형식)
+
+        Example:
+            🔐 2단계 인증
+
+            👤 사용자: user@example.com
+            🔢 인증 코드: 123456
+
+            ⏰ 유효 시간: 5분
+            ⚠️ 이 코드를 타인과 공유하지 마세요!
+        """
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return (
+            "🔐 *2단계 인증*\n\n"
+            f"👤 사용자: `{user_email}`\n"
+            f"🔢 인증 코드: `{code}`\n\n"
+            f"⏰ 유효 시간: *5분*\n"
+            f"⚠️ 이 코드를 타인과 공유하지 마세요!\n"
+            f"🕐 요청 시각: `{now}`"
+        )
 
     def _format_login_message(
         self, user_email: str, ip_address: str, user_agent: str

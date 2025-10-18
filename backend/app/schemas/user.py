@@ -298,3 +298,47 @@ class TokenRefreshResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+
+class VerifyLoginRequest(BaseModel):
+    """2FA 로그인 검증 요청 스키마
+
+    POST /api/v1/auth/verify-login 엔드포인트에서 사용합니다.
+    인증 코드를 검증하여 토큰을 발급받습니다.
+
+    Attributes:
+        username (str): 사용자명 또는 이메일
+        code (str): 6자리 인증 코드
+
+    Example:
+        {
+            "username": "testuser",
+            "code": "123456"
+        }
+
+    Note:
+        - 코드는 5분간 유효
+        - 코드는 일회용 (재사용 불가)
+        - 잘못된 코드 입력 시 400 에러
+    """
+
+    username: str
+    code: str = Field(..., min_length=6, max_length=6, pattern=r'^\d{6}$')
+
+
+class LoginRequestResponse(BaseModel):
+    """2FA 로그인 요청 응답 스키마
+
+    POST /api/v1/auth/request-login 엔드포인트의 응답입니다.
+    인증 코드 발송 성공 메시지를 반환합니다.
+
+    Attributes:
+        message (str): 성공 메시지
+
+    Example Response:
+        {
+            "message": "Verification code sent successfully"
+        }
+    """
+
+    message: str
