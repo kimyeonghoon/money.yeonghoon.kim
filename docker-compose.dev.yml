@@ -154,6 +154,7 @@ services:
       - WATCHMAN_WATCH_DIR=/app
       - TZ=Asia/Seoul
     working_dir: /app
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   mysql_dev_data:

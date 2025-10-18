@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from './storage';
 import { Platform } from 'react-native';
 
 const getApiBaseUrl = (): string => {

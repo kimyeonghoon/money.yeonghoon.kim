@@ -1,5 +1,5 @@
 import api from './api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from './storage';
 import {
   LoginRequest,
   LoginRequestResponse,

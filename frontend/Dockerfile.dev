@@ -43,8 +43,16 @@ ENV GRADLE_USER_HOME=/app/android/.gradle
 # 전역 패키지 설치
 RUN npm install -g react-native-cli
 
-# Metro 서버 포트 노출
-EXPOSE 8081
+# package.json과 package-lock.json 복사 (캐싱 최적화)
+COPY MobileApp/package*.json ./
 
-# 개발 모드로 Metro 서버 실행
-CMD ["npm", "start", "--", "--host", "0.0.0.0"]
+# 의존성 설치 (빌드 시 미리 설치)
+RUN npm install
+
+# Metro 서버 포트 노출 (React Native)
+EXPOSE 8081
+# Webpack Dev Server 포트 노출 (Web)
+EXPOSE 3000
+
+# 기본 명령어 (docker-compose에서 오버라이드 가능)
+CMD ["npm", "run", "dev"]
