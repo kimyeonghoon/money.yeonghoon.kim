@@ -1,0 +1,50 @@
+# React Native Metro 서버용 Dockerfile (개발 환경)
+FROM node:20-slim
+
+# 타임존 설정
+ENV TZ=Asia/Seoul
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 시스템 패키지 업데이트 및 필요한 도구 설치
+RUN apt-get update && apt-get install -y \
+    git \
+    watchman \
+    android-tools-adb \
+    curl \
+    wget \
+    unzip \
+    openjdk-17-jdk \
+    tzdata \
+    && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
+# Android SDK 환경 변수
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# Android SDK 설치 (경량 버전 - 빌드에 필요한 최소한만)
+RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
+    cd $ANDROID_HOME/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+    unzip commandlinetools-linux-9477386_latest.zip && \
+    rm commandlinetools-linux-9477386_latest.zip && \
+    mv cmdline-tools latest
+
+# Android SDK 컴포넌트 설치 (필수만)
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+# Gradle 환경 변수
+ENV GRADLE_USER_HOME=/app/android/.gradle
+
+# 전역 패키지 설치
+RUN npm install -g react-native-cli
+
+# Metro 서버 포트 노출
+EXPOSE 8081
+
+# 개발 모드로 Metro 서버 실행
+CMD ["npm", "start", "--", "--host", "0.0.0.0"]

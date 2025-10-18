@@ -1,0 +1,83 @@
+{
+  "name": "Fullstack Development",
+  "dockerComposeFile": [
+    "../docker-compose.dev.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/app",
+
+  // 컨테이너 환경 변수
+  "containerEnv": {
+    "TZ": "Asia/Seoul"
+  },
+
+  // 컨테이너 생성 후 실행할 명령
+  "postCreateCommand": "pip install -r requirements.txt",
+
+  // VS Code 확장 프로그램
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.debugpy",
+
+        // 일반
+        "streetsidesoftware.code-spell-checker",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+
+        // 데이터베이스
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql"
+      ],
+
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // 포트 포워딩
+  "forwardPorts": [8000, 3306, 5678],
+  "portsAttributes": {
+    "8000": {
+      "label": "FastAPI",
+      "onAutoForward": "notify"
+    },
+    "3306": {
+      "label": "MySQL"
+    },
+    "5678": {
+      "label": "Python Debugger"
+    }
+  },
+
+  // 컨테이너에 마운트할 추가 볼륨
+  "mounts": [
+    "source=${localWorkspaceFolder}/backend,target=/app,type=bind,consistency=cached"
+  ],
+
+  // 컨테이너 사용자
+  "remoteUser": "root",
+
+  // 기능 추가
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
+}

@@ -1,0 +1,93 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Docker Compose - 프로덕션 환경
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# 이 파일은 프로덕션 배포를 위한 Docker Compose 설정입니다.
+#
+# 📦 서비스 구성:
+#   - mysql: MySQL 8.0 데이터베이스
+#   - backend: FastAPI 백엔드 서버 (Gunicorn + Uvicorn)
+#
+# 🚀 시작 방법:
+#   docker-compose up -d
+#
+# 📊 상태 확인:
+#   docker-compose ps
+#   docker-compose logs -f backend
+#
+# 🛑 중지:
+#   docker-compose down
+#
+# 🔐 환경 변수:
+#   프로덕션에서는 backend/.env 파일을 생성하고 다음 값들을 설정하세요:
+#   - SECRET_KEY: JWT 서명 키 (openssl rand -hex 32로 생성)
+#   - MYSQL_ROOT_PASSWORD: MySQL root 비밀번호
+#   - MYSQL_PASSWORD: 애플리케이션 DB 사용자 비밀번호
+#   - BACKEND_CORS_ORIGINS: 허용할 Origin (프론트엔드 도메인)
+#
+# 💾 데이터 영속성:
+#   mysql_data 볼륨에 데이터베이스가 저장됩니다.
+#   컨테이너를 삭제해도 데이터는 유지됩니다.
+#
+# 🗄️  MySQL 설정:
+#   backend/mysql/my.cnf 파일이 자동으로 적용됩니다.
+#   - 문자셋: utf8mb4 (한글, 이모지 지원)
+#   - Collation: utf8mb4_unicode_ci
+#   - 타임존: Asia/Seoul (KST, UTC+9)
+#
+# ⚠️  주의사항:
+#   - 프로덕션 환경에서는 반드시 SECRET_KEY를 변경하세요
+#   - MySQL 비밀번호를 강력하게 설정하세요
+#   - 소스 코드 볼륨 마운트는 최소화되어 있습니다
+#
+# 📚 관련 문서:
+#   - docs/DEVELOPMENT.md: 개발 환경 가이드
+#   - backend/.env.example: 환경 변수 예시
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fullstack_mysql
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-appdb}
+      MYSQL_USER: ${MYSQL_USER:-appuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fullstack_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - TZ=Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

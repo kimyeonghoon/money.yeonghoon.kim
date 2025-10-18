@@ -1,0 +1,171 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables (민감 정보!)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+*.env
+!.env.example
+.envrc
+.environment
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude Code (로컬 설정만 제외, 프로젝트 설정은 포함)
+.claude/settings.local.json
+.claude/**/*.log
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+test.db
+
+# Docker
+*.log
+
+# Database (민감 정보 포함 가능!)
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+*.backup
+db_backup/
+*.bak
+
+# 백업 폴더 (실제 백업 파일은 제외, 디렉토리 구조만 유지)
+backups/*
+!backups/.gitkeep
+
+# Node.js (for frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React Native
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.cert
+*.crt
+*.csr
+*.mobileprovision
+*.orig.*
+web-build/
+
+# 인증서 및 키 파일 (민감!)
+*.keystore
+*.pfx
+*.p7b
+*_rsa
+*_rsa.pub
+id_rsa
+id_rsa.pub
+*.ssh/
+
+# Gradle (Android)
+.gradle/
+local.properties
+*.iml
+.externalNativeBuild
+.cxx/
+
+# Xcode (iOS)
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+project.xcworkspace
+
+# Bundle artifacts
+*.jsbundle
+
+# CocoaPods
+Pods/
+
+# Temporary files
+*.tmp
+*.temp
+
+# 민감 정보 파일들
+secrets/
+credentials/
+*.credentials
+credentials.json
+service-account*.json
+*-credentials.json
+token.json
+*.pem
+.aws/
+.gcp/
+.azure/
+
+# 백업 및 아카이브 (민감 정보 포함 가능)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+backup/
+old/
+
+# 개인 메모 및 TODO (민감 정보 포함 가능)
+notes.txt
+todo.txt
+passwords.txt
+*.private
+private/
+
+# 로컬 Python 환경 (절대 사용 금지!)
+venv/
+virtualenv/
+.venv/

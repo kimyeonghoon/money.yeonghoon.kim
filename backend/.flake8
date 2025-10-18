@@ -1,0 +1,37 @@
+[flake8]
+# Flake8 설정 파일
+# 프로젝트 코드 스타일 규칙 정의
+
+# 최대 줄 길이 (Black과 일치)
+max-line-length = 120
+
+# 제외할 파일/디렉토리
+exclude =
+    .git,
+    __pycache__,
+    .pytest_cache,
+    .venv,
+    venv,
+    env,
+    .env,
+    *.pyc,
+    *.pyo,
+    *.egg-info,
+    build,
+    dist,
+    .mypy_cache,
+    htmlcov,
+    .coverage
+
+# 무시할 에러 코드
+ignore =
+    # E203: whitespace before ':' (Black과 충돌)
+    E203,
+    # W503: line break before binary operator (Black과 충돌)
+    W503,
+
+# 파일당 최대 복잡도
+max-complexity = 10
+
+# docstring 검사
+docstring-convention = google
