@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
@@ -17,7 +17,10 @@ from app.core.security import (
     get_password_hash,
     verify_refresh_token,
 )
+from app.services.notifications.telegram import TelegramNotificationService
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -59,8 +62,23 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
-    """로그인"""
+async def login(login_data: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    """로그인
+
+    로그인 성공 시 JWT 토큰을 발급하고, 선택적으로 Telegram 알림을 전송합니다.
+
+    Args:
+        login_data: 로그인 요청 데이터 (username/email + password)
+        request: FastAPI Request 객체 (IP, User-Agent 추출용)
+        db: 데이터베이스 세션
+
+    Returns:
+        Token: Access token, Refresh token, token type
+
+    Note:
+        - Telegram 알림 실패는 로그인 성공을 방해하지 않음
+        - TELEGRAM_ENABLED=false일 경우 알림 전송하지 않음
+    """
     # 사용자 찾기 (username 또는 email)
     # RAW SQL: SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1
     user = (
@@ -86,6 +104,27 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     # 토큰 생성
     access_token = create_access_token(subject=user.id)
     refresh_token = create_refresh_token(subject=user.id)
+
+    # Telegram 로그인 알림 전송 (선택적, 비동기)
+    try:
+        notifier = TelegramNotificationService()
+        if notifier.is_enabled():
+            ip_address = request.client.host if request.client else "unknown"
+            user_agent = request.headers.get("user-agent", "unknown")
+
+            success = await notifier.send_login_alert(
+                user_email=user.email,
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+
+            if success:
+                logger.info(f"Login notification sent for user {user.email}")
+            else:
+                logger.warning(f"Failed to send login notification for user {user.email}")
+    except Exception as e:
+        # 알림 실패는 로그인 자체를 방해하지 않음
+        logger.error(f"Error sending login notification: {e}")
 
     return {
         "access_token": access_token,
