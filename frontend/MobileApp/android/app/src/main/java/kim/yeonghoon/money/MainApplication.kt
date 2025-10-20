@@ -1,4 +1,4 @@
-package com.mobileapp
+package kim.yeonghoon.money
 
 import android.app.Application
 import com.facebook.react.PackageList

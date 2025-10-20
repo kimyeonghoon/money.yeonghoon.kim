@@ -18,7 +18,7 @@ export const LoginScreen: React.FC = () => {
 
   const handleLogin = async (): Promise<void> => {
     if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+      Alert.alert('오류', '사용자명과 비밀번호를 입력하세요');
       return;
     }
 
@@ -27,8 +27,8 @@ export const LoginScreen: React.FC = () => {
       await requestLogin({ username, password });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Login failed';
-      Alert.alert('Login Error', errorMessage);
+        error instanceof Error ? error.message : '로그인 실패';
+      Alert.alert('로그인 오류', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -37,12 +37,12 @@ export const LoginScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.title}>Login</Text>
-        <Text style={styles.subtitle}>Enter your credentials</Text>
+        <Text style={styles.title}>로그인</Text>
+        <Text style={styles.subtitle}>계정 정보를 입력하세요</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Username or Email"
+          placeholder="사용자명 또는 이메일"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -51,7 +51,7 @@ export const LoginScreen: React.FC = () => {
 
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="비밀번호"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -66,12 +66,12 @@ export const LoginScreen: React.FC = () => {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>로그인</Text>
           )}
         </TouchableOpacity>
 
         <Text style={styles.infoText}>
-          After login, you will receive a 6-digit code via Telegram
+          로그인 후 텔레그램으로 6자리 인증 코드가 발송됩니다
         </Text>
       </View>
     </View>

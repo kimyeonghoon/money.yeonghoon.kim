@@ -38,7 +38,7 @@ export const VerifyCodeScreen: React.FC = () => {
 
   const handleVerify = async (): Promise<void> => {
     if (!code || code.length !== 6) {
-      Alert.alert('Error', 'Please enter a 6-digit code');
+      Alert.alert('오류', '6자리 코드를 입력하세요');
       return;
     }
 
@@ -47,8 +47,8 @@ export const VerifyCodeScreen: React.FC = () => {
       await verifyLogin(code);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Verification failed';
-      Alert.alert('Verification Error', errorMessage);
+        error instanceof Error ? error.message : '인증 실패';
+      Alert.alert('인증 오류', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,12 +61,12 @@ export const VerifyCodeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.title}>Enter Verification Code</Text>
+        <Text style={styles.title}>인증 코드 입력</Text>
         <Text style={styles.subtitle}>
-          We sent a 6-digit code to your Telegram
+          텔레그램으로 6자리 코드를 발송했습니다
         </Text>
         {username && (
-          <Text style={styles.username}>Username: {username}</Text>
+          <Text style={styles.username}>사용자명: {username}</Text>
         )}
 
         <TextInput
@@ -82,10 +82,10 @@ export const VerifyCodeScreen: React.FC = () => {
 
         <View style={styles.timerContainer}>
           <Text style={styles.timerText}>
-            Time remaining: {formatTime(timeRemaining)}
+            남은 시간: {formatTime(timeRemaining)}
           </Text>
           {timeRemaining === 0 && (
-            <Text style={styles.expiredText}>Code expired. Please try again.</Text>
+            <Text style={styles.expiredText}>코드가 만료되었습니다. 다시 시도하세요.</Text>
           )}
         </View>
 
@@ -97,7 +97,7 @@ export const VerifyCodeScreen: React.FC = () => {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Verify</Text>
+            <Text style={styles.buttonText}>인증하기</Text>
           )}
         </TouchableOpacity>
 
@@ -106,11 +106,11 @@ export const VerifyCodeScreen: React.FC = () => {
           onPress={handleBack}
           disabled={loading}
         >
-          <Text style={styles.backButtonText}>Back to Login</Text>
+          <Text style={styles.backButtonText}>로그인으로 돌아가기</Text>
         </TouchableOpacity>
 
         <Text style={styles.infoText}>
-          The code is valid for 5 minutes
+          인증 코드는 5분간 유효합니다
         </Text>
       </View>
     </View>
