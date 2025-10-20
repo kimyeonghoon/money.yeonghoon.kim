@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { MainTabNavigator } from './src/navigation/MainTabNavigator';
+import { colors } from './src/theme';
 
 const AppContent: React.FC = () => {
   const { authStep, loading } = useAuth();
@@ -11,7 +13,7 @@ const AppContent: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -22,7 +24,11 @@ const AppContent: React.FC = () => {
     case 'verify':
       return <VerifyCodeScreen />;
     case 'authenticated':
-      return <HomeScreen />;
+      return (
+        <NavigationContainer>
+          <MainTabNavigator />
+        </NavigationContainer>
+      );
     default:
       return <LoginScreen />;
   }
@@ -41,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
 });
 

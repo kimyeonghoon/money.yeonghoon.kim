@@ -16,7 +16,7 @@ interface AuthContextData {
   setAuthStep: (step: AuthStep) => void;
 }
 
-const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+export const AuthContext = createContext<AuthContextData | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 export const useAuth = (): AuthContextData => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

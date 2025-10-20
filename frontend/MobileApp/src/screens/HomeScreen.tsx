@@ -1,114 +1,117 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
+import { Screen, Card } from '../components';
 import { useAuth } from '../contexts/AuthContext';
+import { typography, spacing, colors } from '../theme';
 
 export const HomeScreen: React.FC = () => {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async (): Promise<void> => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  const { user } = useAuth();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <Screen>
+      <Card style={styles.welcomeCard}>
         <Text style={styles.title}>환영합니다!</Text>
         {user && (
-          <View style={styles.userInfo}>
-            <Text style={styles.label}>사용자명:</Text>
-            <Text style={styles.value}>{user.username}</Text>
-
-            <Text style={styles.label}>이메일:</Text>
-            <Text style={styles.value}>{user.email}</Text>
-
-            {user.full_name && (
-              <>
-                <Text style={styles.label}>이름:</Text>
-                <Text style={styles.value}>{user.full_name}</Text>
-              </>
-            )}
-
-            <Text style={styles.label}>사용자 ID:</Text>
-            <Text style={styles.value}>{user.id}</Text>
-
-            <Text style={styles.label}>상태:</Text>
-            <Text style={[styles.value, styles.statusActive]}>
-              {user.is_active ? '활성' : '비활성'}
-            </Text>
-          </View>
+          <Text style={styles.username}>{user.username}님</Text>
         )}
+        <Text style={styles.subtitle}>
+          MoneyWallet에서 당신의 재정을 관리하세요
+        </Text>
+      </Card>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>로그아웃</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <Card style={styles.summaryCard}>
+        <Text style={styles.sectionTitle}>이번 달 요약</Text>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>총 수입</Text>
+          <Text style={[styles.summaryValue, styles.income]}>
+            ₩0
+          </Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>총 지출</Text>
+          <Text style={[styles.summaryValue, styles.expense]}>
+            ₩0
+          </Text>
+        </View>
+        <View style={[styles.summaryRow, styles.totalRow]}>
+          <Text style={styles.summaryLabel}>잔액</Text>
+          <Text style={styles.summaryValue}>₩0</Text>
+        </View>
+      </Card>
+
+      <Card style={styles.quickActionsCard}>
+        <Text style={styles.sectionTitle}>빠른 작업</Text>
+        <Text style={styles.placeholder}>
+          거래 추가 기능이 곧 제공됩니다
+        </Text>
+      </Card>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  content: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  welcomeCard: {
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    ...typography.title,
+    marginBottom: spacing.sm,
     textAlign: 'center',
-    color: '#333',
   },
-  userInfo: {
-    marginBottom: 24,
+  username: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
-  label: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 12,
-    marginBottom: 4,
-    fontWeight: '600',
+  subtitle: {
+    ...typography.subtitle,
+    textAlign: 'center',
   },
-  value: {
-    fontSize: 16,
-    color: '#333',
+  summaryCard: {
+    marginBottom: spacing.lg,
   },
-  statusActive: {
-    color: '#34C759',
-    fontWeight: '600',
+  sectionTitle: {
+    ...typography.body,
+    fontWeight: 'bold',
+    marginBottom: spacing.lg,
+    color: colors.text,
   },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 8,
-    padding: 16,
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  totalRow: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  summaryLabel: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  summaryValue: {
+    ...typography.body,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  income: {
+    color: colors.success,
+  },
+  expense: {
+    color: colors.danger,
+  },
+  quickActionsCard: {
+    marginBottom: spacing.lg,
+  },
+  placeholder: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

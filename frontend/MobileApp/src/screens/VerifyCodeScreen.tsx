@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
+import { Screen, Card, Button } from '../components';
 import { useAuth } from '../contexts/AuthContext';
+import { typography, spacing, colors, borderRadius } from '../theme';
 
 export const VerifyCodeScreen: React.FC = () => {
   const { verifyLogin, username, setAuthStep } = useAuth();
@@ -59,8 +53,8 @@ export const VerifyCodeScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
+    <Screen centered>
+      <Card>
         <Text style={styles.title}>인증 코드 입력</Text>
         <Text style={styles.subtitle}>
           텔레그램으로 6자리 코드를 발송했습니다
@@ -85,132 +79,88 @@ export const VerifyCodeScreen: React.FC = () => {
             남은 시간: {formatTime(timeRemaining)}
           </Text>
           {timeRemaining === 0 && (
-            <Text style={styles.expiredText}>코드가 만료되었습니다. 다시 시도하세요.</Text>
+            <Text style={styles.expiredText}>
+              코드가 만료되었습니다. 다시 시도하세요.
+            </Text>
           )}
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          title="인증하기"
           onPress={handleVerify}
-          disabled={loading || timeRemaining === 0}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>인증하기</Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          disabled={timeRemaining === 0}
+          style={styles.verifyButton}
+        />
 
-        <TouchableOpacity
-          style={styles.backButton}
+        <Button
+          title="로그인으로 돌아가기"
           onPress={handleBack}
+          variant="ghost"
           disabled={loading}
-        >
-          <Text style={styles.backButtonText}>로그인으로 돌아가기</Text>
-        </TouchableOpacity>
+          style={styles.backButton}
+        />
 
         <Text style={styles.infoText}>
           인증 코드는 5분간 유효합니다
         </Text>
-      </View>
-    </View>
+      </Card>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  form: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    ...typography.title,
+    marginBottom: spacing.sm,
     textAlign: 'center',
-    color: '#333',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    ...typography.subtitle,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   username: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 24,
+    ...typography.bodySmall,
+    color: colors.primary,
+    marginBottom: spacing.xl,
     textAlign: 'center',
     fontWeight: '600',
   },
   codeInput: {
     borderWidth: 2,
-    borderColor: '#007AFF',
-    borderRadius: 8,
-    padding: 16,
+    borderColor: colors.borderFocus,
+    borderRadius: borderRadius.small,
+    padding: spacing.lg,
     fontSize: 32,
     textAlign: 'center',
     letterSpacing: 8,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   timerContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   timerText: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   expiredText: {
-    fontSize: 14,
-    color: '#FF3B30',
-    marginTop: 4,
+    ...typography.bodySmall,
+    color: colors.danger,
+    marginTop: spacing.xs,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#999',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  verifyButton: {
+    marginTop: spacing.sm,
   },
   backButton: {
-    marginTop: 16,
-    padding: 12,
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '600',
+    marginTop: spacing.lg,
   },
   infoText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#666',
+    ...typography.caption,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
 });

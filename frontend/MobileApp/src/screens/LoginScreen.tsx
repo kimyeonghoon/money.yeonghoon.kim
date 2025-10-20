@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Text, TextInput, StyleSheet, Alert } from 'react-native';
+import { Screen, Card, Button } from '../components';
 import { useAuth } from '../contexts/AuthContext';
+import { typography, spacing, colors, borderRadius } from '../theme';
 
 export const LoginScreen: React.FC = () => {
   const { requestLogin } = useAuth();
@@ -35,8 +29,8 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
+    <Screen centered>
+      <Card>
         <Text style={styles.title}>로그인</Text>
         <Text style={styles.subtitle}>계정 정보를 입력하세요</Text>
 
@@ -58,87 +52,47 @@ export const LoginScreen: React.FC = () => {
           editable={!loading}
         />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          title="로그인"
           onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>로그인</Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          style={styles.button}
+        />
 
         <Text style={styles.infoText}>
           로그인 후 텔레그램으로 6자리 인증 코드가 발송됩니다
         </Text>
-      </View>
-    </View>
+      </Card>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  form: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    ...typography.title,
+    marginBottom: spacing.sm,
     textAlign: 'center',
-    color: '#333',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
+    ...typography.subtitle,
+    marginBottom: spacing.xl,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderColor: colors.border,
+    borderRadius: borderRadius.small,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
   },
   button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#999',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: spacing.sm,
   },
   infoText: {
-    marginTop: 16,
-    fontSize: 12,
-    color: '#666',
+    ...typography.caption,
+    marginTop: spacing.lg,
     textAlign: 'center',
   },
 });
