@@ -2,6 +2,13 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from './storage';
 import { Platform } from 'react-native';
 
+const API_TIMEOUT_MS = 15000;
+
+/**
+ * 플랫폼에 따른 API 기본 URL 반환
+ *
+ * @returns API 기본 URL
+ */
 const getApiBaseUrl = (): string => {
   if (Platform.OS === 'web') {
     return 'http://localhost:8000';
@@ -12,9 +19,18 @@ const getApiBaseUrl = (): string => {
   return 'http://localhost:8000';
 };
 
+/**
+ * Axios API 클라이언트
+ *
+ * Features:
+ * - 자동 JWT 토큰 주입 (Authorization 헤더)
+ * - 401 에러 시 리프레시 토큰으로 자동 갱신
+ * - 플랫폼별 API URL 자동 선택
+ * - 타임아웃: 15초
+ */
 const api = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 15000,
+  timeout: API_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },

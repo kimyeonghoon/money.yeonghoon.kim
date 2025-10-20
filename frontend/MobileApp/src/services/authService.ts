@@ -10,6 +10,13 @@ import {
 } from '../types/auth';
 
 class AuthService {
+  /**
+   * 2FA 로그인 요청
+   *
+   * @param credentials - 로그인 자격 증명 (username, password)
+   * @returns 성공 메시지
+   * @throws Error - 인증 실패 시
+   */
   async requestLogin(credentials: LoginRequest): Promise<LoginRequestResponse> {
     try {
       const response = await api.post<LoginRequestResponse>(
@@ -23,6 +30,13 @@ class AuthService {
     }
   }
 
+  /**
+   * 2FA 로그인 검증
+   *
+   * @param data - 검증 데이터 (username, code)
+   * @returns 사용자 정보
+   * @throws Error - 검증 실패 시
+   */
   async verifyLogin(data: VerifyLoginRequest): Promise<User> {
     try {
       const response = await api.post<TokenResponse>(

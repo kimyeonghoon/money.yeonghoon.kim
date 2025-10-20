@@ -21,12 +21,51 @@ from app.core.security import (
     verify_refresh_token,
 )
 from app.services.notifications.telegram import TelegramNotificationService
+from app.core.constants import (
+    VERIFICATION_CODE_MIN,
+    VERIFICATION_CODE_MAX,
+    VERIFICATION_CODE_EXPIRE_MINUTES,
+)
 import logging
 import random
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+async def _send_login_notification_async(user: User, request: Request) -> None:
+    """로그인 알림 전송 (내부 함수)
+
+    Telegram으로 로그인 알림을 전송합니다.
+    알림 실패는 로그인 성공을 방해하지 않습니다.
+
+    Args:
+        user: 로그인한 사용자
+        request: FastAPI Request 객체 (IP, User-Agent 추출용)
+
+    Note:
+        - TELEGRAM_ENABLED=false일 경우 알림 전송하지 않음
+        - 알림 실패 시에도 예외를 발생시키지 않음 (로그만 기록)
+    """
+    try:
+        notifier = TelegramNotificationService()
+        if notifier.is_enabled():
+            ip_address = request.client.host if request.client else "unknown"
+            user_agent = request.headers.get("user-agent", "unknown")
+
+            success = await notifier.send_login_alert(
+                user_email=user.email,
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+
+            if success:
+                logger.info(f"Login notification sent for user ID {user.id}")
+            else:
+                logger.warning(f"Failed to send login notification for user ID {user.id}")
+    except Exception as e:
+        logger.error(f"Error sending login notification: {e}")
 
 
 @router.post(
@@ -111,25 +150,7 @@ async def login(login_data: LoginRequest, request: Request, db: Session = Depend
     refresh_token = create_refresh_token(subject=user.id)
 
     # Telegram 로그인 알림 전송 (선택적, 비동기)
-    try:
-        notifier = TelegramNotificationService()
-        if notifier.is_enabled():
-            ip_address = request.client.host if request.client else "unknown"
-            user_agent = request.headers.get("user-agent", "unknown")
-
-            success = await notifier.send_login_alert(
-                user_email=user.email,
-                ip_address=ip_address,
-                user_agent=user_agent
-            )
-
-            if success:
-                logger.info(f"Login notification sent for user {user.email}")
-            else:
-                logger.warning(f"Failed to send login notification for user {user.email}")
-    except Exception as e:
-        # 알림 실패는 로그인 자체를 방해하지 않음
-        logger.error(f"Error sending login notification: {e}")
+    await _send_login_notification_async(user, request)
 
     return {
         "access_token": access_token,
@@ -189,7 +210,9 @@ def refresh_access_token(refresh_data: RefreshRequest, db: Session = Depends(get
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     if not user.is_active:
@@ -245,8 +268,8 @@ async def request_login(login_data: LoginRequest, request: Request, db: Session 
         )
 
     # 6자리 인증 코드 생성
-    code = str(random.randint(100000, 999999))
-    expires_at = datetime.now() + timedelta(minutes=5)
+    code = str(random.randint(VERIFICATION_CODE_MIN, VERIFICATION_CODE_MAX))
+    expires_at = datetime.now() + timedelta(minutes=VERIFICATION_CODE_EXPIRE_MINUTES)
 
     # RAW SQL: INSERT INTO verification_codes (user_id, code, expires_at, is_used, created_at)
     #          VALUES (?, ?, ?, false, NOW())
@@ -313,7 +336,7 @@ async def verify_login(verify_data: VerifyLoginRequest, request: Request, db: Se
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -350,24 +373,7 @@ async def verify_login(verify_data: VerifyLoginRequest, request: Request, db: Se
     refresh_token = create_refresh_token(subject=user.id)
 
     # 로그인 알림 전송 (선택적)
-    try:
-        notifier = TelegramNotificationService()
-        if notifier.is_enabled():
-            ip_address = request.client.host if request.client else "unknown"
-            user_agent = request.headers.get("user-agent", "unknown")
-
-            success = await notifier.send_login_alert(
-                user_email=user.email,
-                ip_address=ip_address,
-                user_agent=user_agent
-            )
-
-            if success:
-                logger.info(f"Login notification sent for user {user.email}")
-            else:
-                logger.warning(f"Failed to send login notification for user {user.email}")
-    except Exception as e:
-        logger.error(f"Error sending login notification: {e}")
+    await _send_login_notification_async(user, request)
 
     return {
         "access_token": access_token,

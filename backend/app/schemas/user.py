@@ -13,9 +13,15 @@ Pydantic 스키마 정의
 - schemas/user.py: Pydantic 스키마 (API 입출력 데이터 구조)
 """
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import datetime
+from app.core.constants import (
+    MIN_PASSWORD_LENGTH,
+    MAX_PASSWORD_LENGTH,
+    MIN_USERNAME_LENGTH,
+    MAX_USERNAME_LENGTH,
+)
 
 
 class UserBase(BaseModel):
@@ -67,9 +73,29 @@ class UserCreate(BaseModel):
     """
 
     email: EmailStr
-    username: str = Field(..., min_length=3, max_length=100)
-    password: str = Field(..., min_length=8, max_length=100)
+    username: str = Field(..., min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH)
+    password: str = Field(..., min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     full_name: Optional[str] = None
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        """비밀번호 추가 검증
+
+        Args:
+            v: 검증할 비밀번호
+
+        Returns:
+            str: 검증된 비밀번호
+
+        Raises:
+            ValueError: 비밀번호가 최소 길이 미만일 경우
+        """
+        if len(v) < MIN_PASSWORD_LENGTH:
+            raise ValueError(f'Password must be at least {MIN_PASSWORD_LENGTH} characters')
+        if len(v) > MAX_PASSWORD_LENGTH:
+            raise ValueError(f'Password must be at most {MAX_PASSWORD_LENGTH} characters')
+        return v
 
 
 class UserUpdate(BaseModel):
@@ -107,6 +133,27 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: Optional[str]) -> Optional[str]:
+        """비밀번호 업데이트 시 검증
+
+        Args:
+            v: 검증할 비밀번호 (Optional)
+
+        Returns:
+            Optional[str]: 검증된 비밀번호 또는 None
+
+        Raises:
+            ValueError: 비밀번호가 제공되었지만 최소 길이 미만일 경우
+        """
+        if v is not None:
+            if len(v) < MIN_PASSWORD_LENGTH:
+                raise ValueError(f'Password must be at least {MIN_PASSWORD_LENGTH} characters')
+            if len(v) > MAX_PASSWORD_LENGTH:
+                raise ValueError(f'Password must be at most {MAX_PASSWORD_LENGTH} characters')
+        return v
 
 
 class UserInDB(UserBase):

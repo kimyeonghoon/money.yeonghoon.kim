@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
 import authService from '../services/authService';
 import { User, LoginRequest, VerifyLoginRequest, RegisterData } from '../types/auth';
 
@@ -30,9 +30,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     loadStoredUser();
-  }, []);
+  }, [loadStoredUser]);
 
-  const loadStoredUser = async (): Promise<void> => {
+  /**
+   * 저장된 사용자 정보 로드
+   */
+  const loadStoredUser = useCallback(async (): Promise<void> => {
     try {
       const hasToken = await authService.hasToken();
       if (hasToken) {
@@ -47,9 +50,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const requestLogin = async (credentials: LoginRequest): Promise<void> => {
+  /**
+   * 로그인 요청 (2FA 1단계)
+   *
+   * @param credentials - 사용자명/이메일 및 비밀번호
+   */
+  const requestLogin = useCallback(async (credentials: LoginRequest): Promise<void> => {
     try {
       await authService.requestLogin(credentials);
       setUsername(credentials.username);
@@ -58,9 +66,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Request login error:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const verifyLogin = async (code: string): Promise<void> => {
+  /**
+   * 로그인 검증 (2FA 2단계)
+   *
+   * @param code - 6자리 인증 코드
+   */
+  const verifyLogin = useCallback(async (code: string): Promise<void> => {
     try {
       if (!username) {
         throw new Error('Username not found');
@@ -79,18 +92,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Verify login error:', error);
       throw error;
     }
-  };
+  }, [username]);
 
-  const register = async (data: RegisterData): Promise<void> => {
+  /**
+   * 사용자 등록
+   *
+   * @param data - 등록 데이터
+   */
+  const register = useCallback(async (data: RegisterData): Promise<void> => {
     try {
       await authService.register(data);
     } catch (error) {
       console.error('Register error:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const logout = async (): Promise<void> => {
+  /**
+   * 로그아웃
+   */
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await authService.logout();
       setUser(null);
@@ -100,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Logout error:', error);
       throw error;
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

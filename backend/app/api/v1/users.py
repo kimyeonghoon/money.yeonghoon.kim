@@ -12,7 +12,32 @@ router = APIRouter()
 
 @router.get("/me", response_model=UserSchema)
 def read_users_me(current_user: User = Depends(get_current_active_user)):
-    """현재 사용자 정보 조회"""
+    """현재 사용자 정보 조회
+
+    인증된 사용자의 전체 프로필 정보를 반환합니다.
+
+    Args:
+        current_user: 현재 인증된 사용자 (의존성 주입)
+
+    Returns:
+        UserSchema: 사용자 정보 (id, email, username, full_name, is_active, timestamps)
+
+    Example:
+        GET /api/v1/users/me
+        Authorization: Bearer {access_token}
+
+        Response (200):
+        {
+            "id": 1,
+            "email": "user@example.com",
+            "username": "testuser",
+            "full_name": "홍길동",
+            "is_active": true,
+            "is_superuser": false,
+            "created_at": "2025-01-15T10:30:00+09:00",
+            "updated_at": "2025-01-16T14:20:00+09:00"
+        }
+    """
     return current_user
 
 
@@ -71,7 +96,33 @@ def read_user_by_id(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """특정 사용자 정보 조회"""
+    """특정 사용자 정보 조회
+
+    ID로 특정 사용자의 정보를 조회합니다.
+
+    Args:
+        user_id: 조회할 사용자 ID
+        current_user: 현재 인증된 사용자 (의존성 주입)
+        db: 데이터베이스 세션
+
+    Returns:
+        UserSchema: 사용자 정보
+
+    Raises:
+        HTTPException 404: 사용자를 찾을 수 없는 경우
+
+    Example:
+        GET /api/v1/users/123
+        Authorization: Bearer {access_token}
+
+        Response (200):
+        {
+            "id": 123,
+            "email": "user@example.com",
+            "username": "testuser",
+            ...
+        }
+    """
     # RAW SQL: SELECT * FROM users WHERE id = ? LIMIT 1
     user = db.query(User).filter(User.id == user_id).first()
     if not user:

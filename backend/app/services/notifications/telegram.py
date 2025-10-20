@@ -26,6 +26,7 @@ import logging
 from datetime import datetime
 from app.services.notifications.base import BaseNotificationService
 from app.config import settings as config
+from app.core.constants import TELEGRAM_API_TIMEOUT, MAX_USER_AGENT_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ class TelegramNotificationService(BaseNotificationService):
             "🔐 *로그인 알림*\n\n"
             f"👤 사용자: `{user_email}`\n"
             f"📍 IP 주소: `{ip_address}`\n"
-            f"🖥 디바이스: `{user_agent[:50]}...`\n"
+            f"🖥 디바이스: `{user_agent[:MAX_USER_AGENT_LENGTH]}...`\n"
             f"🕐 시각: `{now}`"
         )
 
@@ -221,7 +222,7 @@ class TelegramNotificationService(BaseNotificationService):
         }
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=TELEGRAM_API_TIMEOUT) as client:
                 response = await client.post(url, json=payload)
 
                 if response.status_code == 200:

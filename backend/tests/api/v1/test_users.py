@@ -97,6 +97,24 @@ class TestUpdateCurrentUser:
         # Then: 400 Bad Request
         assert response.status_code == 400
 
+    def test_update_user_short_password(
+        self, client: TestClient, auth_headers: dict
+    ):
+        """비밀번호를 8자 미만으로 변경 시도"""
+        # Given: 8자 미만의 비밀번호
+        update_data = {"password": "short"}
+
+        # When: 비밀번호 변경 요청
+        response = client.put("/api/v1/users/me", headers=auth_headers, json=update_data)
+
+        # Then: 422 Unprocessable Entity
+        assert response.status_code == 422
+        error_detail = response.json()["detail"]
+        assert any(
+            "password" in str(err).lower() and "8" in str(err)
+            for err in error_detail
+        )
+
 
 class TestGetUserById:
     """특정 사용자 정보 조회 테스트"""

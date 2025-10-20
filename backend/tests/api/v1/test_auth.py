@@ -85,6 +85,26 @@ class TestUserRegistration:
         # Then: 422 Unprocessable Entity
         assert response.status_code == 422
 
+    def test_register_short_password(self, client: TestClient):
+        """비밀번호 길이가 8자 미만일 때 실패"""
+        # Given: 8자 미만의 비밀번호
+        user_data = {
+            "email": "newuser@example.com",
+            "username": "newuser",
+            "password": "short"
+        }
+
+        # When: 회원가입 요청
+        response = client.post("/api/v1/auth/register", json=user_data)
+
+        # Then: 422 Unprocessable Entity
+        assert response.status_code == 422
+        error_detail = response.json()["detail"]
+        assert any(
+            "password" in str(err).lower() and "8" in str(err)
+            for err in error_detail
+        )
+
 
 class TestUserLogin:
     """사용자 로그인 테스트"""
