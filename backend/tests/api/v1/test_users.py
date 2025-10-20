@@ -48,6 +48,56 @@ class TestGetCurrentUser:
         # Then: 401 Unauthorized
         assert response.status_code == 401
 
+    def test_get_current_user_inactive(
+        self, client: TestClient, db: Session, test_user: User
+    ):
+        """비활성 사용자로 조회 시도"""
+        # Given: 비활성화된 사용자
+        from app.core.security import create_access_token
+        test_user.is_active = False
+        db.commit()
+
+        token = create_access_token(subject=test_user.id)
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # When: 현재 사용자 정보 요청
+        response = client.get("/api/v1/users/me", headers=headers)
+
+        # Then: 400 Bad Request (Inactive user)
+        assert response.status_code == 400
+        assert "inactive" in response.json()["detail"].lower()
+
+    def test_get_current_user_token_without_sub(self, client: TestClient):
+        """sub가 없는 토큰으로 조회 시도"""
+        # Given: sub가 없는 토큰
+        from jose import jwt
+        from app.config import settings
+        from datetime import datetime, timedelta
+
+        payload = {"exp": datetime.utcnow() + timedelta(minutes=30)}  # sub 없음
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # When: 현재 사용자 정보 요청
+        response = client.get("/api/v1/users/me", headers=headers)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
+    def test_get_current_user_nonexistent_user_id(self, client: TestClient):
+        """존재하지 않는 user_id로 조회 시도"""
+        # Given: 존재하지 않는 user_id로 토큰 생성
+        from app.core.security import create_access_token
+
+        token = create_access_token(subject=999999)  # 존재하지 않는 ID
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # When: 현재 사용자 정보 요청
+        response = client.get("/api/v1/users/me", headers=headers)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
 
 class TestUpdateCurrentUser:
     """현재 사용자 정보 수정 테스트"""
@@ -145,3 +195,48 @@ class TestGetUserById:
 
         # Then: 404 Not Found
         assert response.status_code == 404
+
+
+class TestDeleteCurrentUser:
+    """현재 사용자 삭제 (비활성화) 테스트"""
+
+    def test_delete_user_success(
+        self, client: TestClient, auth_headers: dict, test_user: User, db: Session
+    ):
+        """사용자 삭제 (비활성화) 성공"""
+        # Given: 활성화된 사용자
+
+        # When: 사용자 삭제 요청
+        response = client.delete("/api/v1/users/me", headers=auth_headers)
+
+        # Then: 200 OK, 성공 메시지 반환
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "비활성화" in data["message"]
+
+        # DB에서 확인: is_active = False
+        db.refresh(test_user)
+        assert test_user.is_active is False
+
+    def test_delete_already_inactive_user(
+        self, client: TestClient, db: Session, test_user: User
+    ):
+        """이미 비활성화된 사용자 삭제 시도"""
+        # Given: 비활성화된 사용자
+        from app.core.security import create_access_token
+        test_user.is_active = False
+        db.commit()
+
+        # 비활성 사용자는 get_current_active_user에서 막히므로
+        # 토큰은 있지만 is_active=False인 상태로 직접 엔드포인트 호출 시도
+        # 실제로는 get_current_active_user가 400을 반환함
+        token = create_access_token(subject=test_user.id)
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # When: 사용자 정보 요청 (get_current_active_user 통과 실패)
+        response = client.delete("/api/v1/users/me", headers=headers)
+
+        # Then: 400 Bad Request (Inactive user)
+        assert response.status_code == 400
+        assert "inactive" in response.json()["detail"].lower()

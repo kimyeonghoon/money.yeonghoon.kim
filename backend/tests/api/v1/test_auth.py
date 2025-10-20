@@ -155,6 +155,26 @@ class TestUserLogin:
         # Then: 401 Unauthorized
         assert response.status_code == 401
 
+    def test_login_inactive_user(
+        self, client: TestClient, db: Session, test_user: User
+    ):
+        """비활성 사용자로 로그인 실패"""
+        # Given: 비활성화된 사용자
+        test_user.is_active = False
+        db.commit()
+
+        login_data = {
+            "username": "testuser",
+            "password": "testpassword123"
+        }
+
+        # When: 로그인 요청
+        response = client.post("/api/v1/auth/login", json=login_data)
+
+        # Then: 400 Bad Request
+        assert response.status_code == 400
+        assert "inactive" in response.json()["detail"].lower()
+
     def test_login_nonexistent_user(self, client: TestClient):
         """존재하지 않는 사용자로 로그인 실패"""
         # Given: 존재하지 않는 사용자
@@ -165,6 +185,95 @@ class TestUserLogin:
 
         # When: 로그인 요청
         response = client.post("/api/v1/auth/login", json=login_data)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
+
+class TestRefreshToken:
+    """리프레시 토큰 테스트"""
+
+    def test_refresh_token_success(
+        self, client: TestClient, test_user: User
+    ):
+        """유효한 리프레시 토큰으로 액세스 토큰 갱신 성공"""
+        # Given: 유효한 리프레시 토큰
+        from app.core.security import create_refresh_token
+
+        refresh_token = create_refresh_token(subject=test_user.id)
+
+        # When: 토큰 갱신 요청
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token}
+        )
+
+        # Then: 200 OK, 새 액세스 토큰 반환
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+
+    def test_refresh_token_invalid(self, client: TestClient):
+        """잘못된 리프레시 토큰으로 갱신 실패"""
+        # Given: 잘못된 토큰
+        refresh_data = {"refresh_token": "invalid-token"}
+
+        # When: 토큰 갱신 요청
+        response = client.post("/api/v1/auth/refresh", json=refresh_data)
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
+    def test_refresh_token_access_token_type(self, client: TestClient, test_user: User):
+        """액세스 토큰으로 갱신 시도 (type=refresh 아님)"""
+        # Given: 액세스 토큰 (type이 refresh가 아님)
+        from app.core.security import create_access_token
+
+        access_token = create_access_token(subject=test_user.id)
+
+        # When: 토큰 갱신 요청
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": access_token}
+        )
+
+        # Then: 401 Unauthorized
+        assert response.status_code == 401
+
+    def test_refresh_token_inactive_user(
+        self, client: TestClient, db: Session, test_user: User
+    ):
+        """비활성 사용자의 리프레시 토큰으로 갱신 실패"""
+        # Given: 비활성화된 사용자의 리프레시 토큰
+        from app.core.security import create_refresh_token
+
+        refresh_token = create_refresh_token(subject=test_user.id)
+        test_user.is_active = False
+        db.commit()
+
+        # When: 토큰 갱신 요청
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token}
+        )
+
+        # Then: 400 Bad Request
+        assert response.status_code == 400
+        assert "inactive" in response.json()["detail"].lower()
+
+    def test_refresh_token_nonexistent_user(self, client: TestClient):
+        """존재하지 않는 사용자 ID로 갱신 실패"""
+        # Given: 존재하지 않는 사용자 ID로 토큰 생성
+        from app.core.security import create_refresh_token
+
+        refresh_token = create_refresh_token(subject=999999)
+
+        # When: 토큰 갱신 요청
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token}
+        )
 
         # Then: 401 Unauthorized
         assert response.status_code == 401
