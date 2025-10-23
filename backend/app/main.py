@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.config import settings
 from app.database import engine, Base, get_db
-from app.api.v1 import auth, users
+from app.api.v1 import auth, users, fixed_expenses
 from app.core.logging import setup_logging, get_logger
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -102,6 +102,10 @@ Docker 기반 개발 환경을 제공하는 프로덕션 레벨 템플릿입니�
             "name": "users",
             "description": "사용자 관리 API - 프로필 조회, 수정 (인증 필요)",
         },
+        {
+            "name": "fixed-expenses",
+            "description": "고정지출 관리 API - 항목 관리, 월별 기록, 요약 (인증 필요)",
+        },
     ],
     contact={
         "name": "API Support",
@@ -123,6 +127,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
+app.include_router(fixed_expenses.router, prefix=f"{settings.API_V1_STR}/fixed-expenses", tags=["fixed-expenses"])
 
 
 @app.get("/")
