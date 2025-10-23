@@ -26,9 +26,7 @@ export const MainTabNavigator: React.FC = () => {
         tabBarStyle: {
           backgroundColor: colors.cardBackground,
           borderTopColor: colors.border,
-          paddingBottom: 5,
           paddingTop: 5,
-          height: 60,
         },
         headerStyle: {
           backgroundColor: colors.primary,
