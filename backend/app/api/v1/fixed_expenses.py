@@ -4,14 +4,20 @@
 사용자의 고정지출 항목 및 월별 기록을 관리하는 API입니다.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
-from datetime import datetime
+from typing import List, Optional
+from datetime import datetime, date
 
 from app.database import get_db
 from app.models.user import User
 from app.models.fixed_expense import FixedExpense, FixedExpenseRecord
+from app.api.v1.fixed_expenses_temporal import (
+    close_expense_validity,
+    create_new_expense_version,
+    update_current_month_records,
+    delete_current_month_records
+)
 from app.schemas.fixed_expense import (
     FixedExpenseCreate,
     FixedExpenseUpdate,
@@ -71,15 +77,20 @@ def get_fixed_expenses(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
     is_active: bool = True,
+    year: Optional[int] = Query(None),
+    month: Optional[int] = Query(None),
 ):
     """고정지출 항목 목록 조회
 
-    현재 사용자의 모든 고정지출 항목을 조회합니다.
+    현재 사용자의 고정지출 항목을 조회합니다.
+    year/month 지정 시 해당 월에 유효한 항목만 조회합니다.
 
     Args:
         current_user: 현재 인증된 사용자
         db: 데이터베이스 세션
         is_active: 활성 항목만 조회 여부
+        year: 조회할 년도 (시간 유효성 필터링)
+        month: 조회할 월 (시간 유효성 필터링)
 
     Returns:
         List[FixedExpenseSchema]: 고정지출 항목 리스트
@@ -89,6 +100,13 @@ def get_fixed_expenses(
 
     if is_active is not None:
         query = query.filter(FixedExpense.is_active == is_active)
+
+    if year is not None and month is not None:
+        target_date = date(year, month, 1)
+        query = query.filter(
+            FixedExpense.valid_from <= target_date,
+            (FixedExpense.valid_until.is_(None)) | (FixedExpense.valid_until >= target_date)
+        )
 
     expenses = query.all()
     return expenses
@@ -137,9 +155,11 @@ def update_fixed_expense(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """고정지출 항목 수정
+    """고정지출 항목 수정 (시간 유효성 적용)
 
     기존 고정지출 항목을 수정합니다.
+    - 현재 달(10월 29일): 기존 항목 종료(10월까지), 새 항목 생성(11월부터), 10월 기록 수정
+    - 다음 달(11월 2일): 기존 항목 종료(10월까지), 새 항목 생성(11월부터), 10월 기록 보존
 
     Args:
         expense_id: 고정지출 항목 ID
@@ -148,15 +168,16 @@ def update_fixed_expense(
         db: 데이터베이스 세션
 
     Returns:
-        FixedExpenseSchema: 수정된 고정지출 항목
+        FixedExpenseSchema: 새로 생성된 고정지출 항목 (다음 달부터 유효)
 
     Raises:
         HTTPException: 항목이 없거나 권한이 없을 경우 404
     """
-    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? LIMIT 1
+    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? AND valid_until IS NULL LIMIT 1
     expense = db.query(FixedExpense).filter(
         FixedExpense.id == expense_id,
-        FixedExpense.user_id == current_user.id
+        FixedExpense.user_id == current_user.id,
+        FixedExpense.valid_until.is_(None)
     ).first()
 
     if not expense:
@@ -167,14 +188,13 @@ def update_fixed_expense(
 
     update_data = expense_in.model_dump(exclude_unset=True)
 
-    # RAW SQL: UPDATE fixed_expenses SET ... WHERE id = ?
-    for field, value in update_data.items():
-        setattr(expense, field, value)
+    close_expense_validity(expense, db)
 
-    db.commit()
-    db.refresh(expense)
+    update_current_month_records(expense_id, update_data, db)
 
-    return expense
+    new_expense = create_new_expense_version(expense, update_data, db)
+
+    return new_expense
 
 
 @router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -183,9 +203,11 @@ def delete_fixed_expense(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """고정지출 항목 삭제
+    """고정지출 항목 삭제 (시간 유효성 적용)
 
-    고정지출 항목을 삭제합니다. 관련된 월별 기록도 함께 삭제됩니다 (CASCADE).
+    고정지출 항목을 삭제합니다.
+    - 현재 달(10월 29일): 기존 항목 종료(10월까지), 10월 기록 삭제
+    - 다음 달(11월 2일): 기존 항목 종료(10월까지), 10월 기록 보존
 
     Args:
         expense_id: 고정지출 항목 ID
@@ -195,10 +217,11 @@ def delete_fixed_expense(
     Raises:
         HTTPException: 항목이 없거나 권한이 없을 경우 404
     """
-    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? LIMIT 1
+    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? AND valid_until IS NULL LIMIT 1
     expense = db.query(FixedExpense).filter(
         FixedExpense.id == expense_id,
-        FixedExpense.user_id == current_user.id
+        FixedExpense.user_id == current_user.id,
+        FixedExpense.valid_until.is_(None)
     ).first()
 
     if not expense:
@@ -207,9 +230,9 @@ def delete_fixed_expense(
             detail="Fixed expense not found"
         )
 
-    # RAW SQL: DELETE FROM fixed_expenses WHERE id = ?
-    db.delete(expense)
-    db.commit()
+    close_expense_validity(expense, db)
+
+    delete_current_month_records(expense_id, db)
 
 
 @router.post("/{expense_id}/records", response_model=FixedExpenseRecordSchema, status_code=status.HTTP_201_CREATED)
@@ -371,6 +394,8 @@ def get_monthly_summary(
             is_fixed_amount=expense.is_fixed_amount,
             expected_payment_day=expense.expected_payment_day,
             is_active=expense.is_active,
+            valid_from=expense.valid_from,
+            valid_until=expense.valid_until,
             created_at=expense.created_at,
             updated_at=expense.updated_at,
             records=[FixedExpenseRecordSchema(

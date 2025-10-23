@@ -10,7 +10,7 @@ API 요청/응답 데이터의 검증 및 직렬화를 위한 스키마입니다
 
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 
 class FixedExpenseBase(BaseModel):
@@ -98,6 +98,8 @@ class FixedExpenseInDB(FixedExpenseBase):
     Attributes:
         id (int): 고정지출 항목 ID
         user_id (int): 사용자 ID
+        valid_from (date): 유효 시작일
+        valid_until (date, optional): 유효 종료일
         created_at (datetime): 생성 시각
         updated_at (datetime, optional): 수정 시각
     """
@@ -105,6 +107,8 @@ class FixedExpenseInDB(FixedExpenseBase):
     id: int
     user_id: int
     name: str
+    valid_from: date
+    valid_until: Optional[date] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

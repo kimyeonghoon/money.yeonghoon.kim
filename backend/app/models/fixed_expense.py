@@ -39,10 +39,10 @@
     );
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime, date
 from app.database import Base
 
 
@@ -60,6 +60,8 @@ class FixedExpense(Base):
         is_fixed_amount (bool): 금액 고정 여부 (True: 고정, False: 변동)
         expected_payment_day (int, optional): 예상 지출일 (1-31)
         is_active (bool): 활성 상태 (비활성화 시 삭제하지 않고 숨김)
+        valid_from (date): 유효 시작일 (이 날짜부터 항목이 유효함)
+        valid_until (date, optional): 유효 종료일 (이 날짜까지 항목이 유효함, None이면 무제한)
         created_at (datetime): 생성 시각
         updated_at (datetime): 수정 시각
         records (List[FixedExpenseRecord]): 월별 기록 (relationship)
@@ -87,6 +89,8 @@ class FixedExpense(Base):
     is_fixed_amount = Column(Boolean, default=False)
     expected_payment_day = Column(Integer, nullable=True)
     is_active = Column(Boolean, default=True)
+    valid_from = Column(Date, nullable=False, server_default=func.current_date())
+    valid_until = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

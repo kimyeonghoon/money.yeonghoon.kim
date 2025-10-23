@@ -213,10 +213,11 @@ class TestDeleteFixedExpense:
 
         assert response.status_code == 204
 
-        deleted = db.query(FixedExpense).filter(
+        soft_deleted = db.query(FixedExpense).filter(
             FixedExpense.id == expense.id
         ).first()
-        assert deleted is None
+        assert soft_deleted is not None
+        assert soft_deleted.valid_until is not None
 
 
 class TestCreateFixedExpenseRecord:
