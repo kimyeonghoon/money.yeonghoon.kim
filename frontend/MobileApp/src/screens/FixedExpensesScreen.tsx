@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl * 3,
   },
   expenseCard: {
     marginBottom: spacing.md,
