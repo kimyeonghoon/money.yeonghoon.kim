@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TransactionsScreen } from '../screens/TransactionsScreen';
 import { BudgetScreen } from '../screens/BudgetScreen';
-import { FixedExpensesScreen } from '../screens/FixedExpensesScreen';
+import { FixedExpensesStackNavigator } from './FixedExpensesStackNavigator';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { colors } from '../theme';
 
@@ -63,10 +63,11 @@ export const MainTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="FixedExpenses"
-        component={FixedExpensesScreen}
+        component={FixedExpensesStackNavigator}
         options={{
           title: '고정지출',
           tabBarLabel: '고정지출',
+          headerShown: false,
         }}
       />
       <Tab.Screen

@@ -15,6 +15,8 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen, Card } from '../components';
 import { typography, spacing, colors } from '../theme';
 import { FixedExpense } from '../types/fixedExpense';
@@ -22,6 +24,9 @@ import {
   getFixedExpenses,
   deleteFixedExpense,
 } from '../services/fixedExpenseService';
+import { FixedExpensesStackParamList } from '../navigation/FixedExpensesStackNavigator';
+
+type NavigationProp = NativeStackNavigationProp<FixedExpensesStackParamList, 'FixedExpensesList'>;
 
 interface FixedExpenseItemProps {
   expense: FixedExpense;
@@ -91,6 +96,7 @@ const FixedExpenseItem: React.FC<FixedExpenseItemProps> = ({
 };
 
 export const FixedExpensesScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [expenses, setExpenses] = useState<FixedExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -122,8 +128,8 @@ export const FixedExpensesScreen: React.FC = () => {
   }, [loadExpenses]);
 
   const handlePress = useCallback((expense: FixedExpense) => {
-    Alert.alert('상세 정보', `${expense.name}\n${JSON.stringify(expense, null, 2)}`);
-  }, []);
+    navigation.navigate('FixedExpenseDetail', { expenseId: expense.id });
+  }, [navigation]);
 
   const handleDelete = useCallback(
     async (expense: FixedExpense) => {
@@ -141,8 +147,8 @@ export const FixedExpensesScreen: React.FC = () => {
   );
 
   const handleAddExpense = useCallback(() => {
-    Alert.alert('준비 중', '고정지출 추가 기능이 곧 제공됩니다');
-  }, []);
+    navigation.navigate('AddFixedExpense');
+  }, [navigation]);
 
   if (loading) {
     return (

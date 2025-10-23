@@ -13,6 +13,13 @@ import { FixedExpense } from '../../types/fixedExpense';
 
 jest.mock('../../services/fixedExpenseService');
 
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
+
 const mockExpenses: FixedExpense[] = [
   {
     id: 1,
@@ -45,6 +52,7 @@ const mockExpenses: FixedExpense[] = [
 describe('FixedExpensesScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNavigate.mockClear();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
 
@@ -259,7 +267,7 @@ describe('FixedExpensesScreen', () => {
       (fixedExpenseService.getFixedExpenses as jest.Mock).mockResolvedValue([]);
     });
 
-    it('추가 버튼 클릭 시 준비 중 메시지 표시', async () => {
+    it('추가 버튼 클릭 시 추가 화면으로 이동', async () => {
       const { getByText } = render(<FixedExpensesScreen />);
 
       await waitFor(() => {
@@ -267,10 +275,7 @@ describe('FixedExpensesScreen', () => {
         fireEvent.press(addButton);
       });
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '준비 중',
-        '고정지출 추가 기능이 곧 제공됩니다'
-      );
+      expect(mockNavigate).toHaveBeenCalledWith('AddFixedExpense');
     });
   });
 
