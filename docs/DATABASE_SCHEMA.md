@@ -6,6 +6,9 @@
 
 ```mermaid
 erDiagram
+    users ||--o{ fixed_expenses : creates
+    fixed_expenses ||--o{ fixed_expense_records : has
+
     users {
         int id PK "AUTO_INCREMENT"
         varchar(255) email UK "UNIQUE, NOT NULL"
@@ -14,6 +17,31 @@ erDiagram
         varchar(255) full_name "NULL"
         boolean is_active "DEFAULT TRUE"
         boolean is_superuser "DEFAULT FALSE"
+        datetime created_at "DEFAULT NOW()"
+        datetime updated_at "ON UPDATE NOW()"
+    }
+
+    fixed_expenses {
+        int id PK "AUTO_INCREMENT"
+        int user_id FK "NOT NULL"
+        varchar(100) name "NOT NULL"
+        int default_amount "NULL"
+        boolean is_fixed_amount "DEFAULT FALSE"
+        int expected_payment_day "NULL (1-31)"
+        boolean is_active "DEFAULT TRUE"
+        datetime created_at "DEFAULT NOW()"
+        datetime updated_at "ON UPDATE NOW()"
+    }
+
+    fixed_expense_records {
+        int id PK "AUTO_INCREMENT"
+        int fixed_expense_id FK "NOT NULL"
+        int year "NOT NULL"
+        int month "NOT NULL (1-12)"
+        int amount "NOT NULL"
+        boolean is_paid "DEFAULT FALSE"
+        datetime paid_at "NULL"
+        text memo "NULL"
         datetime created_at "DEFAULT NOW()"
         datetime updated_at "ON UPDATE NOW()"
     }
@@ -103,6 +131,103 @@ VALUES (
     TRUE,
     TRUE
 );
+```
+
+### fixed_expenses (고정지출 항목)
+
+사용자의 고정지출 항목(템플릿)을 저장하는 테이블입니다.
+
+#### 컬럼 정의
+
+| 컬럼명 | 타입 | 제약 조건 | 설명 |
+|--------|------|-----------|------|
+| `id` | INT | PRIMARY KEY, AUTO_INCREMENT | 고정지출 항목 고유 식별자 |
+| `user_id` | INT | FOREIGN KEY, NOT NULL, INDEX | 사용자 ID (users.id 참조) |
+| `name` | VARCHAR(100) | NOT NULL | 항목 이름 (예: 월세, 전기세) |
+| `default_amount` | INT | NULL | 기본 금액 (변동 금액인 경우 NULL) |
+| `is_fixed_amount` | BOOLEAN | DEFAULT FALSE | 금액 고정 여부 |
+| `expected_payment_day` | INT | NULL | 예상 지출일 (1-31) |
+| `is_active` | BOOLEAN | DEFAULT TRUE | 활성 상태 |
+| `created_at` | DATETIME | DEFAULT NOW() | 생성 시각 |
+| `updated_at` | DATETIME | ON UPDATE NOW() | 마지막 수정 시각 |
+
+#### DDL (생성 쿼리)
+
+```sql
+CREATE TABLE fixed_expenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    default_amount INT DEFAULT NULL,
+    is_fixed_amount BOOLEAN DEFAULT FALSE,
+    expected_payment_day INT DEFAULT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_fixed_expenses_user_id (user_id),
+    INDEX idx_fixed_expenses_user_active (user_id, is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### fixed_expense_records (월별 고정지출 기록)
+
+고정지출 항목의 실제 월별 지출 기록을 저장하는 테이블입니다.
+
+#### 컬럼 정의
+
+| 컬럼명 | 타입 | 제약 조건 | 설명 |
+|--------|------|-----------|------|
+| `id` | INT | PRIMARY KEY, AUTO_INCREMENT | 기록 고유 식별자 |
+| `fixed_expense_id` | INT | FOREIGN KEY, NOT NULL | 고정지출 항목 ID |
+| `year` | INT | NOT NULL | 년도 |
+| `month` | INT | NOT NULL | 월 (1-12) |
+| `amount` | INT | NOT NULL | 실제 금액 |
+| `is_paid` | BOOLEAN | DEFAULT FALSE | 지출 완료 여부 |
+| `paid_at` | DATETIME | NULL | 지출 완료 일시 |
+| `memo` | TEXT | NULL | 메모 |
+| `created_at` | DATETIME | DEFAULT NOW() | 생성 시각 |
+| `updated_at` | DATETIME | ON UPDATE NOW() | 마지막 수정 시각 |
+
+#### DDL (생성 쿼리)
+
+```sql
+CREATE TABLE fixed_expense_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fixed_expense_id INT NOT NULL,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    amount INT NOT NULL,
+    is_paid BOOLEAN DEFAULT FALSE,
+    paid_at DATETIME DEFAULT NULL,
+    memo TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (fixed_expense_id) REFERENCES fixed_expenses(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_year_month_per_expense (fixed_expense_id, year, month),
+    INDEX idx_fixed_expense_records_year_month (year, month),
+    INDEX idx_fixed_expense_records_is_paid (is_paid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+#### 샘플 데이터
+
+```sql
+-- 고정지출 항목 추가
+INSERT INTO fixed_expenses (user_id, name, default_amount, is_fixed_amount, expected_payment_day)
+VALUES
+    (1, '월세', 800000, TRUE, 5),
+    (1, '전기세', NULL, FALSE, 15),
+    (1, 'Netflix', 13500, TRUE, 25);
+
+-- 월별 기록 추가
+INSERT INTO fixed_expense_records (fixed_expense_id, year, month, amount, is_paid, paid_at)
+VALUES
+    (1, 2025, 10, 800000, TRUE, '2025-10-05 10:00:00'),
+    (2, 2025, 10, 45000, FALSE, NULL),
+    (3, 2025, 10, 13500, TRUE, '2025-10-25 12:00:00');
 ```
 
 ## 🔄 확장 가능한 스키마 (예시)

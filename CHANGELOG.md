@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **고정지출 관리 기능** (TDD 방식 구현)
+  - FixedExpense, FixedExpenseRecord 모델 추가
+  - 고정지출 CRUD API 엔드포인트 (8개)
+  - 월별 기록 관리 (금액/항목 변동 가능)
+  - 지출 완료 체크 기능
+  - 월별 요약 조회 (진행률, 총액, 완료/미완료)
+  - 테스트 20개 추가 (총 80개, 커버리지 92%)
+
 ### Planned (v2.0.0)
 - Redis 캐싱 통합
 - Celery 비동기 작업

@@ -350,6 +350,17 @@ npm run ios
 - `PUT /api/v1/users/me` - 현재 사용자 정보 수정
 - `GET /api/v1/users/{user_id}` - 특정 사용자 정보 조회
 
+### 고정지출 (Fixed Expenses)
+
+- `POST /api/v1/fixed-expenses` - 고정지출 항목 생성
+- `GET /api/v1/fixed-expenses` - 고정지출 항목 목록 조회
+- `GET /api/v1/fixed-expenses/{id}` - 고정지출 항목 상세 조회
+- `PUT /api/v1/fixed-expenses/{id}` - 고정지출 항목 수정
+- `DELETE /api/v1/fixed-expenses/{id}` - 고정지출 항목 삭제
+- `POST /api/v1/fixed-expenses/{id}/records` - 월별 기록 생성
+- `PUT /api/v1/fixed-expenses/records/{id}/mark-paid` - 지출 완료 처리
+- `GET /api/v1/fixed-expenses/summary/{year}/{month}` - 월별 요약 조회
+
 자세한 API 문서는 http://localhost:8000/docs 에서 확인하세요.
 
 ## 환경 변수
