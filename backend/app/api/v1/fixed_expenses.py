@@ -153,6 +153,7 @@ def update_fixed_expense(
     Raises:
         HTTPException: 항목이 없거나 권한이 없을 경우 404
     """
+    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? LIMIT 1
     expense = db.query(FixedExpense).filter(
         FixedExpense.id == expense_id,
         FixedExpense.user_id == current_user.id
@@ -194,6 +195,7 @@ def delete_fixed_expense(
     Raises:
         HTTPException: 항목이 없거나 권한이 없을 경우 404
     """
+    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? LIMIT 1
     expense = db.query(FixedExpense).filter(
         FixedExpense.id == expense_id,
         FixedExpense.user_id == current_user.id
@@ -233,6 +235,7 @@ def create_expense_record(
     Raises:
         HTTPException: 항목이 없거나 중복 기록이 있을 경우
     """
+    # RAW SQL: SELECT * FROM fixed_expenses WHERE id = ? AND user_id = ? LIMIT 1
     expense = db.query(FixedExpense).filter(
         FixedExpense.id == expense_id,
         FixedExpense.user_id == current_user.id
@@ -244,6 +247,7 @@ def create_expense_record(
             detail="Fixed expense not found"
         )
 
+    # RAW SQL: SELECT * FROM fixed_expense_records WHERE fixed_expense_id = ? AND year = ? AND month = ? LIMIT 1
     existing_record = db.query(FixedExpenseRecord).filter(
         FixedExpenseRecord.fixed_expense_id == expense_id,
         FixedExpenseRecord.year == record_in.year,
