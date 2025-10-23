@@ -39,7 +39,9 @@ if settings.SENTRY_DSN:
     )
     logger.info("Sentry initialized", extra={"environment": settings.ENVIRONMENT})
 
-Base.metadata.create_all(bind=engine)
+# NOTE: Alembic을 사용하므로 자동 테이블 생성 비활성화
+# 마이그레이션 적용: alembic upgrade head
+# Base.metadata.create_all(bind=engine)
 
 logger.info(
     "Application starting",

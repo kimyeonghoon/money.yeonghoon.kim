@@ -120,10 +120,13 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
       - ./backend/requirements.txt:/app/requirements.txt
       - ./backend/.flake8:/app/.flake8
       - /app/app/__pycache__
       - /app/tests/__pycache__
+      - /app/alembic/__pycache__
     env_file:
       - ./backend/.env
     environment:
