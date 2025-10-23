@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TransactionsScreen } from '../screens/TransactionsScreen';
 import { BudgetScreen } from '../screens/BudgetScreen';
+import { FixedExpensesScreen } from '../screens/FixedExpensesScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { colors } from '../theme';
 
@@ -10,6 +11,7 @@ export type MainTabParamList = {
   Home: undefined;
   Transactions: undefined;
   Budget: undefined;
+  FixedExpenses: undefined;
   Settings: undefined;
 };
 
@@ -59,6 +61,14 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           title: '예산',
           tabBarLabel: '예산',
+        }}
+      />
+      <Tab.Screen
+        name="FixedExpenses"
+        component={FixedExpensesScreen}
+        options={{
+          title: '고정지출',
+          tabBarLabel: '고정지출',
         }}
       />
       <Tab.Screen
