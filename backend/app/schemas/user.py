@@ -13,7 +13,7 @@ Pydantic 스키마 정의
 - schemas/user.py: Pydantic 스키마 (API 입출력 데이터 구조)
 """
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 from app.core.constants import (
@@ -179,8 +179,7 @@ class UserInDB(UserBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class User(UserInDB):

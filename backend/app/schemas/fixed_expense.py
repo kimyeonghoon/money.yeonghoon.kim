@@ -8,7 +8,7 @@ API 요청/응답 데이터의 검증 및 직렬화를 위한 스키마입니다
 - schemas/fixed_expense.py: Pydantic 스키마 (API 입출력 데이터 구조)
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 
@@ -112,8 +112,7 @@ class FixedExpenseInDB(FixedExpenseBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FixedExpense(FixedExpenseInDB):
@@ -239,8 +238,7 @@ class FixedExpenseRecordInDB(FixedExpenseRecordBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FixedExpenseRecord(FixedExpenseRecordInDB):
