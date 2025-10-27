@@ -14,11 +14,19 @@ import { FixedExpense } from '../../types/fixedExpense';
 jest.mock('../../services/fixedExpenseService');
 
 const mockNavigate = jest.fn();
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: mockNavigate,
-  }),
-}));
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  return {
+    ...actual,
+    useNavigation: () => ({
+      navigate: mockNavigate,
+    }),
+    useFocusEffect: (effect: () => void) => {
+      const React = jest.requireActual('react');
+      React.useEffect(effect, []);
+    },
+  };
+});
 
 const mockExpenses: FixedExpense[] = [
   {
@@ -108,6 +116,48 @@ describe('FixedExpensesScreen', () => {
       });
     });
 
+    it('종료된 항목은 표시하지 않고 활성 항목만 표시', async () => {
+      const expensesWithEnded: FixedExpense[] = [
+        {
+          id: 1,
+          user_id: 1,
+          name: '활성_항목',
+          default_amount: 100000,
+          is_fixed_amount: true,
+          expected_payment_day: 1,
+          is_active: true,
+          valid_from: '2025-01-01',
+          valid_until: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: null,
+        },
+        {
+          id: 2,
+          user_id: 1,
+          name: '종료된_항목',
+          default_amount: 200000,
+          is_fixed_amount: true,
+          expected_payment_day: 5,
+          is_active: true,
+          valid_from: '2025-01-01',
+          valid_until: '2025-10-31',
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-10-31T00:00:00Z',
+        },
+      ];
+
+      (fixedExpenseService.getFixedExpenses as jest.Mock).mockResolvedValue(
+        expensesWithEnded
+      );
+
+      const { getByText, queryByText } = render(<FixedExpensesScreen />);
+
+      await waitFor(() => {
+        expect(getByText('활성_항목')).toBeTruthy();
+        expect(queryByText('종료된_항목')).toBeNull();
+      });
+    });
+
     it('변동 금액 항목 표시', async () => {
       const { getByText } = render(<FixedExpensesScreen />);
 
@@ -124,24 +174,6 @@ describe('FixedExpensesScreen', () => {
       await waitFor(() => {
         const validityTexts = getAllByText(/유효: 2025-01-01 ~ 현재/);
         expect(validityTexts.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('유효 기간 표시 - 종료일 있음', async () => {
-      const expenseWithEndDate: FixedExpense[] = [
-        {
-          ...mockExpenses[0],
-          valid_until: '2025-12-31',
-        },
-      ];
-      (fixedExpenseService.getFixedExpenses as jest.Mock).mockResolvedValue(
-        expenseWithEndDate
-      );
-
-      const { getByText } = render(<FixedExpensesScreen />);
-
-      await waitFor(() => {
-        expect(getByText('유효: 2025-01-01 ~ 2025-12-31')).toBeTruthy();
       });
     });
 

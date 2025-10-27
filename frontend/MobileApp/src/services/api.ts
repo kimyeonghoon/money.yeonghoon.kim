@@ -4,6 +4,17 @@ import { Platform } from 'react-native';
 
 const API_TIMEOUT_MS = 15000;
 
+let onUnauthorizedCallback: (() => void) | null = null;
+
+/**
+ * 401 에러 시 호출될 콜백 등록
+ *
+ * @param callback - 로그아웃 콜백 함수
+ */
+export const setOnUnauthorized = (callback: (() => void) | null): void => {
+  onUnauthorizedCallback = callback;
+};
+
 /**
  * 플랫폼에 따른 API 기본 URL 반환
  *
@@ -72,9 +83,17 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
           }
           return api(originalRequest);
+        } else {
+          await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
+          if (onUnauthorizedCallback) {
+            onUnauthorizedCallback();
+          }
         }
       } catch (refreshError) {
         await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
+        if (onUnauthorizedCallback) {
+          onUnauthorizedCallback();
+        }
         return Promise.reject(refreshError);
       }
     }

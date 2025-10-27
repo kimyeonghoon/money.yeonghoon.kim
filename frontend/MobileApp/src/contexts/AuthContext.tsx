@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
 import authService from '../services/authService';
 import { User, LoginRequest, VerifyLoginRequest, RegisterData } from '../types/auth';
+import { setOnUnauthorized } from '../services/api';
 
 type AuthStep = 'login' | 'verify' | 'authenticated';
 
@@ -31,6 +32,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     loadStoredUser();
   }, [loadStoredUser]);
+
+  /**
+   * 토큰 만료 시 자동 로그아웃 콜백 등록
+   */
+  useEffect(() => {
+    const handleUnauthorized = (): void => {
+      setUser(null);
+      setAuthStep('login');
+      setUsername(null);
+    };
+
+    setOnUnauthorized(handleUnauthorized);
+
+    return () => {
+      setOnUnauthorized(null);
+    };
+  }, []);
 
   /**
    * 저장된 사용자 정보 로드

@@ -46,7 +46,7 @@ describe('AuthService', () => {
           username: 'testuser',
           password: 'wrong',
         })
-      ).rejects.toThrow('Login failed');
+      ).rejects.toThrow('로그인 중 오류가 발생했습니다');
 
       expect(consoleError).toHaveBeenCalledWith('Request login error:', error);
 
@@ -95,7 +95,7 @@ describe('AuthService', () => {
 
       await expect(
         authService.verifyLogin({ username: 'testuser', code: 'wrong' })
-      ).rejects.toThrow('Invalid code');
+      ).rejects.toThrow('인증 중 오류가 발생했습니다');
 
       expect(consoleError).toHaveBeenCalledWith('Verify login error:', error);
 

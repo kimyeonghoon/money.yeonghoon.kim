@@ -97,8 +97,8 @@ describe('LoginScreen', () => {
       });
     });
 
-    it('사용자명이 비어있으면 Alert를 표시해야 함', () => {
-      const { getAllByText, getByPlaceholderText } = render(
+    it('사용자명이 비어있으면 Toast를 표시해야 함', () => {
+      const { getAllByText, getByPlaceholderText, getByText } = render(
         <AuthContext.Provider value={mockAuthContext}>
           <LoginScreen />
         </AuthContext.Provider>
@@ -111,15 +111,12 @@ describe('LoginScreen', () => {
       fireEvent.changeText(passwordInput, 'password123');
       fireEvent.press(loginButton);
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '오류',
-        '사용자명과 비밀번호를 입력하세요'
-      );
+      expect(getByText('사용자명과 비밀번호를 입력하세요')).toBeTruthy();
       expect(mockRequestLogin).not.toHaveBeenCalled();
     });
 
-    it('비밀번호가 비어있으면 Alert를 표시해야 함', () => {
-      const { getAllByText, getByPlaceholderText } = render(
+    it('비밀번호가 비어있으면 Toast를 표시해야 함', () => {
+      const { getAllByText, getByPlaceholderText, getByText } = render(
         <AuthContext.Provider value={mockAuthContext}>
           <LoginScreen />
         </AuthContext.Provider>
@@ -132,18 +129,15 @@ describe('LoginScreen', () => {
       fireEvent.changeText(usernameInput, 'testuser');
       fireEvent.press(loginButton);
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '오류',
-        '사용자명과 비밀번호를 입력하세요'
-      );
+      expect(getByText('사용자명과 비밀번호를 입력하세요')).toBeTruthy();
       expect(mockRequestLogin).not.toHaveBeenCalled();
     });
 
-    it('로그인 실패 시 에러 Alert를 표시해야 함', async () => {
+    it('로그인 실패 시 에러 Toast를 표시해야 함', async () => {
       const error = new Error('Invalid credentials');
       mockRequestLogin.mockRejectedValue(error);
 
-      const { getAllByText, getByPlaceholderText } = render(
+      const { getAllByText, getByPlaceholderText, getByText } = render(
         <AuthContext.Provider value={mockAuthContext}>
           <LoginScreen />
         </AuthContext.Provider>
@@ -159,10 +153,7 @@ describe('LoginScreen', () => {
       fireEvent.press(loginButton);
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith(
-          '로그인 오류',
-          'Invalid credentials'
-        );
+        expect(getByText('Invalid credentials')).toBeTruthy();
       });
     });
 

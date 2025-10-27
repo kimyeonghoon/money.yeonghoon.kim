@@ -15,8 +15,9 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios, { AxiosError } from 'axios';
 import { Screen, Card } from '../components';
 import { typography, spacing, colors } from '../theme';
 import { FixedExpense } from '../types/fixedExpense';
@@ -55,7 +56,7 @@ const FixedExpenseItem: React.FC<FixedExpenseItemProps> = ({
   };
 
   return (
-    <Card style={styles.expenseCard}>
+    <Card style={styles.expenseCard} noMaxWidth>
       <TouchableOpacity
         onPress={() => onPress(expense)}
         style={styles.expenseContent}
@@ -95,6 +96,17 @@ const FixedExpenseItem: React.FC<FixedExpenseItemProps> = ({
   );
 };
 
+const getErrorMessage = (err: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(err)) {
+    const axiosError = err as AxiosError<{ detail?: string }>;
+    return axiosError.response?.data?.detail || defaultMessage;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return defaultMessage;
+};
+
 export const FixedExpensesScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [expenses, setExpenses] = useState<FixedExpense[]>([]);
@@ -105,11 +117,17 @@ export const FixedExpensesScreen: React.FC = () => {
   const loadExpenses = useCallback(async () => {
     try {
       setError(null);
-      const data = await getFixedExpenses(true);
-      setExpenses(data);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const data = await getFixedExpenses(true, year, month);
+      const activeData = data.filter(expense => expense.valid_until === null);
+      setExpenses(activeData);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : '고정지출 목록을 불러오는데 실패했습니다';
+      const errorMessage = getErrorMessage(
+        err,
+        '고정지출 목록을 불러오는데 실패했습니다'
+      );
       setError(errorMessage);
       Alert.alert('오류', errorMessage);
     } finally {
@@ -118,9 +136,11 @@ export const FixedExpensesScreen: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    loadExpenses();
-  }, [loadExpenses]);
+  useFocusEffect(
+    useCallback(() => {
+      loadExpenses();
+    }, [loadExpenses])
+  );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -138,8 +158,7 @@ export const FixedExpensesScreen: React.FC = () => {
         Alert.alert('성공', `"${expense.name}" 항목이 삭제되었습니다`);
         loadExpenses();
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : '삭제에 실패했습니다';
+        const errorMessage = getErrorMessage(err, '삭제에 실패했습니다');
         Alert.alert('오류', errorMessage);
       }
     },
@@ -152,7 +171,7 @@ export const FixedExpensesScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Screen style={styles.centerContainer}>
+      <Screen centered>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>로딩 중...</Text>
       </Screen>
@@ -160,9 +179,9 @@ export const FixedExpensesScreen: React.FC = () => {
   }
 
   return (
-    <Screen>
+    <Screen noPadding>
       <View style={styles.header}>
-        <Text style={styles.title}>고정지출 관리</Text>
+        <Text style={styles.title}>고정지출 목록</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={handleAddExpense}
@@ -172,14 +191,16 @@ export const FixedExpensesScreen: React.FC = () => {
       </View>
 
       {expenses.length === 0 ? (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>
-            등록된 고정지출이 없습니다
-          </Text>
-          <Text style={styles.emptySubtext}>
-            "+" 버튼을 눌러 고정지출을 추가하세요
-          </Text>
-        </Card>
+        <View style={styles.emptyContainer}>
+          <Card>
+            <Text style={styles.emptyText}>
+              등록된 고정지출이 없습니다
+            </Text>
+            <Text style={styles.emptySubtext}>
+              "+" 버튼을 눌러 고정지출을 추가하세요
+            </Text>
+          </Card>
+        </View>
       ) : (
         <FlatList
           data={expenses}
@@ -206,24 +227,18 @@ export const FixedExpensesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  centerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    ...typography.body,
-    marginTop: spacing.md,
-    color: colors.textSecondary,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   title: {
-    ...typography.title,
+    ...typography.heading,
     color: colors.text,
   },
   addButton: {
@@ -234,11 +249,35 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     ...typography.button,
-    color: colors.white,
+    color: colors.cardBackground,
+    fontSize: 14,
+  },
+  loadingText: {
+    ...typography.body,
+    marginTop: spacing.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl * 3,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl * 2,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  emptyText: {
+    ...typography.subheading,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   expenseCard: {
     marginBottom: spacing.md,
@@ -259,8 +298,8 @@ const styles = StyleSheet.create({
   },
   inactiveBadge: {
     ...typography.caption,
-    color: colors.white,
-    backgroundColor: colors.error,
+    color: colors.cardBackground,
+    backgroundColor: colors.danger,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: 4,
@@ -291,7 +330,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   deleteButton: {
-    backgroundColor: colors.error,
+    backgroundColor: colors.danger,
     padding: spacing.sm,
     alignItems: 'center',
     borderBottomLeftRadius: 8,
@@ -299,19 +338,6 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     ...typography.button,
-    color: colors.white,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl * 2,
-  },
-  emptyText: {
-    ...typography.subheading,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  emptySubtext: {
-    ...typography.body,
-    color: colors.textSecondary,
+    color: colors.cardBackground,
   },
 });
