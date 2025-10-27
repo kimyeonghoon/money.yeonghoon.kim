@@ -102,10 +102,14 @@ def get_fixed_expenses(
         query = query.filter(FixedExpense.is_active == is_active)
 
     if year is not None and month is not None:
-        target_date = date(year, month, 1)
+        import calendar
+        month_start = date(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        month_end = date(year, month, last_day)
+
         query = query.filter(
-            FixedExpense.valid_from <= target_date,
-            (FixedExpense.valid_until.is_(None)) | (FixedExpense.valid_until >= target_date)
+            FixedExpense.valid_from <= month_end,
+            (FixedExpense.valid_until.is_(None)) | (FixedExpense.valid_until >= month_start)
         )
 
     expenses = query.all()

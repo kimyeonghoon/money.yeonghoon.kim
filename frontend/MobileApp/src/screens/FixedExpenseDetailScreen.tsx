@@ -13,6 +13,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Card, Button } from '../components';
 import { typography, spacing, colors } from '../theme';
 import {
@@ -45,10 +46,6 @@ export const FixedExpenseDetailScreen: React.FC<FixedExpenseDetailScreenProps> =
   const [expense, setExpense] = useState<FixedExpense | null>(null);
   const [monthlySummary, setMonthlySummary] = useState<MonthlyExpensesSummary | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [expenseId]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -72,6 +69,12 @@ export const FixedExpenseDetailScreen: React.FC<FixedExpenseDetailScreenProps> =
       setLoading(false);
     }
   }, [expenseId, navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const getCurrentRecord = useCallback((): FixedExpenseRecord | null => {
     if (!monthlySummary || !expense) return null;

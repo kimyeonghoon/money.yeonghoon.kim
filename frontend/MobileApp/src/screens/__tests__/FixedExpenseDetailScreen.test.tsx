@@ -13,6 +13,17 @@ import { FixedExpense, MonthlyExpensesSummary } from '../../types/fixedExpense';
 
 jest.mock('../../services/fixedExpenseService');
 
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  return {
+    ...actual,
+    useFocusEffect: (effect: () => void) => {
+      const React = jest.requireActual('react');
+      React.useEffect(effect, []);
+    },
+  };
+});
+
 const mockExpense: FixedExpense = {
   id: 1,
   user_id: 1,

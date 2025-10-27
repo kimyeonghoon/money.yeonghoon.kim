@@ -7,6 +7,7 @@ interface ScreenProps {
   style?: ViewStyle;
   scrollable?: boolean;
   centered?: boolean;
+  noPadding?: boolean;
 }
 
 export const Screen: React.FC<ScreenProps> = ({
@@ -14,9 +15,11 @@ export const Screen: React.FC<ScreenProps> = ({
   style,
   scrollable = false,
   centered = false,
+  noPadding = false,
 }) => {
   const containerStyle = [
     styles.container,
+    noPadding && styles.noPadding,
     centered && styles.centered,
     style,
   ];
@@ -24,9 +27,10 @@ export const Screen: React.FC<ScreenProps> = ({
   if (scrollable) {
     return (
       <ScrollView
-        style={styles.container}
+        style={[styles.container, noPadding && styles.noPadding]}
         contentContainerStyle={[
           styles.scrollContent,
+          noPadding && styles.noPadding,
           centered && styles.centered,
           style,
         ]}
@@ -48,6 +52,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: spacing.lg,
+  },
+  noPadding: {
+    padding: 0,
   },
   centered: {
     justifyContent: 'center',

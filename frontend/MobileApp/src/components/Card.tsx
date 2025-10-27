@@ -7,6 +7,7 @@ interface CardProps {
   style?: ViewStyle;
   noPadding?: boolean;
   noShadow?: boolean;
+  noMaxWidth?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -14,11 +15,13 @@ export const Card: React.FC<CardProps> = ({
   style,
   noPadding = false,
   noShadow = false,
+  noMaxWidth = false,
 }) => {
   return (
     <View
       style={[
         styles.card,
+        noMaxWidth && styles.noMaxWidth,
         !noPadding && styles.withPadding,
         !noShadow && shadows.card,
         style,
@@ -35,6 +38,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.medium,
+  },
+  noMaxWidth: {
+    maxWidth: '100%',
   },
   withPadding: {
     padding: spacing.xl,

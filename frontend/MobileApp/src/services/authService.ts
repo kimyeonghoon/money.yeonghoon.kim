@@ -24,9 +24,15 @@ class AuthService {
         credentials
       );
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Request login error:', error);
-      throw error;
+      if (error.response?.status === 401) {
+        throw new Error('사용자명 또는 비밀번호가 올바르지 않습니다');
+      }
+      if (error.response?.status === 500) {
+        throw new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요');
+      }
+      throw new Error('로그인 중 오류가 발생했습니다');
     }
   }
 
@@ -52,9 +58,15 @@ class AuthService {
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
       return user;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Verify login error:', error);
-      throw error;
+      if (error.response?.status === 401) {
+        throw new Error('인증 코드가 올바르지 않습니다');
+      }
+      if (error.response?.status === 500) {
+        throw new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요');
+      }
+      throw new Error('인증 중 오류가 발생했습니다');
     }
   }
 

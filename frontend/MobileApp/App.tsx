@@ -25,9 +25,11 @@ const AppContent: React.FC = () => {
       return <VerifyCodeScreen />;
     case 'authenticated':
       return (
-        <NavigationContainer>
-          <MainTabNavigator />
-        </NavigationContainer>
+        <View style={styles.container}>
+          <NavigationContainer>
+            <MainTabNavigator />
+          </NavigationContainer>
+        </View>
       );
     default:
       return <LoginScreen />;
@@ -43,6 +45,10 @@ const App: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    height: '100%',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

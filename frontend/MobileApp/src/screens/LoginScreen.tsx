@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Text, TextInput, StyleSheet, Alert } from 'react-native';
-import { Screen, Card, Button } from '../components';
+import { Text, TextInput, StyleSheet } from 'react-native';
+import { Screen, Card, Button, Toast } from '../components';
 import { useAuth } from '../contexts/AuthContext';
 import { typography, spacing, colors, borderRadius } from '../theme';
 
@@ -9,10 +9,11 @@ export const LoginScreen: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const handleLogin = async (): Promise<void> => {
     if (!username || !password) {
-      Alert.alert('오류', '사용자명과 비밀번호를 입력하세요');
+      setToast({ message: '사용자명과 비밀번호를 입력하세요', type: 'error' });
       return;
     }
 
@@ -22,7 +23,7 @@ export const LoginScreen: React.FC = () => {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : '로그인 실패';
-      Alert.alert('로그인 오류', errorMessage);
+      setToast({ message: errorMessage, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -30,6 +31,13 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <Screen centered>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onHide={() => setToast(null)}
+        />
+      )}
       <Card>
         <Text style={styles.title}>로그인</Text>
         <Text style={styles.subtitle}>계정 정보를 입력하세요</Text>

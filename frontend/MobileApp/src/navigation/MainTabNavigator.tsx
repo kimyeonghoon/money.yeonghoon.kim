@@ -67,7 +67,6 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           title: '고정지출',
           tabBarLabel: '고정지출',
-          headerShown: false,
         }}
       />
       <Tab.Screen
